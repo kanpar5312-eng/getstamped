@@ -1,0 +1,143 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { getServerSupabase } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { verifyTurnstile } from "@/lib/turnstile";
+
+export type AuthResult =
+  | { ok: true; redirectTo?: string }
+  | { ok: false; error: string };
+
+function reasonableEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+/** Sign-up with email + password. Sends a verification email. */
+export async function signUp(formData: FormData): Promise<AuthResult> {
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  const fullName = String(formData.get("fullName") ?? "").trim();
+  const turnstileToken = String(formData.get("turnstileToken") ?? "");
+
+  if (!reasonableEmail(email)) return { ok: false, error: "Enter a valid email." };
+  if (password.length < 8) return { ok: false, error: "Password must be at least 8 characters." };
+  if (fullName.length < 2) return { ok: false, error: "Tell us your full legal name." };
+
+  // CAPTCHA gate — accepts all submissions in dev (no TURNSTILE_SECRET_KEY)
+  const human = await verifyTurnstile(turnstileToken);
+  if (!human) return { ok: false, error: "Please complete the CAPTCHA challenge." };
+
+  if (!isSupabaseConfigured()) {
+    return { ok: false, error: "Auth is not configured yet. Add Supabase env keys to enable signup." };
+  }
+
+  const sb = await getServerSupabase();
+  if (!sb) return { ok: false, error: "Supabase client unavailable." };
+
+  const origin = (await headers()).get("origin") ?? "http://localhost:3030";
+
+  // First word of full legal name → first_name for greeting / avatar initials.
+  const firstName = fullName.split(/\s+/)[0];
+
+  const { error } = await sb.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${origin}/auth/callback`,
+      data: {
+        first_name: firstName,
+        full_name: fullName,
+        legal_signatory_name: fullName,           // frozen legal record, never overwritten
+        dpa_accepted_at: new Date().toISOString(),
+      },
+    },
+  });
+
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, redirectTo: `/sign-up/check-email?email=${encodeURIComponent(email)}` };
+}
+
+/** Re-send the verification email for an unconfirmed account. */
+export async function resendVerification(email: string): Promise<AuthResult> {
+  if (!reasonableEmail(email)) return { ok: false, error: "Enter a valid email." };
+  if (!isSupabaseConfigured()) return { ok: false, error: "Auth is not configured yet." };
+  const sb = await getServerSupabase();
+  if (!sb) return { ok: false, error: "Supabase client unavailable." };
+
+  const origin = (await headers()).get("origin") ?? "http://localhost:3030";
+  const { error } = await sb.auth.resend({
+    type: "signup",
+    email,
+    options: { emailRedirectTo: `${origin}/auth/callback` },
+  });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+/** Sign in with email + password. */
+export async function signIn(formData: FormData): Promise<AuthResult> {
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+
+  if (!reasonableEmail(email)) return { ok: false, error: "Enter a valid email." };
+  if (!password) return { ok: false, error: "Enter your password." };
+
+  if (!isSupabaseConfigured()) {
+    return { ok: false, error: "Auth is not configured yet." };
+  }
+
+  const sb = await getServerSupabase();
+  if (!sb) return { ok: false, error: "Supabase client unavailable." };
+
+  const { error, data } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    // Supabase returns "Email not confirmed" verbatim for unverified accounts
+    if (/not confirmed/i.test(error.message)) {
+      return { ok: false, error: "Please verify your email first. Check your inbox for the link." };
+    }
+    return { ok: false, error: "Email or password is incorrect." };
+  }
+
+  // Send incomplete profiles into onboarding
+  if (data.user) {
+    const { data: profile } = await sb
+      .from("profiles")
+      .select("onboarding_completed")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    if (!profile?.onboarding_completed) {
+      return { ok: true, redirectTo: "/onboarding" };
+    }
+  }
+
+  return { ok: true, redirectTo: "/dashboard" };
+}
+
+/** Trigger a password-reset email. */
+export async function requestPasswordReset(formData: FormData): Promise<AuthResult> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!reasonableEmail(email)) return { ok: false, error: "Enter a valid email." };
+  if (!isSupabaseConfigured()) {
+    return { ok: false, error: "Auth is not configured yet." };
+  }
+  const sb = await getServerSupabase();
+  if (!sb) return { ok: false, error: "Supabase client unavailable." };
+
+  const origin = (await headers()).get("origin") ?? "http://localhost:3030";
+
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/reset`,
+  });
+
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+/** Sign out and bounce to /. */
+export async function signOut(): Promise<never> {
+  const sb = await getServerSupabase();
+  if (sb) await sb.auth.signOut();
+  redirect("/");
+}
