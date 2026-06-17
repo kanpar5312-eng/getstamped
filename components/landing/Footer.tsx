@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { BrandMark } from "@/components/ui/BrandMark";
 import { usePricing } from "@/lib/PricingContext";
 
 const EMAIL = "founder@getstamped.app";
@@ -74,7 +75,7 @@ export function Footer() {
   const otherSymbol = currency === "INR" ? "$" : "₹";
 
   return (
-    <footer className="relative w-full bg-[var(--color-cream)]">
+    <footer className="relative w-full bg-[var(--color-paper)]">
       <div
         aria-hidden
         className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--color-accent)]/60 to-transparent"
@@ -87,9 +88,9 @@ export function Footer() {
             <Link
               href="/"
               aria-label="GetStamped — home"
-              className="inline-flex items-center gap-2"
+              className="inline-flex items-center gap-2 text-[var(--color-ink)]"
             >
-              <span aria-hidden className="block h-3 w-3 rounded-sm bg-[var(--color-forest)]" />
+              <BrandMark size={28} />
               <span className="font-display text-[22px] leading-none tracking-tight text-[var(--color-ink)]">
                 GetStamped
               </span>

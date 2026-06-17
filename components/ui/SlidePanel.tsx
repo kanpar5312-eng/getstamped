@@ -64,7 +64,7 @@ export function SlidePanel({
           "absolute right-0 top-0 h-full w-full",
           width,
           "border-l border-white/40",
-          "bg-[var(--color-cream-soft)]/95 backdrop-blur-2xl backdrop-saturate-150",
+          "bg-[var(--color-paper-soft)]/95 backdrop-blur-2xl backdrop-saturate-150",
           "ring-1 ring-white/30",
           "shadow-[0_40px_100px_-30px_rgba(20,33,28,0.5)]",
           "flex flex-col",
@@ -98,7 +98,7 @@ export function SlidePanel({
             type="button"
             onClick={onClose}
             aria-label="Close panel"
-            className="absolute top-5 right-5 inline-flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-muted)] hover:bg-[var(--color-cream-deep)] hover:text-[var(--color-ink)] transition-colors"
+            className="absolute top-5 right-5 inline-flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-muted)] hover:bg-[var(--color-paper-deep)] hover:text-[var(--color-ink)] transition-colors"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M6 6l12 12" />

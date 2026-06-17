@@ -3,13 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { TOTAL_STEPS } from "@/lib/steps";
+import { STEPS, TOTAL_STEPS } from "@/lib/steps";
+import { pushNotification } from "@/lib/notifications";
 
 export type StepStatusValue = "not_started" | "in_progress" | "complete";
 
 export type StepProgressResult =
   | { ok: true; status: StepStatusValue }
-  | { ok: false; error: string };
+  | { ok: false; error: string; paywall?: boolean };
 
 /**
  * Marks a step's status for the signed-in user.
@@ -39,6 +40,28 @@ export async function markStep(
     return { ok: false, error: "You're not signed in." };
   }
   const userId = userData.user.id;
+
+  // Paywall enforcement — free plan can only complete free steps.
+  // We check the user's plan + the step's isFree flag server-side so the
+  // UI can't bypass it by calling markStep directly with a paid step.
+  if (status === "complete" || status === "in_progress") {
+    const step = STEPS.find((s) => s.number === stepNumber);
+    if (step && !step.isFree) {
+      const { data: profile } = await sb
+        .from("profiles")
+        .select("plan")
+        .eq("id", userId)
+        .maybeSingle();
+      const plan = profile?.plan ?? "free";
+      if (plan === "free") {
+        return {
+          ok: false,
+          error: "This step is locked. Upgrade to unlock every phase.",
+          paywall: true,
+        };
+      }
+    }
+  }
 
   const now = new Date().toISOString();
   const row: Record<string, string | number> = {
@@ -70,6 +93,18 @@ export async function markStep(
     .from("profiles")
     .update({ last_active_at: now })
     .eq("id", userId);
+
+  // Fire a real-time notification for the popup. Best-effort, non-blocking.
+  if (status === "complete") {
+    const step = STEPS.find((s) => s.number === stepNumber);
+    void pushNotification({
+      userId,
+      kind: "step_complete",
+      title: `Step ${stepNumber} complete`,
+      body: step ? step.title : undefined,
+      href: `/dashboard/timeline/${stepNumber}`,
+    });
+  }
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/timeline");

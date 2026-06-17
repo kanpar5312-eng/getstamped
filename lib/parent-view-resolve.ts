@@ -16,7 +16,7 @@ import { resolveToken as resolveMockToken } from "@/lib/parent-view";
  */
 
 type Resolved =
-  | { ok: true; profile: ReturnType<typeof computeDashboard>; isReal: boolean; firstName: string }
+  | { ok: true; profile: ReturnType<typeof computeDashboard>; isReal: boolean; firstName: string; studentUserId: string | null }
   | { ok: false };
 
 export async function resolveParentToken(token: string): Promise<Resolved> {
@@ -28,6 +28,7 @@ export async function resolveParentToken(token: string): Promise<Resolved> {
       profile: res.dashboard,
       isReal: false,
       firstName: res.user.profile.firstName,
+      studentUserId: null,
     };
   }
 
@@ -81,7 +82,13 @@ export async function resolveParentToken(token: string): Promise<Resolved> {
   }));
 
   const dashboard = computeDashboard(profile, progress);
-  return { ok: true, profile: dashboard, isReal: true, firstName: profile.firstName };
+  return {
+    ok: true,
+    profile: dashboard,
+    isReal: true,
+    firstName: profile.firstName,
+    studentUserId: tokenRow.user_id as string,
+  };
 }
 
 // Mock-friendly entry so the public route stays unchanged when env is empty.

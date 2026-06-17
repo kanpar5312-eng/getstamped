@@ -97,7 +97,7 @@ function Pill({ active, onClick, children }: { active: boolean; onClick: () => v
       className={[
         "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] transition-colors whitespace-nowrap",
         active
-          ? "bg-[var(--color-forest)] text-[var(--color-cream-soft)] border border-[var(--color-forest)]"
+          ? "bg-[var(--color-persimmon)] text-[var(--color-paper-soft)] border border-[var(--color-ink)]"
           : "text-[var(--color-ink-soft)] border border-[var(--color-border-soft)] bg-[var(--color-surface)] hover:border-[var(--color-border)] hover:text-[var(--color-ink)]",
       ].join(" ")}
     >
@@ -268,7 +268,7 @@ export function CommandPalette() {
 
       {/* Panel */}
       <div
-        className="relative w-full max-w-2xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-cream-soft)] text-[var(--color-ink)] shadow-[0_40px_120px_-20px_rgba(20,33,28,0.45)] overflow-hidden animate-fade-up max-h-[80vh] flex flex-col"
+        className="relative w-full max-w-2xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper-soft)] text-[var(--color-ink)] shadow-[0_40px_120px_-20px_rgba(20,33,28,0.45)] overflow-hidden animate-fade-up max-h-[80vh] flex flex-col"
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Search bar */}
@@ -285,13 +285,13 @@ export function CommandPalette() {
             spellCheck={false}
             className="flex-1 bg-transparent outline-none border-0 text-[15px] placeholder:text-[var(--color-muted)]/70 text-[var(--color-ink)]"
           />
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-[var(--color-border-soft)] bg-[var(--color-cream-deep)] px-1.5 py-0.5 text-[10px] font-mono text-[var(--color-muted)]">
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-[var(--color-border-soft)] bg-[var(--color-paper-deep)] px-1.5 py-0.5 text-[10px] font-mono text-[var(--color-muted)]">
             ESC
           </kbd>
         </div>
 
         {/* Filter pills */}
-        <div className="flex items-center gap-1.5 px-4 sm:px-5 pt-3 pb-2 overflow-x-auto scrollbar-none border-b border-[var(--color-border-soft)] bg-[var(--color-cream-soft)]">
+        <div className="flex items-center gap-1.5 px-4 sm:px-5 pt-3 pb-2 overflow-x-auto scrollbar-none border-b border-[var(--color-border-soft)] bg-[var(--color-paper-soft)]">
           {(["All", "Steps", "Pages", "Documents", "Phases"] as Category[]).map((c) => (
             <Pill key={c} active={category === c} onClick={() => { setCategory(c); setActiveIdx(0); }}>
               <span>{c}</span>
@@ -300,7 +300,7 @@ export function CommandPalette() {
         </div>
 
         {/* Body */}
-        <div ref={listRef} className="flex-1 overflow-y-auto px-2 pb-3 bg-[var(--color-cream-soft)]">
+        <div ref={listRef} className="flex-1 overflow-y-auto px-2 pb-3 bg-[var(--color-paper-soft)]">
           {showSections ? (
             <>
               {/* Recents */}
@@ -320,7 +320,7 @@ export function CommandPalette() {
                       key={p.id}
                       type="button"
                       onClick={() => go(p)}
-                      className="text-left rounded-xl border border-white/15 p-3 overflow-hidden relative transition-transform hover:-translate-y-px text-[var(--color-cream-soft)]"
+                      className="text-left rounded-xl border border-white/15 p-3 overflow-hidden relative transition-transform hover:-translate-y-px text-[var(--color-paper-soft)]"
                       style={{
                         background:
                           p.id === "mock"
@@ -380,21 +380,21 @@ export function CommandPalette() {
         <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border-soft)] bg-[var(--color-surface)] px-4 sm:px-5 py-2 text-[11px] text-[var(--color-muted)]">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="inline-flex items-center gap-1">
-              <kbd className="rounded border border-[var(--color-border-soft)] bg-[var(--color-cream-deep)] px-1 py-px font-mono text-[var(--color-ink-soft)]">↑</kbd>
-              <kbd className="rounded border border-[var(--color-border-soft)] bg-[var(--color-cream-deep)] px-1 py-px font-mono text-[var(--color-ink-soft)]">↓</kbd>
+              <kbd className="rounded border border-[var(--color-border-soft)] bg-[var(--color-paper-deep)] px-1 py-px font-mono text-[var(--color-ink-soft)]">↑</kbd>
+              <kbd className="rounded border border-[var(--color-border-soft)] bg-[var(--color-paper-deep)] px-1 py-px font-mono text-[var(--color-ink-soft)]">↓</kbd>
               navigate
             </span>
             <span className="inline-flex items-center gap-1">
-              <kbd className="rounded border border-[var(--color-border-soft)] bg-[var(--color-cream-deep)] px-1 py-px font-mono text-[var(--color-ink-soft)]">↵</kbd>
+              <kbd className="rounded border border-[var(--color-border-soft)] bg-[var(--color-paper-deep)] px-1 py-px font-mono text-[var(--color-ink-soft)]">↵</kbd>
               open
             </span>
             <span className="inline-flex items-center gap-1">
-              <kbd className="rounded border border-[var(--color-border-soft)] bg-[var(--color-cream-deep)] px-1 py-px font-mono text-[var(--color-ink-soft)]">esc</kbd>
+              <kbd className="rounded border border-[var(--color-border-soft)] bg-[var(--color-paper-deep)] px-1 py-px font-mono text-[var(--color-ink-soft)]">esc</kbd>
               close
             </span>
           </div>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-forest)] animate-soft-pulse" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-persimmon)] animate-soft-pulse" />
             <span className="font-display text-[var(--color-ink-soft)]">GetStamped</span>
           </span>
         </div>
@@ -448,15 +448,15 @@ function Row({
         "group w-full text-left flex items-center gap-3 mx-1 rounded-lg transition-colors",
         compact ? "px-3 py-2" : "px-3 py-2.5",
         active
-          ? "bg-[var(--color-cream-deep)] ring-1 ring-[var(--color-forest)]/20"
-          : "hover:bg-[var(--color-cream-deep)]/60",
+          ? "bg-[var(--color-paper-deep)] ring-1 ring-[var(--color-ink)]/20"
+          : "hover:bg-[var(--color-paper-deep)]/60",
       ].join(" ")}
     >
       <span
         className={[
           "inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors shrink-0",
           active
-            ? "border-[var(--color-forest)]/30 bg-[var(--color-forest)] text-[var(--color-cream-soft)]"
+            ? "border-[var(--color-ink)]/30 bg-[var(--color-persimmon)] text-[var(--color-paper-soft)]"
             : "border-[var(--color-border-soft)] bg-[var(--color-surface)] text-[var(--color-ink-soft)]",
         ].join(" ")}
         aria-hidden

@@ -21,7 +21,7 @@ export function CookieBanner() {
       <div
         role="dialog"
         aria-label="Cookies"
-        className="mx-auto max-w-3xl rounded-2xl border border-white/40 bg-[var(--color-cream-soft)]/80 backdrop-blur-2xl backdrop-saturate-150 ring-1 ring-white/30 shadow-[0_40px_100px_-30px_rgba(20,33,28,0.5)] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4"
+        className="mx-auto max-w-3xl rounded-2xl border border-white/40 bg-[var(--color-paper-soft)]/80 backdrop-blur-2xl backdrop-saturate-150 ring-1 ring-white/30 shadow-[0_40px_100px_-30px_rgba(20,33,28,0.5)] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4"
       >
         <p className="text-xs sm:text-sm leading-relaxed text-[var(--color-ink)] flex-1">
           We use essential cookies to keep you signed in. Optional cookies help
@@ -44,7 +44,7 @@ export function CookieBanner() {
           <button
             type="button"
             onClick={() => writeConsent("all")}
-            className="inline-flex items-center justify-center rounded-lg bg-[var(--color-forest)] px-4 py-2 text-xs font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors"
+            className="inline-flex items-center justify-center rounded-lg bg-[var(--color-persimmon)] px-4 py-2 text-xs font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors"
           >
             Accept all
           </button>

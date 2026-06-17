@@ -43,7 +43,7 @@ function PhaseSection({ phase, startIndex, isOpen, onToggle }: PhaseProps) {
   const panelId = `phase-panel-${phase.id}`;
 
   return (
-    <div className="border-t border-[var(--color-cream-soft)]/15 first:border-t-0">
+    <div className="border-t border-[var(--color-paper-soft)]/15 first:border-t-0">
       <button
         id={buttonId}
         type="button"
@@ -54,9 +54,9 @@ function PhaseSection({ phase, startIndex, isOpen, onToggle }: PhaseProps) {
           "group w-full text-left py-7 lg:py-8 px-4 -mx-4 rounded-xl",
           "transition-colors duration-200 ease-out",
           isOpen
-            ? "bg-[var(--color-cream-soft)]/[0.04]"
-            : "hover:bg-[var(--color-cream-soft)]/[0.03]",
-          "focus-visible:outline-none focus-visible:bg-[var(--color-cream-soft)]/[0.06]",
+            ? "bg-[var(--color-paper-soft)]/[0.04]"
+            : "hover:bg-[var(--color-paper-soft)]/[0.03]",
+          "focus-visible:outline-none focus-visible:bg-[var(--color-paper-soft)]/[0.06]",
         ].join(" ")}
       >
         <div className="flex items-center gap-3">
@@ -64,22 +64,22 @@ function PhaseSection({ phase, startIndex, isOpen, onToggle }: PhaseProps) {
           <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--color-accent)]">
             {phase.label}
           </span>
-          <span className="font-mono text-[10px] tracking-[0.15em] text-[var(--color-cream-soft)]/40 ml-auto">
+          <span className="font-mono text-[10px] tracking-[0.15em] text-[var(--color-paper-soft)]/40 ml-auto">
             {String(phase.steps.length).padStart(2, "0")} STEPS
           </span>
           <motion.span
             animate={{ rotate: isOpen ? -180 : 0 }}
             transition={{ duration: 0.25, ease: EASE }}
-            className="text-[var(--color-cream-soft)]/45 group-hover:text-[var(--color-cream-soft)]/80 transition-colors"
+            className="text-[var(--color-paper-soft)]/45 group-hover:text-[var(--color-paper-soft)]/80 transition-colors"
           >
             <Chevron />
           </motion.span>
         </div>
 
-        <h3 className="mt-3 font-display text-2xl sm:text-[28px] leading-snug tracking-tight text-[var(--color-cream-soft)]">
+        <h3 className="mt-3 font-display text-2xl sm:text-[28px] leading-snug tracking-tight text-[var(--color-paper-soft)]">
           {phase.name}
         </h3>
-        <p className="mt-2 max-w-[560px] text-sm leading-relaxed text-[var(--color-cream-soft)]/60">
+        <p className="mt-2 max-w-[560px] text-sm leading-relaxed text-[var(--color-paper-soft)]/60">
           {phase.description}
         </p>
       </button>
@@ -104,12 +104,12 @@ function PhaseSection({ phase, startIndex, isOpen, onToggle }: PhaseProps) {
                 return (
                   <li
                     key={idx}
-                    className="flex items-center gap-4 min-h-[52px] py-2.5 px-3 -mx-3 border-b border-[var(--color-cream-soft)]/10 last:border-b-0 hover:bg-[var(--color-cream-soft)]/[0.04] transition-colors"
+                    className="flex items-center gap-4 min-h-[52px] py-2.5 px-3 -mx-3 border-b border-[var(--color-paper-soft)]/10 last:border-b-0 hover:bg-[var(--color-paper-soft)]/[0.04] transition-colors"
                   >
                     <span className="font-mono text-[13px] text-[var(--color-accent)] w-10 shrink-0 tabular-nums">
                       {num}
                     </span>
-                    <span className="text-[15px] text-[var(--color-cream-soft)] leading-snug">
+                    <span className="text-[15px] text-[var(--color-paper-soft)] leading-snug">
                       {step.title}
                     </span>
                   </li>
@@ -146,7 +146,7 @@ export function TimelineFull() {
   return (
     <section
       id="timeline"
-      className="w-full bg-[var(--color-forest)] text-[var(--color-cream-soft)] py-24 lg:py-32"
+      className="w-full bg-[var(--color-persimmon)] text-[var(--color-paper-soft)] py-24 lg:py-32"
     >
       <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-10">
         <div className="text-center max-w-3xl mx-auto">
@@ -156,13 +156,13 @@ export function TimelineFull() {
           <h2 className="mt-4 font-display text-3xl sm:text-4xl lg:text-5xl tracking-tight leading-snug">
             Every step. Nothing hidden.
           </h2>
-          <p className="mx-auto mt-6 max-w-xl text-base sm:text-lg leading-relaxed text-[var(--color-cream-soft)]/70">
+          <p className="mx-auto mt-6 max-w-xl text-base sm:text-lg leading-relaxed text-[var(--color-paper-soft)]/70">
             Five phases. Forty-seven steps. Tap a phase to see what&rsquo;s
             inside.
           </p>
         </div>
 
-        <div className="mx-auto mt-14 lg:mt-20 max-w-[820px] border-b border-[var(--color-cream-soft)]/15">
+        <div className="mx-auto mt-14 lg:mt-20 max-w-[820px] border-b border-[var(--color-paper-soft)]/15">
           {PHASES.map((phase) => (
             <PhaseSection
               key={phase.id}

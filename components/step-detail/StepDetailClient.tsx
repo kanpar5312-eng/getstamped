@@ -50,7 +50,7 @@ function UploadIcon() {
 function StatusPill({ status }: { status: StepStatus }) {
   if (status === "complete")
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-forest)]/[0.08] border border-[var(--color-forest)]/20 px-2.5 py-1 text-[10px] font-medium text-[var(--color-forest)] uppercase tracking-wider">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-persimmon)]/[0.08] border border-[var(--color-ink)]/20 px-2.5 py-1 text-[10px] font-medium text-[var(--color-ink)] uppercase tracking-wider">
         <CheckIcon className="h-3 w-3" /> Complete
       </span>
     );
@@ -61,7 +61,7 @@ function StatusPill({ status }: { status: StepStatus }) {
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-cream-deep)] border border-[var(--color-border-soft)] px-2.5 py-1 text-[10px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-paper-deep)] border border-[var(--color-border-soft)] px-2.5 py-1 text-[10px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
       Not started
     </span>
   );
@@ -83,6 +83,7 @@ export function StepDetailClient({
   );
   const [askOpen, setAskOpen] = useState(false);
   const [showCelebrate, setShowCelebrate] = useState(false);
+  const [paywallHit, setPaywallHit] = useState(false);
   const [, startTransition] = useTransition();
   const instructionsRef = useRef<HTMLElement>(null);
 
@@ -120,10 +121,23 @@ export function StepDetailClient({
     );
   };
 
-  const markComplete = () => {
+  const markComplete = async () => {
+    // Call the server action FIRST; only flip UI on success. If the user is
+    // free-tier on a paid step the action returns { paywall: true } and we
+    // show the upgrade modal instead of marking complete.
+    const res = await markStep(step.number, "complete");
+    if (!res.ok) {
+      if (res.paywall) {
+        setPaywallHit(true);
+        return;
+      }
+      // Other errors: silently fall through — server may be unavailable in
+      // dev. We log so the surface isn't completely silent.
+      console.warn("markStep failed:", res.error);
+      return;
+    }
     setStatus("complete");
     setShowCelebrate(true);
-    void markStep(step.number, "complete");
     setTimeout(() => {
       setShowCelebrate(false);
       startTransition(() => {
@@ -171,8 +185,8 @@ export function StepDetailClient({
 
         {/* Centered upgrade card */}
         <div className="fixed inset-0 z-30 flex items-center justify-center px-4 pointer-events-none">
-          <div className="pointer-events-auto max-w-md rounded-2xl border border-white/40 bg-[var(--color-cream-soft)]/95 backdrop-blur-2xl backdrop-saturate-150 ring-1 ring-white/30 shadow-[0_40px_100px_-30px_rgba(20,33,28,0.5)] p-6 sm:p-7 text-center animate-fade-up">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-forest)] text-[var(--color-cream-soft)] mx-auto">
+          <div className="pointer-events-auto max-w-md rounded-2xl border border-white/40 bg-[var(--color-paper-soft)]/95 backdrop-blur-2xl backdrop-saturate-150 ring-1 ring-white/30 shadow-[0_40px_100px_-30px_rgba(20,33,28,0.5)] p-6 sm:p-7 text-center animate-fade-up">
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-persimmon)] text-[var(--color-paper-soft)] mx-auto">
               <LockIcon />
             </span>
             <h2 className="mt-4 font-display text-2xl tracking-tight text-[var(--color-ink)] leading-snug">
@@ -194,7 +208,7 @@ export function StepDetailClient({
               <Link href="/dashboard/upgrade" className="block">
                 <button
                   type="button"
-                  className="w-full inline-flex items-center justify-center rounded-lg bg-[var(--color-forest)] px-5 py-2.5 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors"
+                  className="w-full inline-flex items-center justify-center rounded-lg bg-[var(--color-persimmon)] px-5 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors"
                 >
                   Unlock all 47 steps →
                 </button>
@@ -233,6 +247,13 @@ export function StepDetailClient({
         onClose={() => setAskOpen(false)}
         stepNumber={step.number}
       />
+      {paywallHit && (
+        <UpgradeModal
+          open={paywallHit}
+          onClose={() => setPaywallHit(false)}
+          fromStep={step.number}
+        />
+      )}
     </>
   );
 }
@@ -283,7 +304,7 @@ function StepDetailMain({
       {/* Celebration overlay */}
       {showCelebrate && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-40 animate-fade-up">
-          <div className="inline-flex items-center gap-3 rounded-xl bg-[var(--color-forest)] px-5 py-3 text-sm font-medium text-[var(--color-cream-soft)] shadow-[0_18px_40px_-15px_rgba(20,33,28,0.45)]">
+          <div className="inline-flex items-center gap-3 rounded-xl bg-[var(--color-persimmon)] px-5 py-3 text-sm font-medium text-[var(--color-paper-soft)] shadow-[0_18px_40px_-15px_rgba(20,33,28,0.45)]">
             <CheckIcon className="h-4 w-4" /> Step {step.number} complete
           </div>
         </div>
@@ -370,15 +391,15 @@ function StepDetailMain({
                 </span>
               </div>
               <div className="mt-4 h-1 w-full rounded-full bg-[var(--color-border-soft)] overflow-hidden">
-                <div className="h-full bg-[var(--color-forest)] transition-all duration-700" style={{ width: `${docPercent}%` }} />
+                <div className="h-full bg-[var(--color-persimmon)] transition-all duration-700" style={{ width: `${docPercent}%` }} />
               </div>
 
-              <ul className="mt-6 divide-y divide-[var(--color-border-soft)] rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] overflow-hidden">
+              <ul className="mt-6 divide-y divide-[var(--color-border-soft)] rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] overflow-hidden">
                 {docs.map((d, i) => (
                   <li key={i} className="flex items-center gap-3 px-4 sm:px-5 py-4">
                     <span aria-hidden className={[
                       "inline-flex h-5 w-5 items-center justify-center rounded-md transition-colors",
-                      d.uploadedAt ? "bg-[var(--color-forest)] text-[var(--color-cream-soft)]" : "border border-[var(--color-border)] bg-[var(--color-surface)]",
+                      d.uploadedAt ? "bg-[var(--color-persimmon)] text-[var(--color-paper-soft)]" : "border border-[var(--color-border)] bg-[var(--color-surface)]",
                     ].join(" ")}>
                       {d.uploadedAt && <CheckIcon className="h-3 w-3" />}
                     </span>
@@ -390,7 +411,7 @@ function StepDetailMain({
                       <p className="mt-0.5 text-xs text-[var(--color-muted)] leading-relaxed">{d.description}</p>
                     </div>
                     {d.uploadedAt ? (
-                      <span className="text-[11px] text-[var(--color-forest)] shrink-0">Uploaded</span>
+                      <span className="text-[11px] text-[var(--color-ink)] shrink-0">Uploaded</span>
                     ) : (
                       <button
                         type="button"
@@ -438,9 +459,9 @@ function StepDetailMain({
           {/* Mark complete CTA */}
           <section className="py-10 border-b border-[var(--color-border-soft)] animate-fade-up" style={{ animationDelay: "240ms" }}>
             {status === "complete" ? (
-              <div className="rounded-2xl border border-[var(--color-forest)]/30 bg-[var(--color-forest)]/[0.06] p-5 sm:p-6 flex items-center justify-between gap-4 flex-wrap">
+              <div className="rounded-2xl border border-[var(--color-ink)]/30 bg-[var(--color-persimmon)]/[0.06] p-5 sm:p-6 flex items-center justify-between gap-4 flex-wrap">
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--color-forest)] text-[var(--color-cream-soft)]">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--color-persimmon)] text-[var(--color-paper-soft)]">
                     <CheckIcon className="h-4 w-4" />
                   </span>
                   <div>
@@ -454,7 +475,7 @@ function StepDetailMain({
                   </button>
                   {nextStep && (
                     <Link href={`/dashboard/timeline/${nextStep.number}`}>
-                      <button type="button" className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-forest)] px-4 py-2 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors">
+                      <button type="button" className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-persimmon)] px-4 py-2 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors">
                         Next step <ArrowRight />
                       </button>
                     </Link>
@@ -462,7 +483,7 @@ function StepDetailMain({
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-5 sm:p-6 flex items-center justify-between gap-4 flex-wrap">
+              <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-5 sm:p-6 flex items-center justify-between gap-4 flex-wrap">
                 <div>
                   <h3 className="font-display text-lg tracking-tight text-[var(--color-ink)]">Done with this step?</h3>
                   <p className="text-xs text-[var(--color-muted)]">Marking complete updates your dashboard and unlocks the next step.</p>
@@ -471,7 +492,7 @@ function StepDetailMain({
                   <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-transparent px-4 py-2 text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-deep)] transition-colors">
                     Save for later
                   </button>
-                  <button type="button" onClick={onMarkComplete} className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-forest)] px-4 py-2 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors">
+                  <button type="button" onClick={onMarkComplete} className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-persimmon)] px-4 py-2 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors">
                     <CheckIcon className="h-3.5 w-3.5" /> Mark complete
                   </button>
                 </div>
@@ -483,7 +504,7 @@ function StepDetailMain({
           <section className="py-10 grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fade-up" style={{ animationDelay: "300ms" }}>
             {prevStep ? (
               <Link href={`/dashboard/timeline/${prevStep.number}`} className="block">
-                <div className="rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-4 hover:border-[var(--color-border)] transition-colors group">
+                <div className="rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-4 hover:border-[var(--color-border)] transition-colors group">
                   <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-muted)] group-hover:text-[var(--color-accent-deep)] transition-colors">
                     <ArrowLeft /> Previous · step {prevStep.number}
                   </div>
@@ -495,7 +516,7 @@ function StepDetailMain({
             )}
             {nextStep ? (
               <Link href={`/dashboard/timeline/${nextStep.number}`} className="block">
-                <div className="rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-4 hover:border-[var(--color-border)] transition-colors text-right group">
+                <div className="rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-4 hover:border-[var(--color-border)] transition-colors text-right group">
                   <div className="flex items-center justify-end gap-2 text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-muted)] group-hover:text-[var(--color-accent-deep)] transition-colors">
                     Next · step {nextStep.number} <ArrowRight />
                   </div>
@@ -503,8 +524,8 @@ function StepDetailMain({
                 </div>
               </Link>
             ) : (
-              <div className="rounded-xl border border-[var(--color-forest)] bg-[var(--color-forest)] text-[var(--color-cream-soft)] p-4 text-right">
-                <div className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-cream-soft)]/70">Final step</div>
+              <div className="rounded-xl border border-[var(--color-ink)] bg-[var(--color-persimmon)] text-[var(--color-paper-soft)] p-4 text-right">
+                <div className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-paper-soft)]/70">Final step</div>
                 <p className="mt-1.5 text-sm font-medium">Finish your visa journey →</p>
               </div>
             )}
@@ -515,14 +536,14 @@ function StepDetailMain({
         <aside className="hidden lg:block w-[280px] flex-shrink-0 self-start sticky top-24">
           <div className="space-y-3">
             {/* Phase progress */}
-            <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-4">
+            <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-4">
               <span className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-muted)]">Phase progress</span>
-              <div className="mt-2 font-display text-2xl tracking-tight text-[var(--color-forest)] tabular-nums">
+              <div className="mt-2 font-display text-2xl tracking-tight text-[var(--color-ink)] tabular-nums">
                 {phaseCompleted}/{phaseTotal}
               </div>
               <div className="mt-1 text-xs text-[var(--color-muted)]">{step.phaseName}</div>
               <div className="mt-3 h-1 w-full rounded-full bg-[var(--color-border-soft)] overflow-hidden">
-                <div className="h-full bg-[var(--color-forest)]" style={{ width: `${(phaseCompleted / phaseTotal) * 100}%` }} />
+                <div className="h-full bg-[var(--color-persimmon)]" style={{ width: `${(phaseCompleted / phaseTotal) * 100}%` }} />
               </div>
             </div>
 
@@ -530,7 +551,7 @@ function StepDetailMain({
             <button
               type="button"
               onClick={() => setAskOpen(true)}
-              className="w-full text-left rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-4 hover:border-[var(--color-border)] transition-colors group"
+              className="w-full text-left rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-4 hover:border-[var(--color-border)] transition-colors group"
             >
               <div className="flex items-start gap-3">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-accent-tint)] text-[var(--color-accent-deep)]">
@@ -545,7 +566,7 @@ function StepDetailMain({
 
             {/* Related steps */}
             {content.relatedSteps.length > 0 && (
-              <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-4">
+              <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-4">
                 <span className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-muted)]">Related steps</span>
                 <ul className="mt-3 space-y-2">
                   {content.relatedSteps.map((n) => {
@@ -564,9 +585,9 @@ function StepDetailMain({
 
             {/* Storage stat */}
             {docs.length > 0 && (
-              <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-4">
+              <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-4">
                 <span className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-muted)]">Documents on file</span>
-                <div className="mt-2 font-display text-2xl tracking-tight text-[var(--color-forest)] tabular-nums">
+                <div className="mt-2 font-display text-2xl tracking-tight text-[var(--color-ink)] tabular-nums">
                   {uploadedCount}/{docs.length}
                 </div>
                 <Link href="/dashboard/documents" className="mt-1 inline-block text-xs text-[var(--color-accent-deep)] hover:text-[var(--color-accent)] transition-colors">
@@ -579,7 +600,7 @@ function StepDetailMain({
       </div>
 
       {/* Mobile sticky bottom bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border-soft)] bg-[var(--color-cream-soft)]/95 backdrop-blur-2xl backdrop-saturate-150 px-4 py-3 flex items-center gap-3">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border-soft)] bg-[var(--color-paper-soft)]/95 backdrop-blur-2xl backdrop-saturate-150 px-4 py-3 flex items-center gap-3">
         {prevStep ? (
           <Link href={`/dashboard/timeline/${prevStep.number}`} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-ink-soft)]">
             <ArrowLeft />
@@ -588,17 +609,17 @@ function StepDetailMain({
         {status === "complete" ? (
           nextStep ? (
             <Link href={`/dashboard/timeline/${nextStep.number}`} className="flex-1">
-              <button type="button" className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-forest)] px-4 py-2.5 text-sm font-medium text-[var(--color-cream-soft)]">
+              <button type="button" className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-persimmon)] px-4 py-2.5 text-sm font-medium text-[var(--color-paper-soft)]">
                 Next step <ArrowRight />
               </button>
             </Link>
           ) : (
-            <button type="button" disabled className="flex-1 rounded-lg bg-[var(--color-forest)] px-4 py-2.5 text-sm font-medium text-[var(--color-cream-soft)]">
+            <button type="button" disabled className="flex-1 rounded-lg bg-[var(--color-persimmon)] px-4 py-2.5 text-sm font-medium text-[var(--color-paper-soft)]">
               Final step
             </button>
           )
         ) : (
-          <button type="button" onClick={onMarkComplete} className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-forest)] px-4 py-2.5 text-sm font-medium text-[var(--color-cream-soft)]">
+          <button type="button" onClick={onMarkComplete} className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-persimmon)] px-4 py-2.5 text-sm font-medium text-[var(--color-paper-soft)]">
             <CheckIcon className="h-3.5 w-3.5" /> Mark complete
           </button>
         )}

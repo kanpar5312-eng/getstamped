@@ -39,7 +39,7 @@ const TIERS: Tier[] = [
     tagline: "For first-time F-1 applicants exploring the process",
     perLabel: "forever",
     cta: "Current plan",
-    ctaClass: "bg-[var(--color-cream-deep)] text-[var(--color-ink)] border border-[var(--color-border)] cursor-default",
+    ctaClass: "bg-[var(--color-paper-deep)] text-[var(--color-ink)] border border-[var(--color-border)] cursor-default",
     priceClass: "text-[var(--color-ink)]",
     ringClass: "",
     quota: { headline: "3 AI questions / day", sub: "1 voice mock per week · Phase 1 (7 of 47 steps)" },
@@ -135,7 +135,7 @@ function DiscountBanner() {
         className="upg-banner-light absolute inset-0"
         style={{
           background:
-            "radial-gradient(120% 80% at 0% 0%, var(--color-accent-tint) 0%, transparent 55%), linear-gradient(135deg, var(--color-forest) 0%, var(--color-forest-soft) 55%, var(--color-forest-deep) 100%)",
+            "radial-gradient(120% 80% at 0% 0%, var(--color-accent-tint) 0%, transparent 55%), linear-gradient(135deg, var(--color-ink) 0%, var(--color-ink-soft) 55%, var(--color-ink-deep) 100%)",
         }}
       />
       {/* Dark gradient: pink */}
@@ -174,7 +174,7 @@ function DiscountBanner() {
       </svg>
 
       <div className="relative px-6 sm:px-10 py-8 sm:py-12 text-white">
-        <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-mono uppercase tracking-wider text-[var(--color-forest)] dark:text-pink-700 shadow-[0_4px_14px_-4px_rgba(0,0,0,0.25)]">
+        <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-mono uppercase tracking-wider text-[var(--color-ink)] dark:text-pink-700 shadow-[0_4px_14px_-4px_rgba(0,0,0,0.25)]">
           <svg viewBox="0 0 24 24" className="h-3 w-3" fill="currentColor" aria-hidden>
             <path d="M21 5l-2-2H10.4a2 2 0 0 0-1.4.6L3 9.6a2 2 0 0 0 0 2.8L11.6 21a2 2 0 0 0 2.8 0L21 14.4a2 2 0 0 0 0-2.8L21 5z" />
           </svg>
@@ -207,7 +207,7 @@ function PromoPill() {
     >
       <span
         className="text-[13px] font-semibold"
-        style={{ color: "#faf6ed", letterSpacing: "-0.005em" }}
+        style={{ color: "var(--surface)", letterSpacing: "-0.005em" }}
       >
         One-time payment · lifetime access
       </span>
@@ -337,7 +337,7 @@ function TierCard({
             ].join(" ")}
           >
             {f.included ? (
-              <svg viewBox="0 0 24 24" className="upg-check mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--color-forest)]" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg viewBox="0 0 24 24" className="upg-check mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--color-ink)]" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M5 12l5 5 9-11" />
               </svg>
             ) : (
@@ -384,13 +384,13 @@ export function UpgradeClient({ currentPlan, earlyBirdRemaining }: Props) {
           className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors"
           style={{
             background: "#14211c",
-            color: "#faf6ed",
+            color: "var(--surface)",
             boxShadow: "0 4px 14px -4px rgba(20,33,28,0.35), inset 0 1px 0 rgba(255,255,255,0.08)",
           }}
         >
-          <span className="font-mono" style={{ color: "#faf6ed" }}>{currency}</span>
+          <span className="font-mono" style={{ color: "var(--surface)" }}>{currency}</span>
           <span style={{ color: "rgba(250,246,237,0.5)" }}>·</span>
-          <span style={{ color: "#faf6ed" }}>switch to {currency === "USD" ? "INR" : "USD"}</span>
+          <span style={{ color: "var(--surface)" }}>switch to {currency === "USD" ? "INR" : "USD"}</span>
         </button>
       </div>
 

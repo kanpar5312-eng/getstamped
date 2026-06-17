@@ -23,7 +23,7 @@ export function ComingSoon({ eyebrow, title, subtitle, bullets }: Props) {
         subtitle={subtitle}
       />
 
-      <section className="mt-10 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-cream-soft)] p-8 sm:p-10">
+      <section className="mt-10 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-paper-soft)] p-8 sm:p-10">
         <Eyebrow>Shipping next</Eyebrow>
         <p className="mt-3 text-base text-[var(--color-ink)] max-w-xl leading-relaxed">
           This area is wired into the dashboard navigation but not yet built.
@@ -37,7 +37,7 @@ export function ComingSoon({ eyebrow, title, subtitle, bullets }: Props) {
             >
               <span
                 aria-hidden
-                className="mt-1.5 block h-1.5 w-1.5 rounded-full bg-[var(--color-forest)] shrink-0"
+                className="mt-1.5 block h-1.5 w-1.5 rounded-full bg-[var(--color-persimmon)] shrink-0"
               />
               <span className="leading-relaxed">{b}</span>
             </li>

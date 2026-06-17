@@ -35,7 +35,7 @@ export function FilterChips({ value, onChange, showLocked }: Props) {
               "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--color-accent)]/10",
               active
                 ? "bg-[var(--color-accent-tint)] text-[var(--color-accent-deep)] border-[var(--color-accent)]/30"
-                : "bg-[var(--color-cream-soft)] text-[var(--color-ink-soft)] border-[var(--color-border-soft)] hover:border-[var(--color-border)]",
+                : "bg-[var(--color-paper-soft)] text-[var(--color-ink-soft)] border-[var(--color-border-soft)] hover:border-[var(--color-border)]",
             ].join(" ")}
           >
             {LABELS[opt]}

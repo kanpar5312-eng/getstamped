@@ -95,7 +95,7 @@ export function InterviewDetailsModal({
             type="button"
             onClick={save}
             disabled={saving || !date}
-            className="inline-flex items-center justify-center rounded-lg bg-[var(--color-forest)] px-5 py-2.5 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-lg bg-[var(--color-persimmon)] px-5 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-60"
           >
             {saving ? "Saving…" : "Save details"}
           </button>

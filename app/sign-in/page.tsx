@@ -22,7 +22,7 @@ export default async function SignInPage() {
       belowCard={
         <>
           New here?{" "}
-          <Link href="/sign-up" className="text-[var(--color-ink)] underline underline-offset-2 hover:text-[var(--color-accent-deep)] transition-colors">
+          <Link href="/sign-up" className="font-semibold text-[var(--color-persimmon-deep)] dark:text-[var(--color-persimmon)] underline underline-offset-4 decoration-2 hover:opacity-80 transition-opacity">
             Create an account
           </Link>
         </>

@@ -39,7 +39,7 @@ export function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="w-full bg-[var(--color-cream)] py-24 lg:py-32"
+      className="w-full bg-[var(--color-paper)] py-24 lg:py-32"
     >
       <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-10">
         <div className="text-center max-w-3xl mx-auto">
@@ -53,7 +53,7 @@ export function HowItWorks() {
           {STEPS.map((s, i) => (
             <Fragment key={s.n}>
               <div>
-                <div className="font-display text-5xl tracking-tight text-[var(--color-forest)] tabular-nums leading-none">
+                <div className="font-display text-5xl tracking-tight text-[var(--color-ink)] tabular-nums leading-none">
                   {s.n}
                 </div>
                 <h3 className="mt-4 text-base font-medium text-[var(--color-ink)]">

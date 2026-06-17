@@ -16,10 +16,10 @@ function MiniTimeline() {
             <li key={p.id} className="flex items-center gap-3 py-2.5">
               <span
                 className={
-                  "inline-flex h-5 w-5 items-center justify-center rounded-full text-[var(--color-cream-soft)] " +
+                  "inline-flex h-5 w-5 items-center justify-center rounded-full text-[var(--color-paper-soft)] " +
                   (done
-                    ? "bg-[var(--color-forest)]"
-                    : "bg-[var(--color-cream-deep)] text-[var(--color-muted)] border border-[var(--color-border)]")
+                    ? "bg-[var(--color-persimmon)]"
+                    : "bg-[var(--color-paper-deep)] text-[var(--color-muted)] border border-[var(--color-border)]")
                 }
               >
                 {done ? (
@@ -60,16 +60,16 @@ function DocStack() {
               zIndex: 3 - i,
             }}
           >
-            <div className="h-1 w-2/3 rounded-full bg-[var(--color-cream-deep)]" />
-            <div className="mt-2 h-1 w-1/2 rounded-full bg-[var(--color-cream-deep)]" />
+            <div className="h-1 w-2/3 rounded-full bg-[var(--color-paper-deep)]" />
+            <div className="mt-2 h-1 w-1/2 rounded-full bg-[var(--color-paper-deep)]" />
             <div className="mt-4 space-y-1">
-              <div className="h-1 w-full rounded-full bg-[var(--color-cream-deep)]" />
-              <div className="h-1 w-full rounded-full bg-[var(--color-cream-deep)]" />
-              <div className="h-1 w-4/5 rounded-full bg-[var(--color-cream-deep)]" />
+              <div className="h-1 w-full rounded-full bg-[var(--color-paper-deep)]" />
+              <div className="h-1 w-full rounded-full bg-[var(--color-paper-deep)]" />
+              <div className="h-1 w-4/5 rounded-full bg-[var(--color-paper-deep)]" />
             </div>
             {i === 0 && (
               <span
-                className="absolute inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-forest)] text-[var(--color-cream-soft)]"
+                className="absolute inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-persimmon)] text-[var(--color-paper-soft)]"
                 style={{ top: 6, right: 6 }}
               >
                 <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -94,7 +94,7 @@ function VoiceOrbMini() {
             {[0, 1, 2, 3].map((i) => (
               <span
                 key={i}
-                className="block w-0.5 h-full rounded-full bg-[var(--color-cream-soft)]/90 origin-bottom animate-voice-bar"
+                className="block w-0.5 h-full rounded-full bg-[var(--color-paper-soft)]/90 origin-bottom animate-voice-bar"
                 style={{ animationDelay: `${i * 0.12}s` }}
               />
             ))}
@@ -108,10 +108,10 @@ function VoiceOrbMini() {
 function ChatBubble() {
   return (
     <div className="mt-5 space-y-2 h-[120px] flex flex-col justify-center">
-      <div className="self-end max-w-[80%] rounded-2xl rounded-tr-md bg-[var(--color-cream-deep)] text-[var(--color-ink)] px-3 py-2 text-xs">
+      <div className="self-end max-w-[80%] rounded-2xl rounded-tr-md bg-[var(--color-paper-deep)] text-[var(--color-ink)] px-3 py-2 text-xs">
         Do I need a US bank statement?
       </div>
-      <div className="self-start inline-flex items-center gap-1.5 max-w-[80%] rounded-2xl rounded-tl-md bg-[var(--color-accent)] text-[var(--color-cream-soft)] px-3 py-2.5">
+      <div className="self-start inline-flex items-center gap-1.5 max-w-[80%] rounded-2xl rounded-tl-md bg-[var(--color-accent)] text-[var(--color-paper-soft)] px-3 py-2.5">
         <span className="h-1 w-1 rounded-full bg-current animate-typing-dot" />
         <span className="h-1 w-1 rounded-full bg-current animate-typing-dot" style={{ animationDelay: "0.15s" }} />
         <span className="h-1 w-1 rounded-full bg-current animate-typing-dot" style={{ animationDelay: "0.3s" }} />
@@ -127,16 +127,16 @@ function ParentMini() {
         <span className="text-[9px] uppercase tracking-[0.18em] font-medium text-[var(--color-muted)]">
           Parent view
         </span>
-        <span className="inline-flex items-center gap-1 text-[9px] text-[var(--color-forest)]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-forest)] animate-soft-pulse" />
+        <span className="inline-flex items-center gap-1 text-[9px] text-[var(--color-ink)]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-persimmon)] animate-soft-pulse" />
           Live
         </span>
       </div>
       <div className="mt-2 text-xs font-display text-[var(--color-ink)] leading-snug">
         Aarav · Phase 4
       </div>
-      <div className="mt-2 h-1.5 w-full rounded-full bg-[var(--color-cream-deep)] overflow-hidden">
-        <div className="h-full bg-[var(--color-forest)]" style={{ width: "68%" }} />
+      <div className="mt-2 h-1.5 w-full rounded-full bg-[var(--color-paper-deep)] overflow-hidden">
+        <div className="h-full bg-[var(--color-persimmon)]" style={{ width: "68%" }} />
       </div>
       <div className="mt-1.5 text-[10px] font-mono text-[var(--color-muted)]">
         32 of 47 complete
@@ -159,8 +159,8 @@ function Card({
       className={[
         "rounded-2xl p-6 sm:p-7 transition-colors",
         dark
-          ? "border border-[var(--color-forest-deep)] bg-[var(--color-forest)] text-[var(--color-cream-soft)]"
-          : "border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] hover:border-[var(--color-border)]",
+          ? "border border-[var(--color-ink-deep)] bg-[var(--color-persimmon)] text-[var(--color-paper-soft)]"
+          : "border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] hover:border-[var(--color-border)]",
         className,
       ].join(" ")}
     >
@@ -173,7 +173,7 @@ export function Features() {
   return (
     <section
       id="features"
-      className="w-full bg-[var(--color-cream)] py-24 lg:py-32"
+      className="w-full bg-[var(--color-paper)] py-24 lg:py-32"
     >
       <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-10">
         <div className="text-center max-w-3xl mx-auto">
@@ -244,31 +244,31 @@ export function Features() {
           <Card dark className="lg:col-span-2">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <span className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-cream-soft)]/65">
+                <span className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-paper-soft)]/65">
                   And one more thing
                 </span>
                 <h3 className="mt-3 font-display text-2xl sm:text-[28px] tracking-tight leading-snug">
                   We update the playbook every time the State Department
                   changes the rules.
                 </h3>
-                <p className="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-cream-soft)]/75">
+                <p className="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-paper-soft)]/75">
                   F-1 policy shifts constantly. Manual checklists go stale.
                   We don&rsquo;t.
                 </p>
               </div>
 
               <div
-                className="shrink-0 hidden sm:flex flex-col items-end gap-2 rounded-xl border border-[var(--color-cream-soft)]/20 bg-[var(--color-cream-soft)]/[0.06] px-3 py-2.5"
+                className="shrink-0 hidden sm:flex flex-col items-end gap-2 rounded-xl border border-[var(--color-paper-soft)]/20 bg-[var(--color-paper-soft)]/[0.06] px-3 py-2.5"
                 title={`Last updated ${stepsLastUpdatedLabel()}`}
               >
-                <span className="text-[9px] uppercase tracking-[0.18em] text-[var(--color-cream-soft)]/55">
+                <span className="text-[9px] uppercase tracking-[0.18em] text-[var(--color-paper-soft)]/55">
                   Last updated
                 </span>
                 <span className="font-display text-base tracking-tight">
                   {stepsLastUpdatedRelative()}
                 </span>
-                <span className="inline-flex items-center gap-1 text-[10px] text-[var(--color-cream-soft)]/70">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-forest-soft)] animate-soft-pulse" />
+                <span className="inline-flex items-center gap-1 text-[10px] text-[var(--color-paper-soft)]/70">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-ink-soft)] animate-soft-pulse" />
                   Watching {STEPS_SOURCE_DOMAIN}
                 </span>
               </div>

@@ -13,7 +13,7 @@ function ProgressDot({ completed, total }: { completed: number; total: number })
     return (
       <span
         aria-hidden
-        className="block h-2.5 w-2.5 rounded-full bg-[var(--color-forest)]"
+        className="block h-2.5 w-2.5 rounded-full bg-[var(--color-persimmon)]"
       />
     );
   }
@@ -24,7 +24,7 @@ function ProgressDot({ completed, total }: { completed: number; total: number })
         className="relative block h-2.5 w-2.5 rounded-full border border-[var(--color-border)] overflow-hidden bg-[var(--color-surface)]"
       >
         <span
-          className="absolute left-0 top-0 h-full bg-[var(--color-forest)]"
+          className="absolute left-0 top-0 h-full bg-[var(--color-persimmon)]"
           style={{ width: `${pct * 100}%` }}
         />
       </span>
@@ -79,7 +79,7 @@ export function PhaseNav({ phases }: Props) {
         aria-label="Phase navigation"
         className="hidden lg:block sticky top-24 self-start w-[220px] flex-shrink-0"
       >
-        <ul className="divide-y divide-[var(--color-border-soft)] rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] overflow-hidden">
+        <ul className="divide-y divide-[var(--color-border-soft)] rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] overflow-hidden">
           {phases.map((p) => {
             const id = `phase-${p.number}`;
             const isActive = active === id;
@@ -92,8 +92,8 @@ export function PhaseNav({ phases }: Props) {
                   className={[
                     "w-full text-left transition-colors py-3 px-3 flex flex-col gap-1",
                     isActive
-                      ? "bg-[var(--color-cream)] border-l-2 border-[var(--color-forest)] pl-[10px]"
-                      : "hover:bg-[var(--color-cream)]/60",
+                      ? "bg-[var(--color-paper)] border-l-2 border-[var(--color-ink)] pl-[10px]"
+                      : "hover:bg-[var(--color-paper)]/60",
                   ].join(" ")}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -132,8 +132,8 @@ export function PhaseNav({ phases }: Props) {
                   className={[
                     "whitespace-nowrap rounded-full px-4 py-2 text-xs transition-colors",
                     isActive
-                      ? "bg-[var(--color-forest)] text-[var(--color-cream-soft)]"
-                      : "bg-[var(--color-cream-soft)] border border-[var(--color-border-soft)] text-[var(--color-ink-soft)]",
+                      ? "bg-[var(--color-persimmon)] text-[var(--color-paper-soft)]"
+                      : "bg-[var(--color-paper-soft)] border border-[var(--color-border-soft)] text-[var(--color-ink-soft)]",
                   ].join(" ")}
                 >
                   {p.name}

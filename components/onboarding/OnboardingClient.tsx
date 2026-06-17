@@ -1,532 +1,723 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { completeOnboarding } from "@/app/actions/profile";
+import { BrandMark } from "@/components/ui/BrandMark";
+import { useCountry } from "@/lib/countryContext";
+import {
+  SUPPORTED_COUNTRIES,
+  type CountryCode,
+} from "@/lib/visa-countries";
+import { PersonalizationCurtain } from "@/components/onboarding/PersonalizationCurtain";
 
 type Props = {
   firstName: string;
   initialCountry?: string;
 };
 
-type Answers = {
+/* ---------- data ---------- */
+const COUNTRIES = [
+  "India", "China", "Vietnam", "South Korea", "Nigeria", "Brazil", "Bangladesh",
+  "Mexico", "Nepal", "Pakistan", "Indonesia", "Taiwan", "Japan", "Colombia",
+  "Ghana", "Kenya", "Philippines", "Turkey", "Saudi Arabia", "Other",
+];
+const INTAKES = ["Fall 2026", "Spring 2027", "Fall 2027", "Not sure yet"];
+const PROGRAMS = ["Bachelor's", "Master's", "PhD", "Other"];
+const FUNDING = [
+  { v: "parents", label: "Parents / family" },
+  { v: "self", label: "Self-funded" },
+  { v: "loan", label: "Education loan" },
+  { v: "scholarship", label: "Scholarship" },
+  { v: "mix", label: "A mix of these" },
+];
+const CONSULATES = [
+  "Mumbai", "New Delhi", "Chennai", "Hyderabad", "Kolkata", "Beijing", "Shanghai",
+  "Guangzhou", "Ho Chi Minh City", "Hanoi", "Seoul", "Lagos", "Abuja", "São Paulo",
+  "Rio de Janeiro", "Dhaka", "Mexico City", "Kathmandu", "Islamabad", "Other",
+];
+
+type Form = {
+  firstName: string;
+  lastName: string;
   country: string;
   university: string;
-  intake_term: string;
-  program_type: string;
-  funding_source: string;
+  program: string;
+  intake: string;
+  interviewBooked: "yes" | "no" | "";
+  interviewDate: string;
+  consulate: string;
+  funding: string;
+  destination: CountryCode | "";
 };
 
-const COUNTRIES = [
-  "India", "China", "Vietnam", "Nigeria", "Brazil", "South Korea",
-  "Bangladesh", "Mexico", "Iran", "Saudi Arabia", "Pakistan", "Indonesia",
-  "Turkey", "Egypt", "Philippines", "Thailand", "Japan", "Taiwan",
-  "Colombia", "Kazakhstan", "Ghana", "Kenya", "United Kingdom", "Other",
-];
+const STEPS = ["name", "country", "study", "intake", "interview", "funding", "destination"] as const;
+type Step = typeof STEPS[number];
 
-const INTAKES = ["Fall 2026", "Spring 2027", "Fall 2027", "Spring 2028", "Not sure yet"];
-
-const PROGRAMS = [
-  { id: "Undergrad", label: "Undergrad", desc: "Bachelor's degree, 4 years." },
-  { id: "Master's",  label: "Master's",  desc: "1–2 year graduate program." },
-  { id: "PhD",       label: "PhD",       desc: "Doctoral, research-focused." },
-];
-
-const FUNDING = [
-  { id: "family",      label: "My family is paying",       desc: "Parents or relatives covering tuition + living." },
-  { id: "loan",        label: "Education loan",            desc: "Bank or government-backed student loan." },
-  { id: "scholarship", label: "Scholarship or assistantship", desc: "School-funded — partial or full." },
-  { id: "mix",         label: "A mix of the above",        desc: "Family + loan + aid combined." },
-  { id: "later",       label: "I'll figure this out later",desc: "Funding plan still in progress." },
-];
-
-const TOTAL_STEPS = 4;
-
-export function OnboardingClient({ firstName, initialCountry }: Props) {
+export function OnboardingClient({ firstName: initialFirstName, initialCountry }: Props) {
   const router = useRouter();
-  const [step, setStep] = useState(0); // 0 = welcome, 1..4 = questions, 5 = done
-  const [answers, setAnswers] = useState<Answers>({
+  const { setCountry } = useCountry();
+  const [i, setI] = useState(0);
+  const [dir, setDir] = useState<1 | -1>(1);
+  const [err, setErr] = useState("");
+  const [saving, startSaving] = useTransition();
+  const [curtain, setCurtain] = useState<
+    null | { destination: CountryCode; applyingFrom: string | null; firstName: string }
+  >(null);
+  const [f, setF] = useState<Form>({
+    firstName: initialFirstName ?? "",
+    lastName: "",
     country: initialCountry ?? "",
     university: "",
-    intake_term: "",
-    program_type: "",
-    funding_source: "",
+    program: "",
+    intake: "",
+    interviewBooked: "",
+    interviewDate: "",
+    consulate: "",
+    funding: "",
+    destination: "",
   });
-  const [saving, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const set = (k: keyof Form, v: string) => setF((p) => ({ ...p, [k]: v }));
+  const setDestination = (code: CountryCode) =>
+    setF((p) => ({ ...p, destination: code }));
 
-  const finish = () => {
-    setError(null);
-    startTransition(async () => {
-      const result = await completeOnboarding({
-        country: answers.country || undefined,
-        university: answers.university || undefined,
-        intake_term: answers.intake_term || undefined,
-        program_type: answers.program_type || undefined,
-        funding_source: answers.funding_source || undefined,
+  const valid = useMemo(() => {
+    const step: Step = STEPS[i];
+    switch (step) {
+      case "name": return f.firstName.trim().length > 1;
+      case "country": return Boolean(f.country);
+      case "study": return f.university.trim().length > 2 && Boolean(f.program);
+      case "intake": return Boolean(f.intake);
+      case "interview":
+        if (f.interviewBooked === "no") return true;
+        if (f.interviewBooked === "yes") return Boolean(f.interviewDate) && Boolean(f.consulate);
+        return false;
+      case "funding": return Boolean(f.funding);
+      case "destination": return Boolean(f.destination);
+    }
+  }, [i, f]);
+
+  // Lookup table mapping the verbose home-country names from the existing
+  // onboarding chips to APPLICANT_COUNTRIES codes used by the curtain.
+  const homeCodeFromName = (name: string): string | null => {
+    const k = name.toLowerCase();
+    const map: Record<string, string> = {
+      "india":"IN","china":"CN","vietnam":"VN","south korea":"KR","nigeria":"NG",
+      "brazil":"BR","bangladesh":"BD","mexico":"MX","nepal":"NP","pakistan":"PK",
+      "indonesia":"ID","taiwan":"TW","japan":"JP","colombia":"CO","ghana":"GH",
+      "kenya":"KE","philippines":"PH","turkey":"TR","saudi arabia":"SA",
+    };
+    return map[k] ?? null;
+  };
+
+  const next = () => {
+    if (!valid || saving) return;
+    setErr("");
+    if (i < STEPS.length - 1) {
+      setDir(1);
+      setI(i + 1);
+      return;
+    }
+    startSaving(async () => {
+      const res = await completeOnboarding({
+        first_name: f.firstName.trim(),
+        last_name: f.lastName.trim() || undefined,
+        country: f.country,
+        university: f.university.trim(),
+        program_type: f.program,
+        intake_term: f.intake,
+        consulate: f.interviewBooked === "yes" ? f.consulate : undefined,
+        interview_date: f.interviewBooked === "yes" ? f.interviewDate : undefined,
+        funding_source: f.funding,
       });
-      if (result.ok) {
-        setStep(5);
-      } else {
-        setError(result.error);
+      if (!res.ok) {
+        setErr(res.error ?? "Couldn't save. Check your connection and try again.");
+        return;
       }
+
+      // Save destination country selection — applying-from is the home-country
+      // chip the user already picked, translated to a 2-letter code where we
+      // recognise it (otherwise null — curtain falls back to a generic line).
+      if (f.destination) {
+        const applyingFrom = homeCodeFromName(f.country);
+        try {
+          await setCountry(f.destination, applyingFrom);
+        } catch {
+          // Non-fatal — the dashboard's gate will catch missing selection.
+        }
+
+        // Show the personalization curtain, then navigate to the dashboard.
+        // The curtain itself flips a sessionStorage flag so DashboardWake.tsx
+        // can trigger the dashboard's wake animation right on mount.
+        setCurtain({
+          destination: f.destination,
+          applyingFrom,
+          firstName: f.firstName.trim() || "you",
+        });
+        return;
+      }
+
+      router.push("/dashboard");
+      router.refresh();
     });
   };
 
-  const next = () => setStep((s) => Math.min(s + 1, 5));
-  const prev = () => setStep((s) => Math.max(s - 1, 0));
-  const skipThis = () => setStep((s) => Math.min(s + 1, 5));
+  const back = () => {
+    if (i > 0 && !saving) {
+      setDir(-1);
+      setI(i - 1);
+    }
+  };
+
+  const onKey = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      // Don't submit if a multi-line text isn't focused — keep simple, just trigger next
+      next();
+    }
+  };
+
+  const pct = ((i + 1) / STEPS.length) * 100;
+  const step: Step = STEPS[i];
+
+  // Once destination is picked + saved, the curtain takes over the whole
+  // viewport. It fires the dashboard wake at fade-start, then navigates.
+  if (curtain) {
+    return (
+      <PersonalizationCurtain
+        destination={curtain.destination}
+        applyingFrom={curtain.applyingFrom}
+        firstName={curtain.firstName}
+        onDone={() => {
+          // Persist the wake intent so DashboardWake.tsx can stagger the
+          // dashboard's children on first mount after the route change.
+          try { sessionStorage.setItem("gs.systemWake", "1"); } catch {}
+          router.push("/dashboard");
+          router.refresh();
+        }}
+      />
+    );
+  }
 
   return (
-    <main className="relative min-h-screen flex flex-col bg-[var(--color-cream)] overflow-hidden">
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute -inset-[40%] mesh-layer-1 animate-mesh-slow opacity-70" />
-        <div className="absolute -inset-[40%] mesh-layer-2 animate-mesh-medium opacity-60" />
+    <main className="ob" onKeyDown={onKey}>
+      <header className="ob-head">
+        <span className="ob-logo inline-flex items-center gap-2 text-[var(--color-ink)]">
+          <BrandMark size={22} />
+          <span className="font-display">GetStamped</span>
+        </span>
+        <span className="ob-count">{i + 1} / {STEPS.length}</span>
+      </header>
+
+      <div className="ob-track" aria-hidden>
+        <div className="ob-fill" style={{ width: `${pct}%` }} />
       </div>
 
-      {/* Top bar */}
-      <div className="relative px-5 sm:px-6 py-5 flex items-center justify-between">
-        <div className="inline-flex items-center gap-2">
-          <span aria-hidden className="block h-3 w-3 rounded-sm bg-[var(--color-forest)]" />
-          <span className="font-display text-[19px] leading-none tracking-tight text-[var(--color-ink)]">
-            GetStamped
-          </span>
-        </div>
-        {step > 0 && step <= TOTAL_STEPS && (
-          <button
-            type="button"
-            onClick={() => router.push("/dashboard")}
-            className="text-xs text-[var(--color-muted)] hover:text-[var(--color-ink)] transition-colors"
-          >
-            Finish later
-          </button>
+      <section key={i} className={`ob-card ${dir === 1 ? "in-r" : "in-l"}`}>
+        {step === "name" && (
+          <>
+            <p className="ob-eyebrow">FIRST THINGS FIRST</p>
+            <h1 className="ob-title">What should we call you?</h1>
+            <div className="ob-grid2">
+              <Field label="First name" value={f.firstName} autoFocus
+                onChange={(v) => set("firstName", v)} placeholder="Aarav" />
+              <Field label="Last name (optional)" value={f.lastName}
+                onChange={(v) => set("lastName", v)} placeholder="Sharma" />
+            </div>
+          </>
         )}
-      </div>
 
-      {/* Progress dots */}
-      {step > 0 && step <= TOTAL_STEPS && (
-        <div className="relative px-5 sm:px-6">
-          <div className="mx-auto max-w-md flex items-center gap-1.5">
-            {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-              <span
-                key={i}
-                className={[
-                  "h-1 flex-1 rounded-full transition-colors duration-300",
-                  i < step
-                    ? "bg-[var(--color-forest)]"
-                    : "bg-[var(--color-border-soft)]",
-                ].join(" ")}
-              />
-            ))}
-          </div>
-          <p className="mx-auto max-w-md mt-2 text-[11px] text-[var(--color-muted)] tabular-nums">
-            Step {step} of {TOTAL_STEPS}
-          </p>
+        {step === "country" && (
+          <>
+            <p className="ob-eyebrow">WHERE YOU&rsquo;RE APPLYING FROM</p>
+            <h1 className="ob-title">
+              Which country are you in{f.firstName ? `, ${f.firstName}` : ""}?
+            </h1>
+            <p className="ob-sub">Sets your consulate options and pricing currency.</p>
+            <div className="ob-chips">
+              {COUNTRIES.map((c) => (
+                <Chip key={c} active={f.country === c} onClick={() => set("country", c)}>{c}</Chip>
+              ))}
+            </div>
+          </>
+        )}
+
+        {step === "study" && (
+          <>
+            <p className="ob-eyebrow">YOUR ADMISSION</p>
+            <h1 className="ob-title">Where are you headed?</h1>
+            <Field label="University" value={f.university} autoFocus
+              onChange={(v) => set("university", v)}
+              placeholder="University of California, Los Angeles" />
+            <p className="ob-label">Program type</p>
+            <div className="ob-chips">
+              {PROGRAMS.map((p) => (
+                <Chip key={p} active={f.program === p} onClick={() => set("program", p)}>{p}</Chip>
+              ))}
+            </div>
+          </>
+        )}
+
+        {step === "intake" && (
+          <>
+            <p className="ob-eyebrow">YOUR TIMELINE</p>
+            <h1 className="ob-title">Which intake are you targeting?</h1>
+            <p className="ob-sub">We build your 47-step timeline around this date.</p>
+            <div className="ob-stack">
+              {INTAKES.map((t) => (
+                <RowOption key={t} active={f.intake === t} onClick={() => set("intake", t)}
+                  title={t}
+                  sub={t === "Not sure yet"
+                    ? "We'll assume the nearest intake — you can change it later."
+                    : undefined}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        {step === "interview" && (
+          <>
+            <p className="ob-eyebrow">THE BIG DAY</p>
+            <h1 className="ob-title">Have you booked your visa interview?</h1>
+            <div className="ob-chips">
+              <Chip active={f.interviewBooked === "yes"} onClick={() => set("interviewBooked", "yes")}>
+                Yes, it&rsquo;s booked
+              </Chip>
+              <Chip active={f.interviewBooked === "no"} onClick={() => set("interviewBooked", "no")}>
+                Not yet
+              </Chip>
+            </div>
+            {f.interviewBooked === "yes" && (
+              <div className="ob-grid2 ob-mt">
+                <div className="ob-field">
+                  <label className="ob-label" htmlFor="ob-int-date">Interview date</label>
+                  <input id="ob-int-date" type="date" className="ob-input" value={f.interviewDate}
+                    onChange={(e) => set("interviewDate", e.target.value)} />
+                </div>
+                <div className="ob-field">
+                  <label className="ob-label" htmlFor="ob-int-consulate">Consulate</label>
+                  <select id="ob-int-consulate" className="ob-input" value={f.consulate}
+                    onChange={(e) => set("consulate", e.target.value)}>
+                    <option value="">Select…</option>
+                    {CONSULATES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+            )}
+            {f.interviewBooked === "no" && (
+              <p className="ob-hint">
+                No problem — we&rsquo;ll remind you when it&rsquo;s time to book (around step 26).
+              </p>
+            )}
+          </>
+        )}
+
+        {step === "funding" && (
+          <>
+            <p className="ob-eyebrow">ALMOST DONE</p>
+            <h1 className="ob-title">How is your education funded?</h1>
+            <p className="ob-sub">The officer will ask. We&rsquo;ll prep your answer with you.</p>
+            <div className="ob-stack">
+              {FUNDING.map((o) => (
+                <RowOption key={o.v} active={f.funding === o.v}
+                  onClick={() => set("funding", o.v)} title={o.label} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {step === "destination" && (
+          <>
+            <p className="ob-eyebrow">LAST ONE — WHERE TO?</p>
+            <h1 className="ob-title">
+              Where are you going to study{f.firstName ? `, ${f.firstName}` : ""}?
+            </h1>
+            <p className="ob-sub">
+              This sets your visa playbook, document checks, and interview bank.
+              You can switch later — your progress carries over.
+            </p>
+            <div className="ob-dest-grid">
+              {SUPPORTED_COUNTRIES.map((c) => {
+                const active = f.destination === c.code;
+                return (
+                  <button
+                    key={c.code}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setDestination(c.code)}
+                    className={`ob-dest-card${active ? " is-active" : ""}`}
+                  >
+                    <span className="ob-dest-flag" aria-hidden>{c.flag_emoji}</span>
+                    <span className="ob-dest-name">{c.name}</span>
+                    <span className="ob-dest-visa">{c.visa_type}</span>
+                    <span className="ob-dest-pt">~{c.processing_time_weeks} weeks processing</span>
+                    {active ? (
+                      <span className="ob-dest-tick" aria-hidden>
+                        <svg viewBox="0 0 16 16" width="14" height="14" fill="none">
+                          <path d="M3 8.5L6.5 12L13 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+              <div className="ob-dest-card ob-dest-soon" aria-disabled>
+                <span className="ob-dest-flag" aria-hidden>+</span>
+                <span className="ob-dest-name">More countries</span>
+                <span className="ob-dest-visa">Coming soon</span>
+                <span className="ob-dest-pt">Schengen, NZ, Ireland…</span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {err && <p className="ob-err">{err}</p>}
+
+        <div className="ob-actions">
+          {i > 0 ? (
+            <button className="ob-back" onClick={back} type="button">← Back</button>
+          ) : <span />}
+          <button className="ob-next" disabled={!valid || saving} onClick={next} type="button">
+            {saving
+              ? "Building your timeline…"
+              : i === STEPS.length - 1 ? "Finish →" : "Continue →"}
+          </button>
         </div>
-      )}
+      </section>
 
-      {/* Card */}
-      <div className="relative flex-1 flex items-center justify-center px-5 py-8">
-        <div key={step} className="w-full max-w-xl animate-fade-up">
-          {step === 0 && (
-            <WelcomeStep firstName={firstName} onStart={() => setStep(1)} />
-          )}
+      <style jsx>{`
+        .ob {
+          min-height: 100dvh;
+          background: var(--color-paper);
+          display: flex; flex-direction: column; align-items: center;
+          padding: 0 20px 48px;
+        }
+        .ob-head {
+          width: 100%; max-width: 640px;
+          display: flex; justify-content: space-between; align-items: center;
+          padding: 28px 0 16px;
+        }
+        .ob-logo {
+          font-family: var(--font-display-stack);
+          font-size: 19px;
+          color: var(--color-ink);
+        }
+        .ob-count {
+          font-size: 12px;
+          color: var(--color-muted);
+          font-variant-numeric: tabular-nums;
+        }
+        .ob-track {
+          width: 100%; max-width: 640px;
+          height: 3px; border-radius: 99px;
+          background: var(--color-border-soft);
+          overflow: hidden;
+        }
+        .ob-fill {
+          height: 100%;
+          background: var(--color-persimmon);
+          border-radius: 99px;
+          transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
 
-          {step === 1 && (
-            <CountryStep
-              value={answers.country}
-              onChange={(v) => setAnswers((a) => ({ ...a, country: v }))}
-              onNext={next}
-              onBack={null}
-              onSkip={skipThis}
-            />
-          )}
+        .ob-card { width: 100%; max-width: 640px; margin-top: 56px; }
+        .in-r { animation: inR 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+        .in-l { animation: inL 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+        @keyframes inR { from { opacity: 0; transform: translateX(26px); } }
+        @keyframes inL { from { opacity: 0; transform: translateX(-26px); } }
 
-          {step === 2 && (
-            <SchoolStep
-              university={answers.university}
-              intake={answers.intake_term}
-              onChange={(u, i) => setAnswers((a) => ({ ...a, university: u, intake_term: i }))}
-              onNext={next}
-              onBack={prev}
-              onSkip={skipThis}
-            />
-          )}
+        .ob-eyebrow {
+          font-size: 10px; letter-spacing: 0.18em; font-weight: 600;
+          color: var(--color-persimmon-deep);
+          margin: 0;
+          text-transform: uppercase;
+        }
+        .ob-title {
+          font-family: var(--font-display-stack);
+          font-weight: 400;
+          font-size: clamp(26px, 4.5vw, 36px);
+          letter-spacing: -0.02em;
+          color: var(--color-ink);
+          margin: 10px 0 0;
+          line-height: 1.15;
+        }
+        .ob-sub {
+          font-size: 14px; color: var(--color-ink-soft);
+          margin: 10px 0 0; max-width: 460px; line-height: 1.6;
+        }
+        .ob-label {
+          font-size: 12px; font-weight: 500;
+          color: var(--color-ink-soft);
+          margin: 22px 0 8px;
+          display: block;
+        }
+        .ob-hint {
+          font-size: 13px; color: var(--color-muted);
+          margin-top: 16px;
+        }
+        .ob-mt { margin-top: 22px; }
+        .ob-err {
+          font-size: 13px;
+          color: var(--color-persimmon-deep);
+          margin-top: 16px;
+        }
 
-          {step === 3 && (
-            <ProgramStep
-              value={answers.program_type}
-              onChange={(v) => setAnswers((a) => ({ ...a, program_type: v }))}
-              onNext={next}
-              onBack={prev}
-              onSkip={skipThis}
-            />
-          )}
+        .ob-grid2 {
+          display: grid; grid-template-columns: 1fr 1fr;
+          gap: 14px; margin-top: 26px;
+        }
+        @media (max-width: 540px) {
+          .ob-grid2 { grid-template-columns: 1fr; }
+        }
 
-          {step === 4 && (
-            <FundingStep
-              value={answers.funding_source}
-              onChange={(v) => setAnswers((a) => ({ ...a, funding_source: v }))}
-              onNext={finish}
-              onBack={prev}
-              onSkip={finish}
-              saving={saving}
-              error={error}
-            />
-          )}
+        .ob-chips {
+          display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px;
+        }
+        .ob-stack {
+          display: flex; flex-direction: column; gap: 8px; margin-top: 24px;
+        }
 
-          {step === 5 && (
-            <DoneStep
-              firstName={firstName}
-              onContinue={() => router.push("/dashboard")}
-            />
-          )}
-        </div>
-      </div>
+        .ob-field { display: flex; flex-direction: column; }
+        .ob-input {
+          width: 100%;
+          border-radius: 12px;
+          border: 1px solid var(--color-border);
+          background: var(--color-paper-soft);
+          padding: 11px 14px;
+          font-size: 14px;
+          color: var(--color-ink);
+          outline: none;
+          transition: border 0.2s, box-shadow 0.2s;
+        }
+        .ob-input:focus {
+          border-color: var(--color-persimmon);
+          box-shadow: 0 0 0 4px rgba(255, 91, 46, 0.10);
+        }
+
+        .ob-actions {
+          display: flex; justify-content: space-between; align-items: center;
+          margin-top: 40px;
+        }
+        .ob-back {
+          background: none; border: none; cursor: pointer;
+          font-size: 14px; color: var(--color-muted);
+          padding: 8px 4px;
+        }
+        .ob-back:hover { color: var(--color-ink); }
+        .ob-next {
+          border: none; cursor: pointer; border-radius: 10px;
+          background: var(--color-persimmon);
+          color: var(--color-paper-soft);
+          font-size: 14px; font-weight: 500;
+          padding: 12px 26px;
+          transition: background 0.2s, transform 0.15s;
+        }
+        .ob-next:hover:not(:disabled) { background: var(--color-persimmon-deep); }
+        .ob-next:active:not(:disabled) { transform: scale(0.98); }
+        .ob-next:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ── Destination step grid ─────────────────────────────────── */
+        .ob-dest-grid {
+          margin-top: 24px;
+          display: grid; gap: 12px;
+          grid-template-columns: repeat(2, 1fr);
+        }
+        @media (max-width: 540px) { .ob-dest-grid { grid-template-columns: 1fr; } }
+        .ob-dest-card {
+          position: relative; cursor: pointer;
+          all: unset;
+          display: flex; flex-direction: column; gap: 4px;
+          padding: 18px 20px;
+          background: var(--color-paper-soft);
+          border: 1.5px solid var(--color-border);
+          border-radius: 12px;
+          transition: border-color 200ms var(--ease-soft),
+            background-color 200ms var(--ease-soft),
+            transform 160ms var(--ease-soft);
+        }
+        @media (hover: hover) and (pointer: fine) {
+          .ob-dest-card:not(.ob-dest-soon):hover {
+            border-color: var(--color-persimmon);
+            background: color-mix(in srgb, var(--color-persimmon) 4%, var(--color-paper-soft));
+          }
+        }
+        .ob-dest-card:not(.ob-dest-soon):active { transform: scale(0.98); }
+        .ob-dest-card.is-active {
+          border-width: 2px; padding: 17px 19px;
+          border-color: var(--color-persimmon);
+          background: color-mix(in srgb, var(--color-persimmon) 6%, var(--color-paper-soft));
+        }
+        .ob-dest-soon {
+          border-style: dashed; cursor: default; background: transparent;
+        }
+        .ob-dest-soon .ob-dest-name,
+        .ob-dest-soon .ob-dest-visa,
+        .ob-dest-soon .ob-dest-pt { color: var(--color-muted); }
+        .ob-dest-flag { font-size: 28px; line-height: 1; }
+        .ob-dest-name {
+          margin-top: 8px;
+          font-size: 15px; font-weight: 600; color: var(--color-ink);
+        }
+        .ob-dest-visa {
+          font-family: var(--font-mono-stack);
+          font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase;
+          color: var(--color-ink-soft);
+        }
+        .ob-dest-pt {
+          font-size: 11px; color: var(--color-ink-soft);
+        }
+        .ob-dest-tick {
+          position: absolute; top: 12px; right: 12px;
+          color: var(--color-persimmon);
+        }
+      `}</style>
     </main>
   );
 }
 
-/* ============================== Step shell ============================== */
-
-function StepCard({
-  eyebrow,
-  title,
-  why,
-  children,
-  footer,
-}: {
-  eyebrow: string;
-  title: React.ReactNode;
-  why?: string;
-  children: React.ReactNode;
-  footer: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-white/40 bg-[var(--color-cream-soft)]/90 backdrop-blur-2xl backdrop-saturate-150 ring-1 ring-white/30 shadow-[0_30px_80px_-30px_rgba(20,33,28,0.25)] p-6 sm:p-8">
-      <p className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-muted)]">
-        {eyebrow}
-      </p>
-      <h1 className="mt-3 font-display text-2xl sm:text-[28px] tracking-tight text-[var(--color-ink)] leading-snug">
-        {title}
-      </h1>
-      <div className="mt-6">{children}</div>
-      {why && (
-        <p className="mt-6 text-[11px] text-[var(--color-muted)] leading-relaxed flex items-start gap-2">
-          <span aria-hidden className="mt-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[var(--color-accent-tint)] text-[var(--color-accent-deep)] text-[8px] font-medium shrink-0">i</span>
-          <span>{why}</span>
-        </p>
-      )}
-      <div className="mt-7 flex flex-wrap items-center justify-between gap-3">
-        {footer}
-      </div>
-    </div>
-  );
-}
-
-function PrimaryBtn({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-forest)] px-5 py-2.5 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors disabled:opacity-60"
-    >
-      {children}
-    </button>
-  );
-}
-
-function GhostBtn({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="text-sm text-[var(--color-muted)] hover:text-[var(--color-ink)] transition-colors"
-    >
-      {children}
-    </button>
-  );
-}
-
-function BackBtn({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center gap-1.5 text-sm text-[var(--color-ink-soft)] hover:text-[var(--color-ink)] transition-colors"
-    >
-      ← Back
-    </button>
-  );
-}
-
-/* ============================= Step 0: Welcome ============================ */
-
-function WelcomeStep({ firstName, onStart }: { firstName: string; onStart: () => void }) {
-  return (
-    <div className="rounded-2xl border border-white/40 bg-[var(--color-cream-soft)]/90 backdrop-blur-2xl backdrop-saturate-150 ring-1 ring-white/30 shadow-[0_30px_80px_-30px_rgba(20,33,28,0.25)] p-8 sm:p-10 text-center">
-      <span aria-hidden className="mx-auto block h-4 w-4 rounded-sm bg-[var(--color-forest)]" />
-      <h1 className="mt-6 font-display text-3xl sm:text-4xl tracking-tight text-[var(--color-ink)] leading-snug">
-        Welcome, <span className="text-[var(--color-forest)]">{firstName}</span>.
-      </h1>
-      <p className="mt-4 max-w-md mx-auto text-sm sm:text-base text-[var(--color-ink-soft)] leading-relaxed">
-        Four short questions so we can personalize your 47-step timeline.
-        About 60 seconds. You can skip anything.
-      </p>
-      <div className="mt-8 flex items-center justify-center gap-3">
-        <PrimaryBtn onClick={onStart}>Let&rsquo;s go →</PrimaryBtn>
-      </div>
-      <p className="mt-6 text-[11px] text-[var(--color-muted)]">
-        We never share your answers. Used only to personalize your steps.
-      </p>
-    </div>
-  );
-}
-
-/* ============================ Step 1: Country ============================= */
-
-function CountryStep({
-  value, onChange, onNext, onBack, onSkip,
-}: {
+/* ---------- atoms ---------- */
+function Field({ label, value, onChange, placeholder, autoFocus }: {
+  label: string;
   value: string;
   onChange: (v: string) => void;
-  onNext: () => void;
-  onBack: null | (() => void);
-  onSkip: () => void;
+  placeholder?: string;
+  autoFocus?: boolean;
 }) {
   return (
-    <StepCard
-      eyebrow="Question 1 of 4"
-      title="Where are you applying from?"
-      why="We adjust document requirements per consulate — Mumbai's financial proof list differs from Lagos's."
-      footer={
-        <>
-          <div className="flex items-center gap-3">
-            {onBack && <BackBtn onClick={onBack} />}
-            <GhostBtn onClick={onSkip}>Skip</GhostBtn>
-          </div>
-          <PrimaryBtn onClick={onNext} disabled={!value}>Continue →</PrimaryBtn>
-        </>
-      }
-    >
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent)]/10 transition-colors"
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <label
+        style={{
+          fontSize: 12, fontWeight: 500,
+          color: "var(--color-ink-soft)",
+          marginBottom: 8,
+        }}
       >
-        <option value="" disabled>Pick your country…</option>
-        {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-      </select>
-    </StepCard>
-  );
-}
-
-/* ============================ Step 2: School ============================== */
-
-function SchoolStep({
-  university, intake, onChange, onNext, onBack, onSkip,
-}: {
-  university: string;
-  intake: string;
-  onChange: (u: string, i: string) => void;
-  onNext: () => void;
-  onBack: () => void;
-  onSkip: () => void;
-}) {
-  return (
-    <StepCard
-      eyebrow="Question 2 of 4"
-      title="Where are you going?"
-      why="Drives every deadline in your timeline. You can fill these in later if you're still deciding."
-      footer={
-        <>
-          <div className="flex items-center gap-3">
-            <BackBtn onClick={onBack} />
-            <GhostBtn onClick={onSkip}>Skip</GhostBtn>
-          </div>
-          <PrimaryBtn onClick={onNext}>Continue →</PrimaryBtn>
-        </>
-      }
-    >
-      <div className="space-y-4">
-        <label className="block">
-          <span className="text-xs font-medium text-[var(--color-ink-soft)]">University</span>
-          <input
-            value={university}
-            onChange={(e) => onChange(e.target.value, intake)}
-            placeholder="e.g. North Carolina State University"
-            className="mt-1.5 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted)]/70 outline-none focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent)]/10 transition-colors"
-          />
-          <p className="mt-1.5 text-[11px] text-[var(--color-muted)]">Leave blank if you haven&rsquo;t picked yet.</p>
-        </label>
-
-        <fieldset>
-          <legend className="text-xs font-medium text-[var(--color-ink-soft)]">When do you start?</legend>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {INTAKES.map((opt) => {
-              const active = intake === opt;
-              return (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => onChange(university, opt)}
-                  className={[
-                    "rounded-full px-3.5 py-1.5 text-xs font-medium border transition-colors",
-                    active
-                      ? "bg-[var(--color-forest)] border-[var(--color-forest)] text-[var(--color-cream-soft)]"
-                      : "bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-ink-soft)] hover:border-[var(--color-accent)]/60",
-                  ].join(" ")}
-                >
-                  {opt}
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-      </div>
-    </StepCard>
-  );
-}
-
-/* ============================ Step 3: Program ============================= */
-
-function ProgramStep({
-  value, onChange, onNext, onBack, onSkip,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  onNext: () => void;
-  onBack: () => void;
-  onSkip: () => void;
-}) {
-  return (
-    <StepCard
-      eyebrow="Question 3 of 4"
-      title="What kind of program?"
-      why="Mock interview questions adjust to your level. PhD applicants get research-funding questions; undergrads don't."
-      footer={
-        <>
-          <div className="flex items-center gap-3">
-            <BackBtn onClick={onBack} />
-            <GhostBtn onClick={onSkip}>Skip</GhostBtn>
-          </div>
-          <PrimaryBtn onClick={onNext} disabled={!value}>Continue →</PrimaryBtn>
-        </>
-      }
-    >
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {PROGRAMS.map((p) => {
-          const active = value === p.id;
-          return (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => onChange(p.id)}
-              className={[
-                "text-left rounded-xl border p-4 transition-colors",
-                active
-                  ? "border-[var(--color-forest)] bg-[var(--color-cream-soft)] ring-1 ring-[var(--color-forest)]/30"
-                  : "border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] hover:border-[var(--color-border)]",
-              ].join(" ")}
-            >
-              <p className="font-display text-lg tracking-tight text-[var(--color-ink)] leading-snug">{p.label}</p>
-              <p className="mt-1.5 text-xs text-[var(--color-ink-soft)] leading-relaxed">{p.desc}</p>
-            </button>
-          );
-        })}
-      </div>
-    </StepCard>
-  );
-}
-
-/* ============================ Step 4: Funding ============================= */
-
-function FundingStep({
-  value, onChange, onNext, onBack, onSkip, saving, error,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  onNext: () => void;
-  onBack: () => void;
-  onSkip: () => void;
-  saving: boolean;
-  error: string | null;
-}) {
-  return (
-    <StepCard
-      eyebrow="Question 4 of 4 · Last one"
-      title="Funding plan?"
-      why="Officers always ask. Different sources need different paperwork — we tailor your document checklist to match. No dollar amounts needed."
-      footer={
-        <>
-          <div className="flex items-center gap-3">
-            <BackBtn onClick={onBack} />
-            <GhostBtn onClick={onSkip}>{saving ? "Saving…" : "Skip and finish"}</GhostBtn>
-          </div>
-          <PrimaryBtn onClick={onNext} disabled={!value || saving}>
-            {saving ? "Saving…" : "Finish setup →"}
-          </PrimaryBtn>
-        </>
-      }
-    >
-      <div className="space-y-2">
-        {FUNDING.map((f) => {
-          const active = value === f.id;
-          return (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => onChange(f.id)}
-              className={[
-                "w-full text-left rounded-xl border p-3.5 transition-colors flex items-start gap-3",
-                active
-                  ? "border-[var(--color-forest)] bg-[var(--color-cream-soft)] ring-1 ring-[var(--color-forest)]/30"
-                  : "border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] hover:border-[var(--color-border)]",
-              ].join(" ")}
-            >
-              <span
-                aria-hidden
-                className={[
-                  "mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
-                  active ? "border-[var(--color-forest)] bg-[var(--color-forest)]" : "border-[var(--color-border)]",
-                ].join(" ")}
-              >
-                {active && <span className="block h-1.5 w-1.5 rounded-full bg-[var(--color-cream-soft)]" />}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[var(--color-ink)]">{f.label}</p>
-                <p className="mt-0.5 text-xs text-[var(--color-ink-soft)] leading-relaxed">{f.desc}</p>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-      {error && <p className="mt-4 text-xs text-red-600">{error}</p>}
-      <p className="mt-4 text-[11px] text-[var(--color-muted)]">
-        Only you can see this. We never share with universities, sponsors, or anyone else.
-      </p>
-    </StepCard>
-  );
-}
-
-/* ============================ Step 5: Done ================================ */
-
-function DoneStep({ firstName, onContinue }: { firstName: string; onContinue: () => void }) {
-  return (
-    <div className="rounded-2xl border border-white/40 bg-[var(--color-cream-soft)]/90 backdrop-blur-2xl backdrop-saturate-150 ring-1 ring-white/30 shadow-[0_30px_80px_-30px_rgba(20,33,28,0.25)] p-8 sm:p-10 text-center">
-      <span aria-hidden className="mx-auto inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--color-forest)] text-[var(--color-cream-soft)]">
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12l5 5 9-11" /></svg>
-      </span>
-      <h1 className="mt-6 font-display text-3xl sm:text-4xl tracking-tight text-[var(--color-ink)] leading-snug">
-        You&rsquo;re set up.
-      </h1>
-      <p className="mt-4 max-w-md mx-auto text-sm sm:text-base text-[var(--color-ink-soft)] leading-relaxed">
-        Forty-seven steps. Let&rsquo;s start with Phase 1, {firstName}.
-      </p>
-      <div className="mt-8 flex items-center justify-center gap-3">
-        <PrimaryBtn onClick={onContinue}>Open my timeline →</PrimaryBtn>
-      </div>
+        {label}
+      </label>
+      <input
+        value={value}
+        placeholder={placeholder}
+        autoFocus={autoFocus}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          borderRadius: 12,
+          border: "1px solid var(--color-border)",
+          background: "var(--color-paper-soft)",
+          padding: "11px 14px",
+          fontSize: 14,
+          color: "var(--color-ink)",
+          outline: "none",
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.borderColor = "var(--color-persimmon)";
+          e.currentTarget.style.boxShadow = "0 0 0 4px rgba(255,91,46,0.10)";
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.borderColor = "var(--color-border)";
+          e.currentTarget.style.boxShadow = "none";
+        }}
+      />
     </div>
+  );
+}
+
+function Chip({ children, active, onClick }: {
+  children: React.ReactNode;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        borderRadius: 999,
+        padding: "8px 16px",
+        fontSize: 13,
+        cursor: "pointer",
+        fontWeight: active ? 500 : 400,
+        border: active
+          ? "1px solid var(--color-persimmon)"
+          : "1px solid var(--color-border)",
+        background: active
+          ? "var(--color-persimmon-tint)"
+          : "var(--color-paper-soft)",
+        color: active
+          ? "var(--color-persimmon-deep)"
+          : "var(--color-ink)",
+        transition: "all 0.18s ease",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function RowOption({ title, sub, active, onClick }: {
+  title: string;
+  sub?: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        textAlign: "left",
+        borderRadius: 14,
+        padding: "16px 18px",
+        cursor: "pointer",
+        border: active
+          ? "1.5px solid var(--color-persimmon)"
+          : "1px solid var(--color-border-soft)",
+        background: active
+          ? "var(--color-persimmon-tint)"
+          : "var(--color-paper-soft)",
+        transition: "all 0.18s ease",
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+      }}
+    >
+      <span
+        style={{
+          width: 18,
+          height: 18,
+          borderRadius: "50%",
+          flexShrink: 0,
+          border: active
+            ? "5px solid var(--color-persimmon)"
+            : "1.5px solid var(--color-border)",
+          background: "var(--color-paper-soft)",
+          transition: "all 0.18s ease",
+        }}
+      />
+      <span>
+        <span
+          style={{
+            display: "block",
+            fontSize: 14,
+            fontWeight: 500,
+            color: "var(--color-ink)",
+          }}
+        >
+          {title}
+        </span>
+        {sub && (
+          <span
+            style={{
+              display: "block",
+              fontSize: 12,
+              color: "var(--color-muted)",
+              marginTop: 3,
+            }}
+          >
+            {sub}
+          </span>
+        )}
+      </span>
+    </button>
   );
 }

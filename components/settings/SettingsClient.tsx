@@ -278,8 +278,8 @@ export function SettingsClient({ initial }: Props) {
                 className={[
                   "whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors",
                   active === s.id
-                    ? "bg-[var(--color-forest)] text-[var(--color-cream-soft)]"
-                    : "bg-[var(--color-cream-soft)] border border-[var(--color-border-soft)] text-[var(--color-ink-soft)]",
+                    ? "bg-[var(--color-persimmon)] text-[var(--color-paper-soft)]"
+                    : "bg-[var(--color-paper-soft)] border border-[var(--color-border-soft)] text-[var(--color-ink-soft)]",
                 ].join(" ")}
               >
                 {s.label}
@@ -301,8 +301,8 @@ export function SettingsClient({ initial }: Props) {
                   className={[
                     "w-full text-left rounded-lg px-3 py-2 text-sm transition-colors",
                     active === s.id
-                      ? "bg-[var(--color-cream-deep)] text-[var(--color-ink)] font-medium"
-                      : "text-[var(--color-ink-soft)] hover:bg-[var(--color-cream-deep)]/40 hover:text-[var(--color-ink)]",
+                      ? "bg-[var(--color-paper-deep)] text-[var(--color-ink)] font-medium"
+                      : "text-[var(--color-ink-soft)] hover:bg-[var(--color-paper-deep)]/40 hover:text-[var(--color-ink)]",
                   ].join(" ")}
                 >
                   {s.label}
@@ -314,7 +314,7 @@ export function SettingsClient({ initial }: Props) {
 
         <main className="flex-1 min-w-0">
           {active === "profile" && (
-            <section className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-6 sm:p-7">
+            <section className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-6 sm:p-7">
               <h2 className="text-base font-medium text-[var(--color-ink)]">Profile</h2>
               <p className="mt-0.5 text-xs text-[var(--color-muted)]">Your name, email, and country.</p>
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -343,7 +343,7 @@ export function SettingsClient({ initial }: Props) {
           )}
 
           {active === "application" && (
-            <section className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-6 sm:p-7">
+            <section className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-6 sm:p-7">
               <h2 className="text-base font-medium text-[var(--color-ink)]">Application</h2>
               <p className="mt-0.5 text-xs text-[var(--color-muted)]">University, intake, consulate.</p>
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -386,9 +386,9 @@ export function SettingsClient({ initial }: Props) {
           )}
 
           {active === "plan" && (
-            <section className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-6 sm:p-7">
+            <section className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-6 sm:p-7">
               <h2 className="text-base font-medium text-[var(--color-ink)]">Plan</h2>
-              <div className="mt-6 rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-cream)] p-5">
+              <div className="mt-6 rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-paper)] p-5">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <div>
                     <Eyebrow>Current plan</Eyebrow>
@@ -399,7 +399,7 @@ export function SettingsClient({ initial }: Props) {
                   </div>
                   {data.plan === "free" ? (
                     <Link href="/dashboard/upgrade">
-                      <button type="button" className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-forest)] px-5 py-2.5 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors">
+                      <button type="button" className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-persimmon)] px-5 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors">
                         Upgrade →
                       </button>
                     </Link>
@@ -453,7 +453,7 @@ export function SettingsClient({ initial }: Props) {
           )}
 
           {active === "notifications" && (
-            <section className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-6 sm:p-7">
+            <section className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-6 sm:p-7">
               <h2 className="text-base font-medium text-[var(--color-ink)]">Notifications</h2>
               <p className="mt-0.5 text-xs text-[var(--color-muted)]">Choose what we email you about.</p>
               <ul className="mt-6 space-y-4">
@@ -475,7 +475,7 @@ export function SettingsClient({ initial }: Props) {
                       onClick={() => toggleNotif(row.key)}
                       className={[
                         "relative inline-block h-5 w-9 rounded-full transition-colors shrink-0",
-                        notifs[row.key] ? "bg-[var(--color-forest)]" : "bg-[var(--color-cream-deep)]",
+                        notifs[row.key] ? "bg-[var(--color-persimmon)]" : "bg-[var(--color-paper-deep)]",
                       ].join(" ")}
                     >
                       <span className={[
@@ -490,7 +490,7 @@ export function SettingsClient({ initial }: Props) {
           )}
 
           {active === "account" && (
-            <section className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-6 sm:p-7">
+            <section className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-6 sm:p-7">
               <h2 className="text-base font-medium text-[var(--color-ink)]">Account</h2>
               <ul className="mt-6 divide-y divide-[var(--color-border-soft)]">
                 {[
@@ -520,7 +520,7 @@ export function SettingsClient({ initial }: Props) {
                   { label: "Export my data", desc: "GDPR · download a JSON archive of everything.", action: handleExport },
                   { label: "Delete account", desc: "30-day grace period. Reactivate by signing in within 30 days.", action: () => setDeleteModal(true) },
                 ].map((row, i) => (
-                  <li key={i} className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-[var(--color-cream-soft)] p-4">
+                  <li key={i} className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-[var(--color-paper-soft)] p-4">
                     <div>
                       <p className="text-sm font-medium text-[var(--color-ink)]">{row.label}</p>
                       <p className="text-xs text-[var(--color-muted)]">{row.desc}</p>
@@ -545,7 +545,7 @@ export function SettingsClient({ initial }: Props) {
         footer={
           <>
             <button type="button" onClick={() => setEmailModal(false)} className="rounded-lg border border-[var(--color-border)] px-5 py-2.5 text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-accent)] transition-colors">Cancel</button>
-            <button type="button" disabled={pending || !newEmail} onClick={handleEmailChange} className="rounded-lg bg-[var(--color-forest)] px-5 py-2.5 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors disabled:opacity-50">{pending ? "Sending…" : "Send verification"}</button>
+            <button type="button" disabled={pending || !newEmail} onClick={handleEmailChange} className="rounded-lg bg-[var(--color-persimmon)] px-5 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-50">{pending ? "Sending…" : "Send verification"}</button>
           </>
         }
       >
@@ -563,7 +563,7 @@ export function SettingsClient({ initial }: Props) {
         footer={
           <>
             <button type="button" onClick={() => setPasswordModal(false)} className="rounded-lg border border-[var(--color-border)] px-5 py-2.5 text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-accent)] transition-colors">Cancel</button>
-            <button type="button" disabled={pending || !newPassword} onClick={handlePasswordChange} className="rounded-lg bg-[var(--color-forest)] px-5 py-2.5 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors disabled:opacity-50">{pending ? "Updating…" : "Update"}</button>
+            <button type="button" disabled={pending || !newPassword} onClick={handlePasswordChange} className="rounded-lg bg-[var(--color-persimmon)] px-5 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-50">{pending ? "Updating…" : "Update"}</button>
           </>
         }
       >
@@ -655,7 +655,7 @@ export function SettingsClient({ initial }: Props) {
               type="button"
               disabled={pending || refundReason.trim().length < 10}
               onClick={handleRefund}
-              className="rounded-lg bg-[var(--color-forest)] px-5 py-2.5 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors disabled:opacity-50"
+              className="rounded-lg bg-[var(--color-persimmon)] px-5 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-50"
             >
               {pending ? "Sending…" : "Request refund"}
             </button>
@@ -688,7 +688,7 @@ export function SettingsClient({ initial }: Props) {
 
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-up">
-          <div className="inline-flex items-center gap-3 rounded-xl bg-[var(--color-forest)] px-5 py-3 text-sm font-medium text-[var(--color-cream-soft)] shadow-[0_18px_40px_-15px_rgba(20,33,28,0.45)]">
+          <div className="inline-flex items-center gap-3 rounded-xl bg-[var(--color-persimmon)] px-5 py-3 text-sm font-medium text-[var(--color-paper-soft)] shadow-[0_18px_40px_-15px_rgba(20,33,28,0.45)]">
             {toast}
           </div>
         </div>
@@ -705,7 +705,7 @@ function SaveRow({ show, section, saving, saved, onSave }: { show: boolean; sect
         type="button"
         onClick={onSave}
         disabled={saving || (!show && !saved)}
-        className="inline-flex items-center justify-center rounded-lg bg-[var(--color-forest)] px-5 py-2.5 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors disabled:opacity-60"
+        className="inline-flex items-center justify-center rounded-lg bg-[var(--color-persimmon)] px-5 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-60"
         data-section={section}
       >
         {saving ? "Saving…" : saved ? "Saved ✓" : "Save changes"}

@@ -1,544 +1,796 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { PHASE_META } from "@/lib/steps";
-import { MOCK_DOCS, type MockDoc } from "@/lib/mock-documents";
-import { Modal } from "@/components/ui/Modal";
-import { Eyebrow } from "@/components/ui/Eyebrow";
-import { timeAgo } from "@/lib/relative-time";
-import {
-  createSignedUpload,
-  deleteDocument,
-  getSignedDownloadUrl,
-  listDocuments,
-  recordUpload,
-  undeleteDocument,
-  type DocRecord,
-} from "@/app/actions/documents";
-import { getBrowserSupabase } from "@/lib/supabase/client";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { CHECKLIST, PHASES, PHASE_TITLES, getChecklistItem } from "@/lib/documents/checklist";
+import { CountUp } from "@/components/dashboard/CountUp";
 
 type Plan = "free" | "solo" | "family";
 
+export type DocStatus = "missing" | "uploading" | "checking" | "attention" | "accepted";
+
+export type AiIssue = { severity: "blocker" | "warning"; message: string };
+
+export type DocRow = {
+  id: string | null;
+  slug: string;
+  status: DocStatus;
+  fileSize: number | null;
+  mimeType: string | null;
+  aiFeedback: {
+    matches_expected?: boolean;
+    issues?: AiIssue[];
+    extracted?: Record<string, string>;
+    rate_limited?: boolean;
+  } | null;
+  uploadedAt: string | null;
+  checkedAt: string | null;
+};
+
 type Props = {
   plan: Plan;
-  isReal?: boolean;
+  initialRows: DocRow[];
 };
 
-const STORAGE_LIMIT_KB: Record<Plan, number> = {
-  free: 50_000,
-  solo: 2_000_000,
-  family: 2_000_000,
-};
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const ACCEPTED_INPUT = ".pdf,.jpg,.jpeg,.png,.webp";
+const MAX_BYTES = 10 * 1024 * 1024;
 
-function FileIcon({ type }: { type: DocRecord["type"] }) {
-  return (
-    <span aria-hidden className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-surface)] text-[var(--color-ink-soft)]">
-      {type === "image" ? (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <circle cx="8.5" cy="8.5" r="1.5" />
-          <path d="M21 15l-5-5L5 21" />
-        </svg>
-      ) : (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
-          <path d="M14 3v5h5" />
-        </svg>
-      )}
-    </span>
+export function DocumentsClient({ plan, initialRows }: Props) {
+  const [rows, setRows] = useState<DocRow[]>(initialRows);
+  const [openPhase, setOpenPhase] = useState<number>(1);
+  const [detailDocId, setDetailDocId] = useState<string | null>(null);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+
+  const isLocked = useCallback((phase: number) => plan === "free" && phase > 1, [plan]);
+
+  const acceptedCount = rows.filter((r) => r.status === "accepted").length;
+  const totalCount = rows.length;
+  const pct = Math.round((acceptedCount / Math.max(1, totalCount)) * 100);
+
+  const updateRow = useCallback((slug: string, patch: Partial<DocRow>) => {
+    setRows((prev) => prev.map((r) => (r.slug === slug ? { ...r, ...patch } : r)));
+  }, []);
+
+  const refreshRow = useCallback(
+    async (slug: string) => {
+      try {
+        const r = await fetch(
+          `/api/documents/state?slug=${encodeURIComponent(slug)}`,
+          { cache: "no-store" },
+        );
+        if (!r.ok) return;
+        const data = await r.json();
+        if (data?.row) updateRow(slug, data.row);
+      } catch {
+        /* ignore */
+      }
+    },
+    [updateRow],
   );
-}
 
-function ChevronDown({ className = "" }: { className?: string }) {
-  return <svg viewBox="0 0 24 24" className={`h-3 w-3 ${className}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M6 9l6 6 6-6" /></svg>;
-}
-function MoreIcon() {
-  return <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></svg>;
-}
-function UploadIcon() {
-  return <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>;
-}
-function PdfIcon() {
-  return <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 14h6M9 18h4" /></svg>;
-}
-
-function formatBytes(kb: number): string {
-  if (kb < 1000) return `${kb} KB`;
-  if (kb < 1_000_000) return `${(kb / 1000).toFixed(1)} MB`;
-  return `${(kb / 1_000_000).toFixed(2)} GB`;
-}
-
-function StatTile({ label, value, hint, danger }: { label: string; value: React.ReactNode; hint?: string; danger?: boolean }) {
-  return (
-    <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-4 sm:p-5">
-      <div className="text-[10px] uppercase tracking-[0.14em] text-[var(--color-muted)] font-medium">{label}</div>
-      <div className={`mt-2 font-display text-2xl sm:text-3xl tracking-tight tabular-nums leading-none ${danger ? "text-red-600" : "text-[var(--color-forest)]"}`}>
-        {value}
-      </div>
-      {hint && <div className="mt-1 text-[11px] text-[var(--color-muted)]">{hint}</div>}
-    </div>
-  );
-}
-
-function mockToRecord(m: MockDoc): DocRecord {
-  return { ...m, storagePath: `mock/${m.id}` };
-}
-
-export function DocumentsClient({ plan, isReal = false }: Props) {
-  const [docs, setDocs] = useState<DocRecord[]>(
-    isReal ? [] : MOCK_DOCS.map(mockToRecord),
-  );
-  const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
-  const [dragOver, setDragOver] = useState(false);
-  const [preview, setPreview] = useState<DocRecord | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [actionMenu, setActionMenu] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
-  const [toast, setToast] = useState<{ msg: string; undoId?: string } | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const refresh = useCallback(async () => {
-    if (!isReal) return;
-    const res = await listDocuments();
-    if (res.ok) setDocs(res.data);
-  }, [isReal]);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  useEffect(() => {
-    if (!preview) {
-      setPreviewUrl(null);
-      return;
-    }
-    if (!isReal) return;
-    let active = true;
-    (async () => {
-      const res = await getSignedDownloadUrl(preview.storagePath);
-      if (active && res.ok) setPreviewUrl(res.data.url);
-    })();
-    return () => { active = false; };
-  }, [preview, isReal]);
-
-  const togglePhase = (n: number) => {
-    setCollapsed((p) => {
-      const next = new Set(p);
-      if (next.has(n)) next.delete(n);
-      else next.add(n);
-      return next;
-    });
-  };
-
-  const totalUploaded = docs.length;
-  const required = 47;
-  const requiredUploaded = docs.filter((d) => d.required).length;
-  const requiredMissing = Math.max(0, 20 - requiredUploaded);
-  const storageLimit = STORAGE_LIMIT_KB[plan];
-  const storageUsed = docs.reduce((n, d) => n + d.sizeKb, 0);
-  const storagePct = Math.round((storageUsed / storageLimit) * 100);
-  const expiringSoon = docs.filter((d) => {
-    if (!d.expiresAt) return false;
-    const days = (d.expiresAt.getTime() - Date.now()) / 86_400_000;
-    return days > 0 && days <= 30;
-  }).length;
-
-  const phases = useMemo(() => {
-    return PHASE_META.map((p) => {
-      const phaseDocs = docs.filter((d) => d.phase === p.number);
-      const required = phaseDocs.filter((d) => d.required).length;
-      return { ...p, docs: phaseDocs, required };
-    });
-  }, [docs]);
-
-  const showToast = (msg: string, undoId?: string) => {
-    setToast({ msg, undoId });
-    setTimeout(() => setToast((t) => (t?.msg === msg ? null : t)), 6000);
-  };
-
-  const uploadFile = useCallback(async (f: File) => {
-    if (f.size > MAX_FILE_BYTES) {
-      showToast(`"${f.name}" exceeds 10MB limit.`);
-      return;
-    }
-    if (plan === "free" && (storageUsed + Math.round(f.size / 1024)) > storageLimit) {
-      showToast("Free tier storage full. Upgrade for 2GB.");
-      return;
-    }
-
-    if (!isReal) {
-      // Mock mode: keep optimistic local state
-      const newDoc: DocRecord = {
-        id: `up-${Date.now()}-${f.name}`,
-        name: f.name,
-        filename: f.name,
-        step: 1,
-        phase: 1,
-        sizeKb: Math.round(f.size / 1024),
-        uploadedAt: new Date(),
-        expiresAt: null,
-        required: false,
-        type: f.type.startsWith("image") ? "image" : f.type === "application/pdf" ? "pdf" : "doc",
-        storagePath: `mock/${Date.now()}`,
-      };
-      setDocs((d) => [newDoc, ...d]);
-      return;
-    }
-
-    const sb = getBrowserSupabase();
-    if (!sb) {
-      showToast("Storage unavailable.");
-      return;
-    }
-    setBusy(true);
-    try {
-      const signed = await createSignedUpload(f.name);
-      if (!signed.ok) { showToast(signed.error); return; }
-      const { error } = await sb.storage
-        .from("documents")
-        .uploadToSignedUrl(signed.data.storagePath, signed.data.token, f, {
-          contentType: f.type || "application/octet-stream",
-        });
-      if (error) { showToast(error.message); return; }
-      const rec = await recordUpload({
-        storagePath: signed.data.storagePath,
-        name: f.name,
-        filename: f.name,
-        sizeBytes: f.size,
-        mimeType: f.type || "application/octet-stream",
-      });
-      if (!rec.ok) { showToast(rec.error); return; }
-      await refresh();
-    } finally {
-      setBusy(false);
-    }
-  }, [isReal, plan, refresh, storageLimit, storageUsed]);
-
-  const onDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const files = Array.from(e.dataTransfer.files);
-    for (const f of files) await uploadFile(f);
-    if (files.length) showToast(`Uploaded ${files.length} file${files.length === 1 ? "" : "s"}`);
-  };
-
-  const handleDelete = async (id: string) => {
-    const removed = docs.find((d) => d.id === id);
-    if (!removed) return;
-    setActionMenu(null);
-
-    if (!isReal) {
-      setDocs((d) => d.filter((x) => x.id !== id));
-      showToast(`Removed "${removed.name}"`);
-      return;
-    }
-
-    setDocs((d) => d.filter((x) => x.id !== id));
-    const res = await deleteDocument(id);
-    if (!res.ok) {
-      showToast(res.error);
-      void refresh();
-      return;
-    }
-    showToast(`Removed "${removed.name}" · click to undo`, id);
-  };
-
-  const handleUndo = async () => {
-    if (!toast?.undoId) return;
-    const id = toast.undoId;
-    setToast(null);
-    if (isReal) {
-      await undeleteDocument(id);
-      await refresh();
-    }
-  };
-
-  const handleDownload = async (d: DocRecord) => {
-    setActionMenu(null);
-    if (!isReal) { showToast("Download wires up with real storage."); return; }
-    const res = await getSignedDownloadUrl(d.storagePath);
-    if (!res.ok) { showToast(res.error); return; }
-    window.open(res.data.url, "_blank", "noopener,noreferrer");
-  };
-
-  const generatePdf = async () => {
-    if (plan === "free") {
-      showToast("Interview Day PDF is part of paid plans.");
-      return;
-    }
-    setGenerating(true);
-    try {
-      const res = await fetch("/api/documents/interview-pdf", { method: "POST" });
-      if (!res.ok) {
-        showToast("PDF generation failed.");
+  const handleUpload = useCallback(
+    async (slug: string, file: File) => {
+      const item = getChecklistItem(slug);
+      if (!item) return;
+      if (isLocked(item.phase)) {
+        setPaywallOpen(true);
         return;
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "interview-day.pdf";
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast("Interview Day PDF ready · downloaded.");
-    } finally {
-      setGenerating(false);
-    }
-  };
+      if (file.size > MAX_BYTES) {
+        updateRow(slug, {
+          status: "attention",
+          aiFeedback: {
+            issues: [
+              {
+                severity: "blocker",
+                message: `File is ${(file.size / 1024 / 1024).toFixed(1)} MB. Limit is 10 MB.`,
+              },
+            ],
+          },
+        });
+        return;
+      }
+      if (
+        !["application/pdf", "image/jpeg", "image/png", "image/webp"].includes(file.type)
+      ) {
+        updateRow(slug, {
+          status: "attention",
+          aiFeedback: {
+            issues: [
+              {
+                severity: "blocker",
+                message: "Only PDF, JPG, PNG, or WEBP files are accepted.",
+              },
+            ],
+          },
+        });
+        return;
+      }
+
+      updateRow(slug, { status: "uploading" });
+      const form = new FormData();
+      form.append("file", file);
+      form.append("slug", slug);
+      try {
+        const r = await fetch("/api/documents/upload", { method: "POST", body: form });
+        const data = await r.json();
+        if (!r.ok || !data.ok) {
+          updateRow(slug, {
+            status: "attention",
+            aiFeedback: {
+              issues: [
+                { severity: "blocker", message: data.error ?? "Upload failed." },
+              ],
+            },
+          });
+          return;
+        }
+        const docId: string = data.documentId;
+        updateRow(slug, {
+          id: docId,
+          status: "checking",
+          uploadedAt: new Date().toISOString(),
+          fileSize: file.size,
+          mimeType: file.type,
+        });
+        const c = await fetch("/api/documents/check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ documentId: docId }),
+        });
+        const cdata = await c.json().catch(() => ({}));
+        if (c.ok) {
+          await refreshRow(slug);
+        } else {
+          updateRow(slug, {
+            status: "attention",
+            aiFeedback: {
+              issues: [
+                {
+                  severity: "warning",
+                  message:
+                    cdata.error ??
+                    "We couldn't check this automatically. Make sure it's clear and complete.",
+                },
+              ],
+            },
+          });
+        }
+      } catch {
+        updateRow(slug, {
+          status: "attention",
+          aiFeedback: {
+            issues: [{ severity: "blocker", message: "Network error. Try again." }],
+          },
+        });
+      }
+    },
+    [isLocked, updateRow, refreshRow],
+  );
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-[var(--color-muted)]">
-        <Link href="/dashboard" className="hover:text-[var(--color-ink)] transition-colors">Dashboard</Link>
-        <span aria-hidden>→</span>
-        <span className="text-[var(--color-ink-soft)]">Documents</span>
-      </nav>
-
-      <header className="mt-6 animate-hero-rise">
-        <Eyebrow>Your documents</Eyebrow>
-        <h1 className="mt-3 font-display text-3xl sm:text-4xl tracking-tight text-[var(--color-ink)] leading-tight">
-          Everything in <span className="text-[var(--color-forest)]">one place</span>.
-        </h1>
-        <p className="mt-3 max-w-2xl text-sm sm:text-base leading-relaxed text-[var(--color-ink-soft)]">
-          Upload, label, and verify every paper your officer might ask for —
-          in the exact order they expect it at the window.
-        </p>
-        <div className="mt-6 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={generatePdf}
-            disabled={generating}
-            className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-forest)] px-5 py-2.5 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors disabled:opacity-60"
-          >
-            {generating ? (
-              <>
-                <span className="h-1.5 w-1.5 rounded-full bg-current animate-soft-pulse" />
-                Building your PDF…
-              </>
-            ) : (
-              <>
-                <PdfIcon /> Generate Interview Day PDF
-              </>
-            )}
-          </button>
-          <label className="inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-transparent px-5 py-2.5 text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-deep)] transition-colors cursor-pointer">
-            <UploadIcon />
-            {busy ? "Uploading…" : "Upload documents"}
-            <input type="file" multiple className="sr-only" onChange={async (e) => {
-              const files = Array.from(e.target.files ?? []);
-              for (const f of files) await uploadFile(f);
-              if (files.length) showToast(`Uploaded ${files.length} file${files.length === 1 ? "" : "s"}`);
-              e.target.value = "";
-            }} />
-          </label>
+    <div className="mx-auto w-full max-w-[1140px] py-8">
+      {/* Header */}
+      <header className="flex items-end justify-between gap-6 flex-wrap">
+        <div>
+          <p data-eyebrow="">Your file vault</p>
+          <h1 className="mt-4 font-display text-[36px] sm:text-[44px] tracking-tight text-[var(--ink)] leading-[1.05]">
+            Your documents.
+          </h1>
+          <p className="mt-2 text-[14px] text-[var(--ink-soft)]">
+            We auto-check what you upload. Final judgment rests with the consulate.
+          </p>
+        </div>
+        <div className="min-w-[260px]">
+          <div className="flex items-baseline justify-between">
+            <span className="font-display text-[28px] tracking-tight text-[var(--ink)] leading-none">
+              <CountUp value={acceptedCount} duration={900} /> of {totalCount} ready
+            </span>
+            <span className="text-[12px] text-[var(--stone)] tabular-nums">{pct}%</span>
+          </div>
+          <div className="mt-3 h-1 w-full rounded-full bg-[var(--surface-sunken)] overflow-hidden">
+            <div className="progress-ember h-full" style={{ width: `${pct}%` }} />
+          </div>
         </div>
       </header>
 
-      <section className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-fade-up">
-        <StatTile label="Uploaded" value={totalUploaded} hint={`Of ~${required} typical`} />
-        <StatTile label="Required missing" value={requiredMissing} danger={requiredMissing > 0} hint={requiredMissing > 0 ? "Check phase sections below" : "All on file"} />
-        <StatTile label="Storage" value={formatBytes(storageUsed)} hint={`${storagePct}% of ${formatBytes(storageLimit)}`} />
-        <StatTile label="Expiring soon" value={expiringSoon} hint={expiringSoon > 0 ? "Within 30 days" : "Nothing imminent"} />
-      </section>
-
-      <section
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={onDrop}
-        className={[
-          "mt-6 rounded-2xl border border-dashed p-8 text-center transition-colors",
-          dragOver
-            ? "border-[var(--color-accent)] bg-[var(--color-accent-tint)]"
-            : "border-[var(--color-border)] bg-[var(--color-cream-soft)]",
-        ].join(" ")}
-      >
-        <UploadIcon />
-        <p className="mt-3 text-sm font-medium text-[var(--color-ink)]">
-          Drop files here, or use Upload documents above.
-        </p>
-        <p className="mt-1 text-xs text-[var(--color-muted)]">
-          PDF, JPG, PNG. Max 10MB per file. {plan === "free" ? "Free tier: 50MB total." : "Solo / Family: 2GB total."}
-        </p>
-      </section>
-
-      <div className="mt-10 space-y-4">
-        {phases.map((p) => {
-          const isCollapsed = collapsed.has(p.number);
-          const total = p.docs.length;
-          const required = p.required;
+      {/* Phase groups */}
+      <div className="mt-10 space-y-3">
+        {PHASES.map((phase) => {
+          const items = CHECKLIST.filter((c) => c.phase === phase);
+          const phaseRows = items.map((c) => rows.find((r) => r.slug === c.slug)!);
+          const accepted = phaseRows.filter((r) => r.status === "accepted").length;
+          const open = openPhase === phase;
+          const locked = isLocked(phase);
           return (
-            <section key={p.id} className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] overflow-hidden animate-fade-up">
+            <section
+              key={phase}
+              className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] overflow-hidden"
+            >
               <button
                 type="button"
-                onClick={() => togglePhase(p.number)}
-                aria-expanded={!isCollapsed}
-                className="w-full text-left px-5 py-4 flex items-center justify-between gap-4 hover:bg-[var(--color-cream)]/40 transition-colors"
+                onClick={() => setOpenPhase(open ? -1 : phase)}
+                className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
+                aria-expanded={open}
               >
-                <div className="min-w-0">
-                  <div className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-accent-deep)]">
-                    Phase {String(p.number).padStart(2, "0")}
-                  </div>
-                  <h2 className="mt-1 font-display text-xl text-[var(--color-ink)] leading-snug tracking-tight">
-                    {p.name}
-                  </h2>
+                <div className="flex items-center gap-3 min-w-0">
+                  <span data-eyebrow="">Phase {phase}</span>
+                  <span className="font-display text-[18px] text-[var(--ink)] tracking-tight truncate">
+                    {PHASE_TITLES[phase]}
+                  </span>
+                  {locked && (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-[var(--stone)] uppercase tracking-[0.12em]">
+                      <LockGlyph /> Locked
+                    </span>
+                  )}
                 </div>
-                <div className="flex items-center gap-4 text-right">
-                  <div>
-                    <div className="font-display text-xl text-[var(--color-forest)] tabular-nums leading-none">
-                      {total}
-                    </div>
-                    <div className="text-[10px] uppercase tracking-[0.14em] text-[var(--color-muted)] mt-1">
-                      Docs · {required} req
-                    </div>
-                  </div>
-                  <ChevronDown className={isCollapsed ? "" : "rotate-180 transition-transform"} />
+                <div className="flex items-center gap-3">
+                  <span className="text-[12px] text-[var(--stone)] tabular-nums">
+                    {accepted}/{items.length} ready
+                  </span>
+                  <Chevron open={open} />
                 </div>
               </button>
-
-              {!isCollapsed && p.docs.length > 0 && (
-                <ul className="divide-y divide-[var(--color-border-soft)] border-t border-[var(--color-border-soft)]">
-                  {p.docs.map((d) => {
-                    const isExpiring =
-                      d.expiresAt &&
-                      (d.expiresAt.getTime() - Date.now()) / 86_400_000 <= 30 &&
-                      d.expiresAt.getTime() > Date.now();
-                    return (
-                      <li
-                        key={d.id}
-                        className={[
-                          "relative flex items-center gap-3 px-4 sm:px-5 py-3",
-                          isExpiring ? "bg-amber-50/60" : "",
-                        ].join(" ")}
-                      >
-                        <FileIcon type={d.type} />
-                        <div className="flex-1 min-w-0">
-                          <button
-                            type="button"
-                            onClick={() => setPreview(d)}
-                            className="text-left w-full"
-                          >
-                            <div className="text-sm font-medium text-[var(--color-ink)] truncate">{d.name}</div>
-                            <div className="mt-0.5 text-[11px] text-[var(--color-muted)] flex flex-wrap items-center gap-2">
-                              <span>Step {d.step}</span>
-                              <span aria-hidden className="h-0.5 w-0.5 rounded-full bg-[var(--color-border)]" />
-                              <span>{d.uploadedAt ? `Uploaded ${timeAgo(d.uploadedAt)}` : "Not yet uploaded"}</span>
-                              <span aria-hidden className="h-0.5 w-0.5 rounded-full bg-[var(--color-border)]" />
-                              <span>{formatBytes(d.sizeKb)}</span>
-                              {isExpiring && (
-                                <>
-                                  <span aria-hidden className="h-0.5 w-0.5 rounded-full bg-[var(--color-border)]" />
-                                  <span className="text-amber-700">Expiring soon</span>
-                                </>
-                              )}
-                            </div>
-                          </button>
-                        </div>
-                        <button
-                          type="button"
-                          aria-label="Document actions"
-                          onClick={() => setActionMenu(actionMenu === d.id ? null : d.id)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-surface)] text-[var(--color-ink-soft)] hover:border-[var(--color-border)] transition-colors"
-                        >
-                          <MoreIcon />
-                        </button>
-
-                        {actionMenu === d.id && (
-                          <div className="absolute right-4 top-12 z-20 w-40 rounded-xl border border-[var(--color-border)] bg-[var(--color-cream-soft)] shadow-[0_30px_80px_-30px_rgba(20,33,28,0.25)] py-1 text-sm animate-fade-up">
-                            {[
-                              { label: "View", onClick: () => { setPreview(d); setActionMenu(null); } },
-                              { label: "Download", onClick: () => handleDownload(d) },
-                              { label: "Delete", onClick: () => handleDelete(d.id), danger: true },
-                            ].map((a) => (
-                              <button
-                                key={a.label}
-                                type="button"
-                                onClick={a.onClick}
-                                className={[
-                                  "w-full text-left px-3 py-1.5 hover:bg-[var(--color-cream-deep)] transition-colors",
-                                  a.danger ? "text-red-600" : "text-[var(--color-ink)]",
-                                ].join(" ")}
-                              >
-                                {a.label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-
-              {!isCollapsed && p.docs.length === 0 && (
-                <div className="border-t border-[var(--color-border-soft)] px-5 py-6 text-sm text-[var(--color-muted)] text-center">
-                  Nothing uploaded for this phase yet.
+              {/* Smooth height transition via grid-template-rows trick.
+                  Closed: 0fr (collapsed). Open: 1fr (natural content height).
+                  No JS measurement needed; transitions both height + opacity. */}
+              <div
+                className="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
+                style={{
+                  gridTemplateRows: open ? "1fr" : "0fr",
+                  opacity: open ? 1 : 0,
+                }}
+                aria-hidden={!open}
+              >
+                <div className="overflow-hidden min-h-0">
+                  <ul className="border-t border-[var(--line)] divide-y divide-[var(--line)]">
+                    {items.map((c) => {
+                      const row = rows.find((r) => r.slug === c.slug)!;
+                      return (
+                        <DocumentRowView
+                          key={c.slug}
+                          displayName={c.display_name}
+                          why={c.why}
+                          acceptedFormats={c.acceptedFormats}
+                          row={row}
+                          locked={locked}
+                          onUpload={(f) => handleUpload(c.slug, f)}
+                          onLocked={() => setPaywallOpen(true)}
+                          onOpenDetail={() => row.id && setDetailDocId(row.id)}
+                        />
+                      );
+                    })}
+                  </ul>
                 </div>
-              )}
+              </div>
             </section>
           );
         })}
+
+        {/* Phase 5 — always locked */}
+        <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-5 py-4 flex items-center justify-between gap-3 opacity-60">
+          <div className="flex items-center gap-3">
+            <span data-eyebrow="">Phase 5</span>
+            <span className="font-display text-[18px] text-[var(--ink)] tracking-tight">
+              {PHASE_TITLES[5]}
+            </span>
+          </div>
+          <span className="inline-flex items-center gap-1 text-[11px] text-[var(--stone)] uppercase tracking-[0.12em]">
+            <LockGlyph /> Unlocks after approval
+          </span>
+        </section>
       </div>
 
-      {plan === "free" && (
-        <section className="mt-8 rounded-2xl border border-[var(--color-forest)] bg-[var(--color-forest)] text-[var(--color-cream-soft)] p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="max-w-md">
-            <p className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-accent-soft)]">
-              Storage cap
-            </p>
-            <h3 className="mt-2 font-display text-xl leading-snug">Free is 50MB. Solo gives you 2GB.</h3>
-            <p className="mt-2 text-sm text-[var(--color-cream-soft)]/80">
-              Plus the auto-generated Interview Day PDF and unlimited uploads.
-            </p>
-          </div>
-          <Link href="/dashboard/upgrade">
-            <button type="button" className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-cream-soft)] px-5 py-2.5 text-sm font-medium text-[var(--color-forest)] hover:bg-[var(--color-cream-deep)] transition-colors">
-              Unlock 2GB →
-            </button>
-          </Link>
-        </section>
+      {/* Detail panel */}
+      {detailDocId && (
+        <DetailPanel
+          docId={detailDocId}
+          row={rows.find((r) => r.id === detailDocId)}
+          onClose={() => setDetailDocId(null)}
+          onDeleted={(slug) => {
+            updateRow(slug, {
+              id: null,
+              status: "missing",
+              fileSize: null,
+              mimeType: null,
+              aiFeedback: null,
+              uploadedAt: null,
+              checkedAt: null,
+            });
+            setDetailDocId(null);
+          }}
+        />
       )}
 
-      <Modal
-        open={!!preview}
-        onClose={() => setPreview(null)}
-        eyebrow={preview ? `Phase ${preview.phase} · Step ${preview.step}` : ""}
-        title={preview?.name ?? ""}
-        maxWidth="max-w-4xl"
-      >
-        {preview && (
-          <div className="aspect-[4/3] rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-cream-deep)]/40 flex items-center justify-center overflow-hidden">
-            {previewUrl ? (
-              preview.type === "image" ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={previewUrl} alt={preview.name} className="h-full w-full object-contain" />
-              ) : (
-                <iframe src={previewUrl} title={preview.name} className="h-full w-full" />
-              )
-            ) : (
-              <div className="text-center text-[var(--color-muted)]">
-                <FileIcon type={preview.type} />
-                <p className="mt-3 text-sm">{preview.filename}</p>
-                <p className="text-xs">{formatBytes(preview.sizeKb)} · uploaded {preview.uploadedAt ? timeAgo(preview.uploadedAt) : "—"}</p>
-                <p className="mt-4 text-xs italic">{isReal ? "Loading…" : "Preview wires up with real storage."}</p>
-              </div>
+      {/* Paywall modal */}
+      {paywallOpen && <PaywallModal onClose={() => setPaywallOpen(false)} />}
+    </div>
+  );
+}
+
+// =============================================================================
+// Row
+// =============================================================================
+
+function DocumentRowView({
+  displayName,
+  why,
+  acceptedFormats,
+  row,
+  locked,
+  onUpload,
+  onLocked,
+  onOpenDetail,
+}: {
+  displayName: string;
+  why: string;
+  acceptedFormats: ("pdf" | "jpg" | "png")[];
+  row: DocRow;
+  locked: boolean;
+  onUpload: (f: File) => void;
+  onLocked: () => void;
+  onOpenDetail: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [expand, setExpand] = useState(false);
+
+  useEffect(() => {
+    if (row.status === "attention") setExpand(true);
+  }, [row.status]);
+
+  const onFileChosen = (f: File | undefined) => {
+    if (!f) return;
+    if (locked) {
+      onLocked();
+      return;
+    }
+    onUpload(f);
+  };
+
+  const trigger = () => {
+    if (locked) return onLocked();
+    inputRef.current?.click();
+  };
+
+  const dashedBorder = dragOver
+    ? "outline outline-2 outline-dashed outline-[var(--ember)] -outline-offset-2"
+    : "";
+
+  const fmtList = acceptedFormats.map((f) => f.toUpperCase()).join(" · ");
+
+  return (
+    <li
+      className={`relative px-5 py-4 transition-colors ${locked ? "opacity-60" : ""} ${dashedBorder}`}
+      onDragOver={(e) => {
+        if (locked) return;
+        e.preventDefault();
+        setDragOver(true);
+      }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragOver(false);
+        const f = e.dataTransfer.files?.[0];
+        onFileChosen(f);
+      }}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept={ACCEPTED_INPUT}
+        className="sr-only"
+        onChange={(e) => onFileChosen(e.target.files?.[0])}
+      />
+      <div className="flex items-start gap-4">
+        <StatusIcon status={row.status} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[15px] font-medium text-[var(--ink)]">{displayName}</span>
+            <span className="text-[11px] text-[var(--stone)] uppercase tracking-[0.08em]">
+              {fmtList}
+            </span>
+          </div>
+          <p className="mt-1 text-[13px] text-[var(--ink-soft)] leading-snug">{why}</p>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <StatusChip status={row.status} />
+          {row.status === "missing" || row.status === "attention" ? (
+            <button
+              type="button"
+              onClick={trigger}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 py-[6px] text-[12px] font-medium text-[var(--ink)] hover:border-[var(--line-hover)] transition-colors"
+            >
+              {row.status === "attention" ? "Replace" : "Upload"}
+            </button>
+          ) : row.id ? (
+            <button
+              type="button"
+              onClick={onOpenDetail}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 py-[6px] text-[12px] font-medium text-[var(--ink)] hover:border-[var(--line-hover)] transition-colors"
+            >
+              View
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      {expand &&
+        row.status === "attention" &&
+        row.aiFeedback?.issues &&
+        row.aiFeedback.issues.length > 0 && (
+          <div className="mt-3 ml-8 rounded-lg bg-[var(--surface-sunken)] p-3">
+            <ul className="space-y-1.5">
+              {row.aiFeedback.issues.map((i, idx) => (
+                <li key={idx} className="flex items-start gap-2 text-[13px]">
+                  <span
+                    className={
+                      i.severity === "blocker"
+                        ? "mt-[6px] inline-block h-1.5 w-1.5 rounded-full bg-[var(--ember)]"
+                        : "mt-[6px] inline-block h-1.5 w-1.5 rounded-full bg-[var(--stone)]"
+                    }
+                  />
+                  <span className="text-[var(--ink-soft)]">{i.message}</span>
+                </li>
+              ))}
+            </ul>
+            {row.aiFeedback?.rate_limited && (
+              <Link
+                href="/dashboard/upgrade"
+                className="mt-3 inline-block text-[12px] font-medium text-[var(--ember-hover)] hover:text-[var(--ember)]"
+              >
+                Upgrade for more checks →
+              </Link>
             )}
           </div>
         )}
-      </Modal>
 
-      {toast && (
-        <button
-          type="button"
-          onClick={toast.undoId ? handleUndo : () => setToast(null)}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-up"
-        >
-          <span className="inline-flex items-center gap-3 rounded-xl bg-[var(--color-forest)] px-5 py-3 text-sm font-medium text-[var(--color-cream-soft)] shadow-[0_18px_40px_-15px_rgba(20,33,28,0.45)]">
-            {toast.msg}
-          </span>
-        </button>
+      {row.status === "accepted" && (
+        <p className="mt-2 ml-8 text-[11px] text-[var(--stone)] leading-relaxed">
+          Checked by AI — final judgment rests with the consulate.
+        </p>
       )}
+
+      {row.status === "uploading" && (
+        <span
+          aria-hidden
+          className="absolute left-0 bottom-0 h-[2px] bg-[var(--ember)]"
+          style={{ animation: "upload-fill 1.2s ease-out forwards" }}
+        />
+      )}
+    </li>
+  );
+}
+
+// =============================================================================
+// Detail Panel
+// =============================================================================
+
+function DetailPanel({
+  docId,
+  row,
+  onClose,
+  onDeleted,
+}: {
+  docId: string;
+  row: DocRow | undefined;
+  onClose: () => void;
+  onDeleted: (slug: string) => void;
+}) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [mimeType, setMimeType] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string>("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch(`/api/documents/${docId}/signed-url`, { cache: "no-store" });
+        if (!r.ok) return;
+        const data = await r.json();
+        if (!cancelled) {
+          setUrl(data.url);
+          setMimeType(data.mimeType);
+          setDisplayName(data.displayName);
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [docId]);
+
+  const onDelete = async () => {
+    if (!row) return;
+    await fetch(`/api/documents/${docId}`, { method: "DELETE" });
+    onDeleted(row.slug);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex justify-end"
+      style={{ background: "rgba(28,27,26,0.35)" }}
+      onClick={onClose}
+    >
+      <aside
+        role="dialog"
+        aria-modal="true"
+        className="relative h-full w-full max-w-[480px] bg-[var(--surface)] border-l border-[var(--line)] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--line)]">
+          <p className="text-[14px] font-medium text-[var(--ink)]">
+            {displayName || "Document"}
+          </p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[var(--stone)] hover:text-[var(--ink)] text-[18px] leading-none"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {url && mimeType?.startsWith("image/") ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={url} alt={displayName} className="w-full" />
+          ) : url ? (
+            <iframe src={url} className="w-full h-[480px]" title={displayName} />
+          ) : (
+            <div className="px-5 py-10 text-[13px] text-[var(--stone)]">
+              Loading preview…
+            </div>
+          )}
+
+          <div className="px-5 py-4 space-y-4 border-t border-[var(--line)]">
+            {row?.aiFeedback?.issues && row.aiFeedback.issues.length > 0 && (
+              <section>
+                <p data-eyebrow="">AI feedback</p>
+                <ul className="mt-3 space-y-2">
+                  {row.aiFeedback.issues.map((i, idx) => (
+                    <li
+                      key={idx}
+                      className="text-[13px] text-[var(--ink-soft)] leading-snug"
+                    >
+                      {i.message}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+            {row?.status === "accepted" && (
+              <p className="text-[12px] text-[var(--stone)]">
+                Checked by AI — final judgment rests with the consulate.
+              </p>
+            )}
+
+            <section className="text-[12px] text-[var(--stone)] space-y-1">
+              {row?.fileSize && <p>Size: {(row.fileSize / 1024 / 1024).toFixed(2)} MB</p>}
+              {row?.uploadedAt && (
+                <p>Uploaded: {new Date(row.uploadedAt).toLocaleString()}</p>
+              )}
+            </section>
+          </div>
+        </div>
+
+        <div className="border-t border-[var(--line)] px-5 py-4 flex items-center gap-2 flex-wrap">
+          {url && (
+            <a
+              href={url}
+              download
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 py-[8px] text-[12px] font-medium text-[var(--ink)] hover:border-[var(--line-hover)] transition-colors"
+            >
+              Download
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 py-[8px] text-[12px] font-medium text-[var(--ember-hover)] hover:border-[var(--ember)] transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+
+        {confirmDelete && (
+          <div className="absolute inset-0 bg-[rgba(28,27,26,0.6)] flex items-center justify-center px-6">
+            <div className="bg-[var(--surface)] rounded-2xl p-5 max-w-sm border border-[var(--line)]">
+              <p className="font-display text-[18px] text-[var(--ink)]">
+                Delete this file?
+              </p>
+              <p className="mt-2 text-[13px] text-[var(--ink-soft)]">
+                The document slot stays in your checklist — you can re-upload anytime.
+              </p>
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(false)}
+                  className="px-3 py-[8px] text-[13px] text-[var(--ink-soft)]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  className="btn-ember rounded-lg px-3 py-[8px] text-[13px] font-semibold"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </aside>
     </div>
+  );
+}
+
+// =============================================================================
+// Bits
+// =============================================================================
+
+function PaywallModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center px-6"
+      style={{ background: "rgba(28,27,26,0.5)" }}
+      onClick={onClose}
+    >
+      <div
+        className="bg-[var(--surface)] rounded-2xl p-6 max-w-md border border-[var(--line)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p data-eyebrow="">Locked</p>
+        <h2 className="mt-3 font-display text-[24px] text-[var(--ink)] tracking-tight leading-snug">
+          Phase 2 and beyond are on paid plans.
+        </h2>
+        <p className="mt-2 text-[13px] text-[var(--ink-soft)] leading-relaxed">
+          Phase 1 is fully free. Upgrade once for $19 and unlock every phase + unlimited AI checks.
+        </p>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-[10px] text-[13px] text-[var(--ink-soft)]"
+          >
+            Maybe later
+          </button>
+          <Link
+            href="/dashboard/upgrade"
+            className="btn-ember rounded-lg px-4 py-[10px] text-[13px] font-semibold"
+          >
+            Upgrade for $19 →
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatusIcon({ status }: { status: DocStatus }) {
+  const base = "mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full";
+  if (status === "accepted")
+    return (
+      <span
+        className={`${base} bg-[var(--ember-soft)] text-[var(--ember-hover)]`}
+        aria-hidden
+      >
+        <CheckGlyph />
+      </span>
+    );
+  if (status === "attention")
+    return (
+      <span
+        className={`${base} bg-[var(--ember-soft)] text-[var(--ember-hover)] text-[12px] font-bold`}
+        aria-hidden
+      >
+        !
+      </span>
+    );
+  if (status === "checking" || status === "uploading")
+    return (
+      <span className={`${base} border border-[var(--ember)]`} aria-hidden>
+        <span
+          className="block h-1.5 w-1.5 rounded-full bg-[var(--ember)]"
+          style={{ animation: "pulse-dot 1.2s ease-in-out infinite" }}
+        />
+      </span>
+    );
+  return <span className={`${base} border border-[var(--line-hover)]`} aria-hidden />;
+}
+
+function StatusChip({ status }: { status: DocStatus }) {
+  const cls =
+    "inline-flex items-center gap-1.5 rounded-full px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em]";
+  if (status === "accepted")
+    return (
+      <span className={`${cls} bg-[var(--ember-soft)] text-[var(--ember-hover)]`}>
+        Checked by AI
+      </span>
+    );
+  if (status === "attention")
+    return (
+      <span className={`${cls} border border-[var(--ember)] text-[var(--ember-hover)]`}>
+        Needs attention
+      </span>
+    );
+  if (status === "checking")
+    return (
+      <span className={`${cls} border border-[var(--line)] text-[var(--stone)]`}>
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-[var(--ember)]"
+          style={{ animation: "pulse-dot 1.2s ease-in-out infinite" }}
+        />
+        Checking
+      </span>
+    );
+  if (status === "uploading")
+    return (
+      <span className={`${cls} border border-[var(--line)] text-[var(--stone)]`}>Uploading</span>
+    );
+  return (
+    <span className={`${cls} border border-[var(--line)] text-[var(--stone)]`}>Missing</span>
+  );
+}
+
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={14}
+      height={14}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="text-[var(--stone)] transition-transform duration-200"
+      style={{ transform: open ? "rotate(180deg)" : "rotate(0)" }}
+      aria-hidden
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
+
+function LockGlyph() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={12}
+      height={12}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </svg>
+  );
+}
+
+function CheckGlyph() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={12}
+      height={12}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M5 12l5 5L20 7" />
+    </svg>
   );
 }

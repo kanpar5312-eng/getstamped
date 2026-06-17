@@ -119,7 +119,7 @@ export function ParentViewClient({ initialEnabled, initialToken, views, lastView
       </header>
 
       {/* Block 1 — Link status */}
-      <section className="mt-8 rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-5 sm:p-6 animate-fade-up">
+      <section className="mt-8 rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-5 sm:p-6 animate-fade-up">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <Eyebrow>Shareable link</Eyebrow>
@@ -134,7 +134,7 @@ export function ParentViewClient({ initialEnabled, initialToken, views, lastView
             onClick={() => onToggle(!enabled)}
             className={[
               "relative inline-block h-6 w-11 rounded-full transition-colors",
-              enabled ? "bg-[var(--color-forest)]" : "bg-[var(--color-cream-deep)]",
+              enabled ? "bg-[var(--color-persimmon)]" : "bg-[var(--color-paper-deep)]",
             ].join(" ")}
           >
             <span
@@ -153,7 +153,7 @@ export function ParentViewClient({ initialEnabled, initialToken, views, lastView
               <button
                 type="button"
                 onClick={copy}
-                className="rounded-md bg-[var(--color-cream-deep)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink)] hover:bg-[var(--color-cream)] transition-colors"
+                className="rounded-md bg-[var(--color-paper-deep)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink)] hover:bg-[var(--color-paper)] transition-colors"
               >
                 {copied ? "Copied" : "Copy"}
               </button>
@@ -188,15 +188,15 @@ export function ParentViewClient({ initialEnabled, initialToken, views, lastView
       </section>
 
       {/* Block 2 — Preview */}
-      <section className="mt-6 rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-5 sm:p-6 animate-fade-up">
+      <section className="mt-6 rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-5 sm:p-6 animate-fade-up">
         <Eyebrow>See what they see</Eyebrow>
-        <div className="mt-4 rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-cream)] p-4 sm:p-6">
+        <div className="mt-4 rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-paper)] p-4 sm:p-6">
           <div className="text-center max-w-md mx-auto">
             <p className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-muted)]">Read-only view</p>
             <h3 className="mt-2 font-display text-xl text-[var(--color-ink)] tracking-tight">Arya&rsquo;s F-1 Application</h3>
             <p className="mt-1 text-xs text-[var(--color-ink-soft)]">Currently on Phase 3: DS-160 and fees</p>
             <div className="mt-3 h-1.5 w-full rounded-full bg-[var(--color-border-soft)] overflow-hidden">
-              <div className="h-full bg-[var(--color-forest)]" style={{ width: "49%" }} />
+              <div className="h-full bg-[var(--color-persimmon)]" style={{ width: "49%" }} />
             </div>
             <p className="mt-2 text-[11px] font-mono text-[var(--color-muted)]">23 of 47 complete · 49%</p>
           </div>
@@ -205,23 +205,23 @@ export function ParentViewClient({ initialEnabled, initialToken, views, lastView
 
       {/* Block 3 — What's shared */}
       <section className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fade-up">
-        <div className="rounded-2xl border border-[var(--color-forest)]/20 bg-[var(--color-forest)]/[0.04] p-5">
+        <div className="rounded-2xl border border-[var(--color-ink)]/20 bg-[var(--color-persimmon)]/[0.04] p-5">
           <Eyebrow>Shared</Eyebrow>
           <ul className="mt-3 space-y-2 text-sm">
             {["Progress count", "Current phase", "Next step title", "Interview date + consulate", "Recent activity (last 5)", "Document count"].map((x) => (
               <li key={x} className="flex items-start gap-2.5">
-                <span className="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-forest)] text-[var(--color-cream-soft)] shrink-0"><CheckIcon /></span>
+                <span className="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-persimmon)] text-[var(--color-paper-soft)] shrink-0"><CheckIcon /></span>
                 <span className="text-[var(--color-ink)]">{x}</span>
               </li>
             ))}
           </ul>
         </div>
-        <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-5">
+        <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-5">
           <Eyebrow>Not shared</Eyebrow>
           <ul className="mt-3 space-y-2 text-sm">
             {["Document files themselves", "AI conversations", "Mock interview transcripts", "Email address", "Settings"].map((x) => (
               <li key={x} className="flex items-start gap-2.5">
-                <span className="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-cream-deep)] text-[var(--color-muted)] shrink-0"><XIcon /></span>
+                <span className="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-paper-deep)] text-[var(--color-muted)] shrink-0"><XIcon /></span>
                 <span className="text-[var(--color-ink-soft)]">{x}</span>
               </li>
             ))}
@@ -230,7 +230,7 @@ export function ParentViewClient({ initialEnabled, initialToken, views, lastView
       </section>
 
       {/* Block 4 — Email */}
-      <section className="mt-6 rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-5 sm:p-6 animate-fade-up">
+      <section className="mt-6 rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-5 sm:p-6 animate-fade-up">
         <Eyebrow>Email it directly</Eyebrow>
         <p className="mt-2 text-sm text-[var(--color-ink-soft)]">
           We&rsquo;ll send your parents a short note with the link.
@@ -247,7 +247,7 @@ export function ParentViewClient({ initialEnabled, initialToken, views, lastView
             type="button"
             onClick={sendEmail}
             disabled={!emailTo || sending}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--color-forest)] px-5 py-2.5 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--color-persimmon)] px-5 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-60"
           >
             {sending ? "Sending…" : "Send link"}
           </button>
@@ -280,7 +280,7 @@ export function ParentViewClient({ initialEnabled, initialToken, views, lastView
             <button
               type="button"
               onClick={regenerate}
-              className="inline-flex items-center justify-center rounded-lg bg-[var(--color-forest)] px-5 py-2.5 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors"
+              className="inline-flex items-center justify-center rounded-lg bg-[var(--color-persimmon)] px-5 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors"
             >
               Generate new link
             </button>
@@ -295,7 +295,7 @@ export function ParentViewClient({ initialEnabled, initialToken, views, lastView
 
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-up">
-          <div className="inline-flex items-center gap-3 rounded-xl bg-[var(--color-forest)] px-5 py-3 text-sm font-medium text-[var(--color-cream-soft)] shadow-[0_18px_40px_-15px_rgba(20,33,28,0.45)]">
+          <div className="inline-flex items-center gap-3 rounded-xl bg-[var(--color-persimmon)] px-5 py-3 text-sm font-medium text-[var(--color-paper-soft)] shadow-[0_18px_40px_-15px_rgba(20,33,28,0.45)]">
             {toast}
           </div>
         </div>

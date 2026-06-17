@@ -32,7 +32,7 @@ export function WhyThisMattersPanel({ open, onClose, step }: Props) {
             Instructions
           </h3>
           <p className="mt-3 text-sm leading-relaxed text-[var(--color-ink-soft)]">
-            {step.instructions}
+            {step.instructions.intro}
           </p>
         </section>
 
@@ -40,7 +40,7 @@ export function WhyThisMattersPanel({ open, onClose, step }: Props) {
           <h3 className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-muted)]">
             Documents needed
           </h3>
-          <p className="mt-3 font-display text-3xl tracking-tight text-[var(--color-forest)] tabular-nums leading-none">
+          <p className="mt-3 font-display text-3xl tracking-tight text-[var(--color-ink)] tabular-nums leading-none">
             {step.documentsNeeded}
           </p>
           <p className="mt-2 text-xs text-[var(--color-muted)]">
@@ -62,7 +62,10 @@ export function WhyThisMattersPanel({ open, onClose, step }: Props) {
                   aria-hidden
                   className="mt-1.5 block h-1.5 w-1.5 rounded-full bg-[var(--color-accent)] shrink-0"
                 />
-                <span>{m}</span>
+                <span>
+                  <span className="font-medium">{m.title}.</span>{" "}
+                  <span className="text-[var(--color-ink-soft)]">{m.body}</span>
+                </span>
               </li>
             ))}
           </ul>
@@ -73,18 +76,13 @@ export function WhyThisMattersPanel({ open, onClose, step }: Props) {
             Tips
           </h3>
           <ul className="mt-3 space-y-2">
-            {step.tips.map((t, i) => (
-              <li
-                key={i}
-                className="flex items-start gap-2.5 text-sm leading-relaxed text-[var(--color-ink)]"
-              >
-                <span
-                  aria-hidden
-                  className="mt-1.5 block h-1.5 w-1.5 rounded-full bg-[var(--color-forest)] shrink-0"
-                />
-                <span>{t}</span>
-              </li>
-            ))}
+            <li className="flex items-start gap-2.5 text-sm leading-relaxed text-[var(--color-ink)]">
+              <span
+                aria-hidden
+                className="mt-1.5 block h-1.5 w-1.5 rounded-full bg-[var(--color-persimmon)] shrink-0"
+              />
+              <span>{step.whyItMatters}</span>
+            </li>
           </ul>
         </section>
 

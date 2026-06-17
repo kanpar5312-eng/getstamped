@@ -13,11 +13,11 @@ type Props = {
 export function StatTile({ label, value, hint, accent = "forest" }: Props) {
   const color =
     accent === "forest"
-      ? "text-[var(--color-forest)]"
+      ? "text-[var(--color-ink)]"
       : "text-[var(--color-accent-deep)]";
 
   return (
-    <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-4 sm:p-5">
+    <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-4 sm:p-5">
       <div className="text-[10px] uppercase tracking-[0.14em] text-[var(--color-muted)] font-medium">
         {label}
       </div>

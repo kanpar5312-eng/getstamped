@@ -106,7 +106,7 @@ export function SignInForm() {
       <button
         type="submit"
         disabled={pending}
-        className="field-rise field-rise-3 w-full inline-flex items-center justify-center rounded-xl bg-[var(--color-forest)] px-5 py-3 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors disabled:opacity-60"
+        className="field-rise field-rise-3 w-full inline-flex items-center justify-center rounded-xl bg-[var(--color-persimmon)] px-5 py-3 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-60"
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>

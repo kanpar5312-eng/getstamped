@@ -1,0 +1,12 @@
+# GetStamped — Supabase local configuration.
+# Used by `supabase functions serve` for local dev and `supabase functions deploy`
+# for production. Replace `project_id` with your project ref before deploying:
+#   supabase link --project-ref <your-ref>
+
+project_id = "getstamped"
+
+[functions.compute_readiness]
+# JWT verification on: only the authenticated student (or service role) can
+# invoke. The function recomputes their own readiness snapshot and upserts it.
+verify_jwt = true
+import_map = "./functions/import_map.json"

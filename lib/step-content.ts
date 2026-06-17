@@ -358,34 +358,29 @@ export function getStepContent(stepNumber: number): {
 }
 
 function buildPlaceholder(step: Step): StepRichContent {
+  // Every step now has rich content directly on the Step object —
+  // just adapt the shape to StepRichContent.
   return {
-    intro: step.shortDescription,
-    subSteps: [
-      {
-        title: "Full walkthrough coming soon",
-        body: "We're writing the detailed walkthrough for this step. In the meantime, the instructions, tips, and common mistakes below are accurate and actionable.",
-      },
-      {
-        title: "What you'll do here",
-        body: step.instructions,
-      },
-    ],
-    outro: undefined,
-    documents:
-      step.documentsNeeded > 0
-        ? Array.from({ length: step.documentsNeeded }, (_, i) => ({
-            name: `Document ${i + 1}`,
-            description: "Detailed document specs coming with full step content.",
-            required: i < Math.min(step.documentsNeeded, 3),
-          }))
-        : [],
-    mistakes: step.commonMistakes.map((m, i) => ({
-      title: `Mistake ${i + 1}`,
-      body: m,
+    intro: step.instructions.intro,
+    subSteps: step.instructions.steps.map((s) => ({
+      title: s.title,
+      body: s.body,
     })),
-    whyItMatters: step.tips[0] ?? step.shortDescription,
-    relatedSteps: [step.number - 1, step.number + 1].filter(
-      (n) => n >= 1 && n <= STEPS.length,
-    ),
+    outro: step.instructions.outro,
+    documents: step.documents.map((d) => ({
+      name: d.name,
+      description: d.description,
+      required: true,
+    })),
+    mistakes: step.commonMistakes.map((m) => ({
+      title: m.title,
+      body: m.body,
+    })),
+    whyItMatters: step.whyItMatters,
+    relatedSteps:
+      step.relatedSteps ??
+      [step.number - 1, step.number + 1].filter(
+        (n) => n >= 1 && n <= STEPS.length,
+      ),
   };
 }

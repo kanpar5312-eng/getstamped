@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { signOut } from "@/app/actions/auth";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 type Props = {
   initials: string;
@@ -38,15 +37,57 @@ export function AccountMenu({ initials, email }: Props) {
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((s) => !s)}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-forest)] text-[var(--color-cream-soft)] text-xs font-medium tracking-tight"
+        style={{
+          width: 36,
+          height: 36,
+          background: "#1C1B1A",
+          color: "#FFFFFF",
+          borderRadius: 999,
+          border: "none",
+          cursor: "pointer",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 12.5,
+          fontWeight: 600,
+          letterSpacing: "-0.01em",
+          position: "relative",
+          boxShadow:
+            "0 2px 8px -2px rgba(28,27,26,0.25), 0 0 0 1px rgba(28,27,26,0.10)",
+          transition: "box-shadow 200ms ease, transform 200ms ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow =
+            "0 4px 14px -2px rgba(28,27,26,0.30), 0 0 0 2px #FF5B2E";
+          e.currentTarget.style.transform = "translateY(-1px)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow =
+            "0 2px 8px -2px rgba(28,27,26,0.25), 0 0 0 1px rgba(28,27,26,0.10)";
+          e.currentTarget.style.transform = "translateY(0)";
+        }}
       >
-        {initials}
+        <span>{initials || "GS"}</span>
+        {/* Persimmon online dot */}
+        <span
+          aria-hidden
+          style={{
+            position: "absolute",
+            bottom: -1,
+            right: -1,
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            background: "#FF5B2E",
+            boxShadow: "0 0 0 2px #FFFFFF",
+          }}
+        />
       </button>
 
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-56 rounded-xl border border-[var(--color-border)] bg-[var(--color-cream-soft)] shadow-[0_30px_80px_-30px_rgba(20,33,28,0.25)] p-1 animate-fade-up z-50"
+          className="absolute right-0 mt-2 w-56 rounded-xl border border-[var(--color-border)] bg-[var(--color-paper-soft)] shadow-[0_30px_80px_-30px_rgba(20,33,28,0.25)] p-1 animate-fade-up z-50"
         >
           {email && (
             <div className="px-3 py-2 border-b border-[var(--color-border-soft)] mb-1">
@@ -57,27 +98,24 @@ export function AccountMenu({ initials, email }: Props) {
           <Link
             href="/dashboard/settings"
             onClick={() => setOpen(false)}
-            className="block px-3 py-1.5 text-sm text-[var(--color-ink)] hover:bg-[var(--color-cream-deep)] rounded-md transition-colors"
+            className="block px-3 py-1.5 text-sm text-[var(--color-ink)] hover:bg-[var(--color-paper-deep)] rounded-md transition-colors"
           >
             Settings
           </Link>
           <Link
             href="/dashboard/parent-view"
             onClick={() => setOpen(false)}
-            className="block px-3 py-1.5 text-sm text-[var(--color-ink)] hover:bg-[var(--color-cream-deep)] rounded-md transition-colors"
+            className="block px-3 py-1.5 text-sm text-[var(--color-ink)] hover:bg-[var(--color-paper-deep)] rounded-md transition-colors"
           >
             Parent view link
           </Link>
           <Link
             href="/dashboard/upgrade"
             onClick={() => setOpen(false)}
-            className="block px-3 py-1.5 text-sm text-[var(--color-ink)] hover:bg-[var(--color-cream-deep)] rounded-md transition-colors"
+            className="block px-3 py-1.5 text-sm text-[var(--color-ink)] hover:bg-[var(--color-paper-deep)] rounded-md transition-colors"
           >
             Upgrade plan
           </Link>
-          <div className="mt-1 border-t border-[var(--color-border-soft)] pt-1">
-            <ThemeToggle variant="row" />
-          </div>
           <form action={signOut} className="mt-1 border-t border-[var(--color-border-soft)] pt-1">
             <button
               type="submit"

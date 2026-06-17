@@ -11,7 +11,7 @@ export default function CelebrationPage() {
       <div className="mx-auto max-w-2xl py-32 text-center">
         <div
           aria-hidden
-          className="mx-auto h-0.5 w-10 bg-[var(--color-forest)]"
+          className="mx-auto h-0.5 w-10 bg-[var(--color-persimmon)]"
         />
         <h1 className="mt-8 animate-hero-rise font-display text-5xl sm:text-6xl tracking-tight text-[var(--color-ink)] leading-tight">
           Your visa is stamped.
@@ -24,7 +24,7 @@ export default function CelebrationPage() {
           <Link href="/dashboard/timeline?phase=5">
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-forest)] px-6 py-3 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-persimmon)] px-6 py-3 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors"
             >
               Continue to pre-departure prep →
             </button>

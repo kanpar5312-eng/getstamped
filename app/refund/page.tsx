@@ -33,7 +33,7 @@ export default function RefundPage() {
           heading: "How to request",
           body: (
             <p>
-              Email <span className="text-ink">hello@getstamped.app</span>{" "}
+              Email <span className="text-ink">getstamped.online@gmail.com</span>{" "}
               with the email address you used to purchase. No forms, no
               survey, no friction. One sentence is fine.
             </p>

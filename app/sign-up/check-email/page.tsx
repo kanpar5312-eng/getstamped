@@ -44,7 +44,7 @@ export default async function CheckEmailPage({
           <span>You&rsquo;ll be dropped straight into your dashboard.</span>
         </li>
       </ol>
-      <div className="mt-6 rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-cream)] p-3 text-xs text-[var(--color-muted)] leading-relaxed">
+      <div className="mt-6 rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-paper)] p-3 text-xs text-[var(--color-muted)] leading-relaxed">
         The verification link expires in 24 hours. If it does, you can{" "}
         <Link href="/sign-in" className="text-[var(--color-ink)] underline underline-offset-2 hover:text-[var(--color-accent-deep)] transition-colors">
           sign in

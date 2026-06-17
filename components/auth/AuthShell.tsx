@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { BrandMark } from "@/components/ui/BrandMark";
 
 type Props = {
   eyebrow: string;
@@ -26,7 +26,7 @@ export function AuthShell({
   background = false,
 }: Props) {
   return (
-    <main className="relative min-h-screen flex flex-col overflow-hidden bg-[var(--color-cream)]">
+    <main className="relative min-h-screen flex flex-col overflow-hidden bg-[var(--color-paper)]">
       {background ? (
         <>
           {/* Warm base gradient — cream paper with afternoon-gold pooling */}
@@ -38,7 +38,7 @@ export function AuthShell({
                 "radial-gradient(120% 100% at 18% 12%, rgba(245, 213, 144, 0.55) 0%, rgba(245, 213, 144, 0) 55%), " +
                 "radial-gradient(110% 90% at 82% 88%, rgba(245, 213, 144, 0.30) 0%, rgba(245, 213, 144, 0) 60%), " +
                 "radial-gradient(80% 60% at 50% 50%, rgba(20, 58, 47, 0.06) 0%, rgba(20, 58, 47, 0) 70%), " +
-                "linear-gradient(180deg, var(--color-cream-soft) 0%, var(--color-cream) 100%)",
+                "linear-gradient(180deg, var(--color-paper-soft) 0%, var(--color-paper) 100%)",
             }}
           />
 
@@ -114,11 +114,6 @@ export function AuthShell({
         </div>
       )}
 
-      {/* Top: theme toggle, top-right */}
-      <div className="relative z-10 flex justify-end px-5 sm:px-6 py-5">
-        <ThemeToggle />
-      </div>
-
       {/* Centered column */}
       <div className="relative z-10 flex-1 flex items-center justify-center px-5 py-8 sm:py-12">
         <div className="w-full max-w-md">
@@ -126,20 +121,19 @@ export function AuthShell({
           <Link
             href="/"
             aria-label="GetStamped — home"
-            className="flex items-center justify-center gap-2 mb-8 mx-auto w-fit"
+            className="flex items-center justify-center gap-2.5 mb-8 mx-auto w-fit text-[var(--color-ink)] dark:text-[var(--color-paper)] hover:opacity-90 transition-opacity"
           >
-            <span
-              aria-hidden
-              className="block h-3 w-3 rounded-sm bg-[var(--color-forest)]"
-            />
-            <span className="font-display text-[22px] leading-none tracking-tight text-[var(--color-ink)]">
+            <span className="inline-flex items-center justify-center rounded-full bg-[var(--color-paper-soft)] dark:bg-[var(--color-ink)] p-1.5 ring-1 ring-[var(--color-border)] dark:ring-white/15">
+              <BrandMark size={26} />
+            </span>
+            <span className="font-display text-[26px] leading-none tracking-tight">
               GetStamped
             </span>
           </Link>
 
           {/* Card — same surface in both modes; airy, paper-like */}
           <div
-            className="relative rounded-2xl border border-[var(--color-border)] bg-[var(--color-cream-soft)] p-7 sm:p-10"
+            className="relative rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper-soft)] p-7 sm:p-10"
             style={{
               boxShadow:
                 "0 30px 80px -28px rgba(20, 33, 28, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.5) inset",
@@ -175,7 +169,7 @@ export function AuthShell({
           </div>
 
           {belowCard && (
-            <p className="mt-6 text-center text-xs text-[var(--color-ink-soft)]">
+            <p className="mt-6 text-center text-sm font-medium text-[var(--color-ink)] dark:text-[var(--color-paper)]">
               {belowCard}
             </p>
           )}

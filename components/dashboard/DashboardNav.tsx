@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AccountMenu } from "@/components/dashboard/AccountMenu";
+import { BrandMark } from "@/components/ui/BrandMark";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 type Plan = "free" | "solo" | "family";
 
@@ -19,8 +21,10 @@ const TABS: Tab[] = [
   { label: "Timeline",      href: "/dashboard/timeline",       group: "primary"   },
   { label: "Documents",     href: "/dashboard/documents",      group: "primary"   },
   { label: "Mock Interview",href: "/dashboard/mock-interview", group: "secondary", badge: "new" },
+  { label: "Feedback",      href: "/dashboard/feedback",       group: "secondary", badge: "new" },
   { label: "Ask",           href: "/dashboard/ask",            group: "secondary", badge: "new" },
   { label: "Parent View",   href: "/dashboard/parent-view",    group: "secondary" },
+  { label: "Support",       href: "/support",                  group: "secondary" },
 ];
 
 function SearchIcon() {
@@ -31,45 +35,21 @@ function SearchIcon() {
     </svg>
   );
 }
-function BellIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-      <path d="M10 21a2 2 0 0 0 4 0" />
-    </svg>
-  );
-}
-function GemIcon() {
+function DiamondIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="M6 3h12l4 6-10 12L2 9l4-6z" />
-      <path d="M11 3L8 9l4 12 4-12-3-6" />
       <path d="M2 9h20" />
-    </svg>
-  );
-}
-function FolderIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
+      <path d="M12 3l-3 6 3 12 3-12-3-6z" />
     </svg>
   );
 }
 
 function NewPill() {
   return (
-    <span className="ml-1.5 inline-flex items-center rounded-md bg-[var(--color-cream-deep)] px-1.5 py-px text-[9px] font-mono uppercase tracking-wider text-[var(--color-ink-soft)]">
-      New
+    <span className="ml-1.5 inline-flex items-center rounded-[4px] bg-[var(--ember-soft)] text-[var(--ember-hover)] px-1.5 py-[2px] text-[10px] font-semibold uppercase tracking-[0.04em] leading-none">
+      NEW
     </span>
-  );
-}
-
-function Separator() {
-  return (
-    <span
-      aria-hidden
-      className="mx-1 h-4 w-px self-center bg-[var(--color-border)]"
-    />
   );
 }
 
@@ -77,14 +57,17 @@ type Props = {
   initials: string;
   email?: string | null;
   plan?: Plan;
+  userId?: string | null;
+  /** Red urgency dot on the Feedback tab — failed doc OR readiness < 60. */
+  feedbackUrgent?: boolean;
 };
 
-export function DashboardNav({ initials, email, plan = "free" }: Props) {
+export function DashboardNav({ initials, email, plan = "free", userId = null, feedbackUrgent = false }: Props) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 4);
+    const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -95,154 +78,182 @@ export function DashboardNav({ initials, email, plan = "free" }: Props) {
       ? pathname === "/dashboard"
       : pathname.startsWith(href);
 
-  const primary = TABS.filter((t) => t.group === "primary");
-  const secondary = TABS.filter((t) => t.group === "secondary");
-
   const planLabel = plan === "free" ? "Free" : plan === "solo" ? "Solo" : "Family";
-  const planTone =
-    plan === "free"
-      ? "text-[var(--color-ink-soft)] border-[var(--color-border)] bg-[var(--color-surface)]"
-      : "text-[var(--color-forest)] border-[var(--color-forest)]/30 bg-[var(--color-forest)]/[0.06]";
+
+  const tabClass = (active: boolean) =>
+    [
+      "relative inline-flex items-center h-16 px-1 text-[13px] whitespace-nowrap transition-colors duration-150",
+      active
+        ? "text-[var(--ink)] font-semibold"
+        : "text-[var(--ink-soft)] font-normal hover:text-[var(--ink)]",
+    ].join(" ");
+
+  // Refs for each tab + the gliding underline
+  const navRef = useRef<HTMLElement>(null);
+  const tabRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const [indicator, setIndicator] = useState<{ left: number; width: number; visible: boolean }>({
+    left: 0,
+    width: 0,
+    visible: false,
+  });
+  const [hasMounted, setHasMounted] = useState(false);
+
+  const setTabRef = useCallback(
+    (href: string) => (el: HTMLAnchorElement | null) => {
+      tabRefs.current[href] = el;
+    },
+    [],
+  );
+
+  const measure = useCallback(() => {
+    const activeHref = TABS.find((t) => isActive(t.href))?.href;
+    if (!activeHref) {
+      setIndicator((s) => ({ ...s, visible: false }));
+      return;
+    }
+    const nav = navRef.current;
+    const tab = tabRefs.current[activeHref];
+    if (!nav || !tab) return;
+    const navRect = nav.getBoundingClientRect();
+    const tabRect = tab.getBoundingClientRect();
+    setIndicator({
+      left: tabRect.left - navRect.left,
+      width: tabRect.width,
+      visible: true,
+    });
+  }, [pathname]); // re-measure when route changes
+
+  // Measure synchronously after layout to avoid first-paint flicker
+  useLayoutEffect(() => {
+    measure();
+    setHasMounted(true);
+  }, [measure]);
+
+  // Re-measure on window resize (font load shifts, hydration, etc.)
+  useEffect(() => {
+    const onResize = () => measure();
+    window.addEventListener("resize", onResize);
+    // Re-measure after fonts load — display font weight changes shift the active tab's width
+    if (typeof document !== "undefined" && "fonts" in document) {
+      document.fonts.ready.then(() => measure()).catch(() => {});
+    }
+    return () => window.removeEventListener("resize", onResize);
+  }, [measure]);
 
   return (
     <header
       className={[
-        "sticky top-0 z-40 w-full",
-        "transition-[background-color,backdrop-filter,border-color] duration-300 ease-out",
-        scrolled
-          ? "bg-[var(--color-cream-soft)]/80 backdrop-blur-2xl backdrop-saturate-150 border-b border-white/40"
-          : "bg-[var(--color-cream)] border-b border-transparent",
+        "sticky top-0 z-40 w-full bg-[var(--surface)] border-b border-[var(--line)]",
+        "transition-shadow duration-200 ease-out",
+        scrolled ? "shadow-[0_1px_12px_rgba(28,27,26,0.05)]" : "shadow-none",
       ].join(" ")}
     >
-      {scrolled && (
-        <div
-          aria-hidden
-          className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--color-accent)]/60 to-transparent"
-        />
-      )}
-
-      <div className="mx-auto max-w-[1480px] px-4 sm:px-6 lg:px-8 h-14 flex items-center gap-3">
-        {/* Wordmark */}
+      <div className="w-full pl-4 pr-5 sm:pl-5 sm:pr-6 h-16 flex items-center">
+        {/* Logo — pinned to viewport top-left */}
         <Link
           href="/dashboard"
           aria-label="GetStamped — dashboard"
-          className="inline-flex items-center gap-2 shrink-0 pr-2"
+          className="inline-flex items-center gap-2 shrink-0 text-[var(--ink)]"
         >
-          <span
-            aria-hidden
-            className="block h-3.5 w-3.5 rounded-[3px] bg-[var(--color-forest)]"
-            style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25)" }}
-          />
-          <span className="font-display text-[19px] leading-none tracking-tight text-[var(--color-ink)]">
+          <BrandMark size={26} priority />
+          <span className="font-display text-[19px] leading-none tracking-tight text-[var(--ink)]">
             GetStamped
           </span>
         </Link>
 
-        <Separator />
-
-        {/* Primary + secondary nav, single line, dense */}
+        {/* Tabs — no scroll, single row; shared gliding underline */}
         <nav
+          ref={navRef}
           aria-label="Dashboard sections"
-          className="hidden lg:flex items-center gap-0.5 min-w-0 overflow-x-auto scrollbar-none"
+          className="relative hidden lg:flex items-center gap-5 ml-8 min-w-0"
         >
-          {primary.map((t) => {
+          {TABS.map((t) => {
             const active = isActive(t.href);
             return (
               <Link
                 key={t.href}
                 href={t.href}
+                ref={setTabRef(t.href)}
                 aria-current={active ? "page" : undefined}
                 data-nav-active={active ? "true" : undefined}
-                className={[
-                  "inline-flex items-center px-2.5 py-1.5 text-[13px] rounded-md whitespace-nowrap transition-colors",
-                  active
-                    ? "font-medium"
-                    : "text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]",
-                ].join(" ")}
-              >
-                {t.label}
-              </Link>
-            );
-          })}
-
-          <Separator />
-
-          {secondary.map((t) => {
-            const active = isActive(t.href);
-            return (
-              <Link
-                key={t.href}
-                href={t.href}
-                aria-current={active ? "page" : undefined}
-                data-nav-active={active ? "true" : undefined}
-                className={[
-                  "inline-flex items-center px-2.5 py-1.5 text-[13px] rounded-md whitespace-nowrap transition-colors",
-                  active
-                    ? "font-medium"
-                    : "text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]",
-                ].join(" ")}
+                className={tabClass(active)}
               >
                 {t.label}
                 {t.badge === "new" && <NewPill />}
+                {feedbackUrgent && t.href === "/dashboard/feedback" ? (
+                  <span
+                    aria-label="Needs attention"
+                    className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full"
+                    style={{ background: "#EF4444" }}
+                  />
+                ) : null}
               </Link>
             );
           })}
+
+          {/* Shared underline — glides between tabs on route change */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute bottom-[-1px] h-[2px] bg-[var(--ember)]"
+            style={{
+              transform: `translateX(${indicator.left}px)`,
+              width: `${indicator.width}px`,
+              opacity: indicator.visible ? 1 : 0,
+              // No transition on first mount → it snaps under Home rather than gliding from x=0
+              transition: hasMounted
+                ? "transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), width 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease"
+                : "opacity 0.2s ease",
+              willChange: "transform, width",
+            }}
+          />
         </nav>
 
-        {/* Right cluster */}
-        <div className="ml-auto flex items-center gap-2 shrink-0">
-          {/* Search */}
+        {/* Right cluster — 12px gaps, flush to viewport right edge */}
+        <div className="ml-auto flex items-center gap-3 shrink-0 pl-4">
+          {/* Search — expands when there's room, icon-only otherwise */}
           <button
             type="button"
             onClick={() => window.dispatchEvent(new CustomEvent("cmdk:open"))}
-            className="hidden sm:inline-flex items-center gap-2 rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-surface)] pl-2.5 pr-1.5 py-1.5 text-[12px] text-[var(--color-muted)] hover:border-[var(--color-border)] hover:text-[var(--color-ink-soft)] transition-colors min-w-[180px]"
+            className="hidden sm:inline-flex 2xl:hidden h-8 w-8 items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--surface)] text-[var(--stone)] hover:border-[var(--line-hover)] hover:text-[var(--ink)] transition-colors"
+            aria-label="Search (⌘K)"
+          >
+            <SearchIcon />
+          </button>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("cmdk:open"))}
+            className="hidden 2xl:inline-flex items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--surface)] pl-2.5 pr-1.5 h-8 text-[12px] text-[var(--stone)] hover:border-[var(--line-hover)] hover:text-[var(--ink-soft)] transition-colors min-w-[200px]"
             aria-label="Search (⌘K)"
           >
             <SearchIcon />
             <span className="flex-1 text-left">Search</span>
-            <span className="inline-flex items-center gap-0.5 rounded-md border border-[var(--color-border-soft)] bg-[var(--color-cream-deep)] px-1.5 py-0.5 text-[10px] font-mono text-[var(--color-muted)]">
+            <span className="inline-flex items-center gap-0.5 rounded-md border border-[var(--line)] bg-[var(--surface-sunken)] px-1.5 py-0.5 text-[10px] font-mono text-[var(--stone)]">
               ⌘K
             </span>
           </button>
 
-          {/* Plan pill — like the "Pricing" badge in the reference */}
+          {/* Upgrade chip — Free · 30% off */}
           <Link
             href="/dashboard/upgrade"
-            className={`hidden sm:inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[12px] font-medium transition-colors hover:border-[var(--color-border)] ${planTone}`}
+            className="group inline-flex items-center gap-1.5 rounded-lg border border-[var(--line)] bg-[var(--surface)] h-8 px-2.5 text-[12px] font-medium text-[var(--ink)] hover:border-[var(--ember)] transition-colors"
             aria-label={`Plan · ${planLabel}`}
           >
-            <GemIcon />
+            <span className="text-[var(--ember)]">
+              <DiamondIcon />
+            </span>
             <span>{planLabel}</span>
             {plan === "free" && (
-              <span className="ml-1 inline-flex items-center rounded-md bg-[var(--color-accent)] text-white px-1.5 py-px text-[9px] font-mono tracking-wider">
-                30% OFF
-              </span>
+              <>
+                <span aria-hidden className="text-[var(--stone)]">·</span>
+                <span className="text-[var(--ember-hover)]">30% off</span>
+              </>
             )}
           </Link>
 
-          {/* Documents shortcut — neutral, not the page primary action */}
-          <Link
-            href="/dashboard/documents"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-ink)] px-3 py-1.5 text-[12px] font-medium hover:border-[var(--line-hover,#D8D5D0)] transition-colors"
-          >
-            <FolderIcon />
-            <span className="hidden sm:inline">Documents</span>
-          </Link>
+          {/* Notifications — bell + dropdown + realtime */}
+          <NotificationBell userId={userId} />
 
-          {/* Notifications */}
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-surface)] text-[var(--color-ink-soft)] hover:border-[var(--color-border)] hover:text-[var(--color-ink)] transition-colors"
-          >
-            <BellIcon />
-            <span
-              className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full"
-              style={{ background: "var(--ember, currentColor)" }}
-            />
-          </button>
-
-          {/* Avatar + dropdown (Settings, Theme, Sign out) */}
+          {/* Avatar */}
           <AccountMenu initials={initials} email={email} />
         </div>
       </div>
@@ -250,7 +261,7 @@ export function DashboardNav({ initials, email, plan = "free" }: Props) {
       {/* Mobile / tablet section row */}
       <nav
         aria-label="Dashboard sections (mobile)"
-        className="lg:hidden flex items-center gap-1 px-4 pb-2.5 overflow-x-auto scrollbar-none"
+        className="lg:hidden flex items-center gap-1 px-5 pb-2.5 overflow-x-auto scrollbar-none"
       >
         {TABS.map((t) => {
           const active = isActive(t.href);
@@ -259,10 +270,10 @@ export function DashboardNav({ initials, email, plan = "free" }: Props) {
               key={t.href}
               href={t.href}
               className={[
-                "text-[12px] px-2.5 py-1.5 rounded-md transition-colors whitespace-nowrap inline-flex items-center",
+                "relative text-[12px] px-2.5 py-1.5 rounded-md transition-colors whitespace-nowrap inline-flex items-center",
                 active
-                  ? "text-[var(--color-ink)] bg-[var(--color-cream-deep)]"
-                  : "text-[var(--color-ink-soft)] hover:bg-[var(--color-cream-deep)]/60",
+                  ? "text-[var(--ink)] font-semibold"
+                  : "text-[var(--ink-soft)] hover:text-[var(--ink)]",
               ].join(" ")}
             >
               {t.label}
@@ -270,17 +281,6 @@ export function DashboardNav({ initials, email, plan = "free" }: Props) {
             </Link>
           );
         })}
-        <Link
-          href="/dashboard/settings"
-          className={[
-            "ml-1 text-[12px] px-2.5 py-1.5 rounded-md transition-colors whitespace-nowrap",
-            isActive("/dashboard/settings")
-              ? "text-[var(--color-ink)] bg-[var(--color-cream-deep)]"
-              : "text-[var(--color-ink-soft)]",
-          ].join(" ")}
-        >
-          Settings
-        </Link>
       </nav>
     </header>
   );

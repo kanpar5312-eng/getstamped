@@ -15,7 +15,7 @@ export type ContactResult =
   | { ok: true; receivedId?: string }
   | { ok: false; error: string };
 
-const SUPPORT_INBOX = process.env.SUPPORT_INBOX ?? "hello@getstamped.app";
+const SUPPORT_INBOX = process.env.SUPPORT_INBOX ?? "getstamped.online@gmail.com";
 const RESPONSE_WINDOW_HOURS = 24;
 
 /**

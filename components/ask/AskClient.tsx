@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { MOCK_THREADS, SUGGESTED_QUESTIONS, type Message, type Scope, type Thread } from "@/lib/mock-threads";
+import { TypedText } from "@/components/ask/TypedText";
 import { timeAgo } from "@/lib/relative-time";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { deleteThread as deleteThreadAction, setMessageHelpful, setMessageSaved } from "@/app/actions/ai-threads";
@@ -44,7 +45,7 @@ function renderInline(text: string): React.ReactNode {
       const end = text.indexOf("`", i + 1);
       if (end > -1) {
         out.push(
-          <code key={i} className="rounded-md bg-[var(--color-cream-deep)] px-1 py-0.5 font-mono text-[0.85em]">
+          <code key={i} className="rounded-md bg-[var(--color-paper-deep)] px-1 py-0.5 font-mono text-[0.85em]">
             {text.slice(i + 1, end)}
           </code>,
         );
@@ -181,6 +182,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
         role: "assistant",
         content: answer,
         createdAt: new Date(),
+        fresh: true,
       };
       setThreads((ts) =>
         ts.map((t) => {
@@ -279,13 +281,13 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
           className={[
             "w-[280px] flex-shrink-0",
             "lg:block",
-            sidebarOpen ? "fixed inset-y-0 left-0 z-40 w-[280px] bg-[var(--color-cream-soft)] p-4 overflow-y-auto" : "hidden lg:block",
+            sidebarOpen ? "fixed inset-y-0 left-0 z-40 w-[280px] bg-[var(--color-paper-soft)] p-4 overflow-y-auto" : "hidden lg:block",
           ].join(" ")}
         >
           <button
             type="button"
             onClick={newThread}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-forest)] px-4 py-2.5 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-persimmon)] px-4 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors"
           >
             + New question
           </button>
@@ -315,8 +317,8 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                     className={[
                       "w-full text-left rounded-lg px-3 py-2.5 transition-colors",
                       isActive
-                        ? "bg-[var(--color-cream-deep)] text-[var(--color-ink)]"
-                        : "hover:bg-[var(--color-cream-deep)]/40 text-[var(--color-ink-soft)]",
+                        ? "bg-[var(--color-paper-deep)] text-[var(--color-ink)]"
+                        : "hover:bg-[var(--color-paper-deep)]/40 text-[var(--color-ink-soft)]",
                     ].join(" ")}
                   >
                     <div className="text-xs font-medium truncate">{t.title}</div>
@@ -408,7 +410,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
             {!active ? (
               // Empty state
               <div className="text-center max-w-xl mx-auto py-12">
-                <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-cream-soft)] p-8">
+                <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-paper-soft)] p-8">
                   <h2 className="font-display text-2xl tracking-tight text-[var(--color-ink)] leading-snug">
                     Ask anything about your F-1
                   </h2>
@@ -421,7 +423,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                         key={q}
                         type="button"
                         onClick={() => { setInput(q); setTimeout(send, 50); }}
-                        className="rounded-full bg-[var(--color-cream)] border border-[var(--color-border-soft)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-deep)] px-3 py-1.5 text-xs text-[var(--color-ink-soft)] transition-colors"
+                        className="rounded-full bg-[var(--color-paper)] border border-[var(--color-border-soft)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-deep)] px-3 py-1.5 text-xs text-[var(--color-ink-soft)] transition-colors"
                       >
                         {q}
                       </button>
@@ -434,23 +436,39 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                 {active.messages.map((m) => {
                   if (m.role === "user") {
                     return (
-                      <div key={m.id} className="ml-auto max-w-[80%] rounded-2xl rounded-tr-md bg-[var(--color-accent)] text-[var(--color-cream-soft)] px-4 py-2.5 text-sm leading-relaxed animate-bubble-in-right">
+                      <div key={m.id} className="ml-auto max-w-[80%] rounded-2xl rounded-tr-md bg-[var(--color-accent)] text-[var(--color-paper-soft)] px-4 py-2.5 text-sm leading-relaxed animate-bubble-in-right">
                         {m.content}
                       </div>
                     );
                   }
                   return (
-                    <div key={m.id} className="max-w-[90%] animate-bubble-in-left">
-                      <div className="rounded-2xl rounded-tl-md bg-[var(--color-cream-soft)] border border-[var(--color-border-soft)] text-[var(--color-ink)] px-4 py-3 text-sm leading-relaxed">
-                        {renderMarkdown(m.content)}
+                    <div key={m.id} className="max-w-[78ch] animate-bubble-in-left">
+                      <div
+                        className="ask-answer text-[var(--color-ink)]"
+                        style={{
+                          fontFamily: "var(--font-sans-stack)",
+                          fontSize: "16px",
+                          lineHeight: 1.65,
+                          letterSpacing: "-0.005em",
+                        }}
+                      >
+                        {m.fresh ? (
+                          <TypedText
+                            text={m.content}
+                            cps={32}
+                            renderFinal={(t) => renderMarkdown(t)}
+                          />
+                        ) : (
+                          renderMarkdown(m.content)
+                        )}
                       </div>
-                      <div className="mt-2 flex items-center gap-3 text-[var(--color-muted)]">
+                      <div className="mt-3 flex items-center gap-3 text-[var(--color-muted)]">
                         <span className="text-[11px]">Was this helpful?</span>
                         <button
                           type="button"
                           onClick={() => toggleHelpful(m.id, true)}
                           aria-label="Helpful"
-                          className={m.helpful === true ? "text-[var(--color-forest)]" : "hover:text-[var(--color-ink)] transition-colors"}
+                          className={m.helpful === true ? "text-[var(--color-ink)]" : "hover:text-[var(--color-ink)] transition-colors"}
                         >
                           <ThumbsUp filled={m.helpful === true} />
                         </button>
@@ -476,7 +494,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                 })}
 
                 {sending && (
-                  <div className="max-w-[60%] inline-flex items-center gap-1.5 rounded-2xl rounded-tl-md bg-[var(--color-cream-soft)] border border-[var(--color-border-soft)] px-4 py-3 animate-bubble-in-left">
+                  <div className="inline-flex items-center gap-1.5 animate-bubble-in-left">
                     <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-muted)] animate-typing-dot" />
                     <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-muted)] animate-typing-dot" style={{ animationDelay: "0.15s" }} />
                     <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-muted)] animate-typing-dot" style={{ animationDelay: "0.3s" }} />
@@ -490,7 +508,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
           <div className="border-t border-[var(--color-border-soft)] pt-4">
             {/* Scope chips + counter */}
             <div className="flex items-center justify-between gap-3 mb-2">
-              <div className="inline-flex rounded-lg bg-[var(--color-cream-deep)] p-0.5 text-xs">
+              <div className="inline-flex rounded-lg bg-[var(--color-paper-deep)] p-0.5 text-xs">
                 {(["general", "step", "documents", "interview"] as Scope[]).map((s) => (
                   <button
                     key={s}
@@ -515,10 +533,10 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
             </div>
 
             {exhausted ? (
-              <div className="rounded-xl border border-[var(--color-forest)] bg-[var(--color-forest)] text-[var(--color-cream-soft)] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="rounded-xl border border-[var(--color-ink)] bg-[var(--color-persimmon)] text-[var(--color-paper-soft)] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm">You&rsquo;ve used all 3 free questions. $19 unlocks unlimited.</p>
                 <Link href="/dashboard/upgrade">
-                  <button type="button" className="rounded-lg bg-[var(--color-cream-soft)] text-[var(--color-forest)] px-4 py-2 text-sm font-medium">
+                  <button type="button" className="rounded-lg bg-[var(--color-paper-soft)] text-[var(--color-ink)] px-4 py-2 text-sm font-medium">
                     Upgrade
                   </button>
                 </Link>
@@ -543,7 +561,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                   type="button"
                   onClick={send}
                   disabled={!input.trim() || sending}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--color-forest)] text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors disabled:opacity-50"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--color-persimmon)] text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-50"
                   aria-label="Send"
                 >
                   <PaperPlane />

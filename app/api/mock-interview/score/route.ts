@@ -63,6 +63,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Mock interview scoring is a paid-plan feature." }, { status: 402 });
   }
 
+  // Resolve the destination country for officer persona.
+  // F-1 preservation: default to US / F-1 when no selection exists.
+  let countryName = "United States";
+  let visaType = "F-1 Student Visa";
+  const { data: sel } = await sb
+    .from("user_country_selection")
+    .select("country_code")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (sel?.country_code && sel.country_code !== "US") {
+    const { data: c } = await sb
+      .from("visa_countries")
+      .select("name, visa_type")
+      .eq("code", sel.country_code)
+      .maybeSingle();
+    if (c?.name) countryName = c.name;
+    if (c?.visa_type) visaType = c.visa_type;
+  }
+
   const groq = getGroq();
   if (!groq) {
     return NextResponse.json({
@@ -71,7 +90,7 @@ export async function POST(req: Request) {
     });
   }
 
-  const system = `You are a US F-1 visa officer evaluating a mock interview answer.
+  const system = `You are a ${countryName} visa officer conducting a ${visaType} interview and evaluating a mock answer.
 Be brutal but constructive. Return STRICT JSON with three fields, no prose, no markdown:
 {
   "worked": "what was strong (1 sentence, max 18 words)",

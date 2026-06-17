@@ -2,10 +2,15 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { inter, instrumentSerif } from "@/lib/fonts";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import { PricingProvider } from "@/lib/PricingContext";
-import { ThemeProvider, type Theme } from "@/lib/ThemeContext";
+import { CountryProvider } from "@/lib/countryContext";
+import { Suspense } from "react";
 import { CookieBanner } from "@/components/ui/CookieBanner";
 import { Analytics } from "@/components/ui/Analytics";
+import { NavigationProgress } from "@/components/ui/NavigationProgress";
+import { IntroGate } from "@/components/intro/IntroGate";
 import type { Currency } from "@/lib/pricing";
 
 export const metadata: Metadata = {
@@ -40,27 +45,31 @@ export default async function RootLayout({
   const storedCurrency = c.get("gs_currency")?.value;
   const initialCurrency: Currency = storedCurrency === "INR" ? "INR" : "USD";
 
-  const storedTheme = c.get("gs_theme")?.value;
-  const initialTheme: Theme = storedTheme === "dark" ? "dark" : "light";
-
   return (
     <html
       lang="en"
       className={[
         inter.variable,
         instrumentSerif.variable,
+        GeistSans.variable,
+        GeistMono.variable,
         "h-full",
-        initialTheme === "dark" ? "dark" : "",
       ].join(" ")}
     >
-      <body className="min-h-full flex flex-col bg-[var(--color-cream)] text-[var(--color-ink)] overflow-x-hidden">
-        <ThemeProvider initial={initialTheme}>
-          <PricingProvider initial={initialCurrency}>
-            {children}
+      <body className="min-h-full flex flex-col bg-[var(--color-paper)] text-[var(--color-ink)] overflow-x-hidden">
+        <PricingProvider initial={initialCurrency}>
+          <CountryProvider>
+            <Suspense fallback={null}>
+              <NavigationProgress />
+            </Suspense>
+            <IntroGate />
+            <div className="page-fade">
+              {children}
+            </div>
             <CookieBanner />
             <Analytics domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN ?? null} />
-          </PricingProvider>
-        </ThemeProvider>
+          </CountryProvider>
+        </PricingProvider>
       </body>
     </html>
   );

@@ -19,7 +19,7 @@ function scorePassword(p: string): {
   hint: string;
   color: string;
 } {
-  if (!p) return { score: 0, label: "Empty",  hint: "8+ characters with a number or symbol.", color: "bg-[var(--color-cream-deep)]" };
+  if (!p) return { score: 0, label: "Empty",  hint: "8+ characters with a number or symbol.", color: "bg-[var(--color-paper-deep)]" };
   if (p.length < 8) return { score: 1, label: "Too short", hint: `${8 - p.length} more character${8 - p.length === 1 ? "" : "s"}.`, color: "bg-red-400" };
 
   let score = 1;
@@ -169,7 +169,7 @@ export function SignUpForm() {
   if (success) {
     return (
       <div className="text-center space-y-5 animate-fade-up">
-        <span aria-hidden className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-forest)] text-[var(--color-cream-soft)]">
+        <span aria-hidden className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-persimmon)] text-[var(--color-paper-soft)]">
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12l5 5 9-11" /></svg>
         </span>
         <div>
@@ -182,7 +182,7 @@ export function SignUpForm() {
           </p>
         </div>
 
-        <div className="rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-cream)] p-4 text-left text-xs text-[var(--color-ink-soft)] leading-relaxed space-y-2">
+        <div className="rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-paper)] p-4 text-left text-xs text-[var(--color-ink-soft)] leading-relaxed space-y-2">
           <p><strong className="text-[var(--color-ink)]">Can&rsquo;t find it?</strong></p>
           <ul className="list-disc pl-4 space-y-1">
             <li>Check spam / promotions.</li>
@@ -283,7 +283,7 @@ export function SignUpForm() {
                   key={i}
                   className={[
                     "h-1 flex-1 rounded-full transition-colors",
-                    i <= passwordStrength.score ? passwordStrength.color : "bg-[var(--color-cream-deep)]",
+                    i <= passwordStrength.score ? passwordStrength.color : "bg-[var(--color-paper-deep)]",
                   ].join(" ")}
                 />
               ))}
@@ -307,7 +307,7 @@ export function SignUpForm() {
           type="checkbox"
           checked={agreed}
           onChange={(e) => setAgreed(e.target.checked)}
-          className="mt-0.5 h-4 w-4 accent-[var(--color-forest)] focus:ring-4 focus:ring-[var(--color-tg)]/10 rounded shrink-0"
+          className="mt-0.5 h-4 w-4 accent-[var(--color-ink)] focus:ring-4 focus:ring-[var(--color-tg)]/10 rounded shrink-0"
         />
         <span className="text-[11px] text-[var(--color-ink-soft)] leading-snug">
           I,{" "}
@@ -344,7 +344,7 @@ export function SignUpForm() {
       <button
         type="submit"
         disabled={!canSubmit}
-        className="field-rise field-rise-5 w-full inline-flex items-center justify-center rounded-xl bg-[var(--color-forest)] px-5 py-3 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="field-rise field-rise-5 w-full inline-flex items-center justify-center rounded-xl bg-[var(--color-persimmon)] px-5 py-3 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {pending ? (
           <span className="inline-flex items-center gap-2">
@@ -362,7 +362,7 @@ export function SignUpForm() {
           <span className="w-full border-t border-[var(--color-border-soft)]" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-[var(--color-cream-soft)] px-3 text-[10px] uppercase tracking-[0.18em] text-[var(--color-muted)]">or</span>
+          <span className="bg-[var(--color-paper-soft)] px-3 text-[10px] uppercase tracking-[0.18em] text-[var(--color-muted)]">or</span>
         </div>
       </div>
 

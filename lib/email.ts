@@ -35,9 +35,12 @@ function getResend(): Resend | null {
   return cached;
 }
 
+// Transactional + personal `From:` addresses must stay on the verified Resend
+// domain — Resend rejects sends from Gmail. User-facing reply-to + support
+// inbox is the GetStamped Gmail.
 const DEFAULT_FROM_TRANSACTIONAL = "GetStamped <noreply@getstamped.app>";
 const DEFAULT_FROM_PERSONAL      = "Parneet at GetStamped <hello@getstamped.app>";
-const DEFAULT_SUPPORT_REPLY      = "hello@getstamped.app";
+const DEFAULT_SUPPORT_REPLY      = "getstamped.online@gmail.com";
 
 export type FromKind = "transactional" | "personal";
 export type SendResult = { ok: true; id: string } | { ok: false; error: string };

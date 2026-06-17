@@ -48,7 +48,7 @@ export function Reality() {
   return (
     <section
       aria-labelledby="reality-heading"
-      className="w-full bg-[var(--color-cream)] py-24 lg:py-32"
+      className="w-full bg-[var(--color-paper)] py-24 lg:py-32"
     >
       <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-10">
         <div className="pb-10">
@@ -68,7 +68,7 @@ export function Reality() {
           <div className="flex flex-col gap-12">
             {PAINS.map((p) => (
               <div key={p.n}>
-                <div className="font-mono text-xs text-[var(--color-forest)] tracking-[0.05em]">
+                <div className="font-mono text-xs text-[var(--color-ink)] tracking-[0.05em]">
                   {p.n}
                 </div>
                 <p className="mt-3 text-base sm:text-[17px] leading-relaxed text-[var(--color-ink)] max-w-[520px]">

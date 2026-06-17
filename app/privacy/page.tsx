@@ -93,7 +93,7 @@ export default function PrivacyPage() {
             <p>
               You can request a copy of your data, request deletion, or ask
               us to correct anything inaccurate by emailing
-              hello@getstamped.app. We will respond within seven days.
+              getstamped.online@gmail.com. We will respond within seven days.
               Deletion requests are honored within fourteen days.
             </p>
           ),

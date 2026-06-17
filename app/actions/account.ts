@@ -118,7 +118,7 @@ ${reason}
 
 — Action required: verify charge in Stripe, issue refund within 14-day window if eligible, reply to ${email}.`;
 
-  const supportInbox = process.env.SUPPORT_INBOX ?? "hello@getstamped.app";
+  const supportInbox = process.env.SUPPORT_INBOX ?? "getstamped.online@gmail.com";
   await sendMail({
     to: supportInbox,
     subject,

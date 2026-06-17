@@ -59,7 +59,7 @@ function StatusBlock({ view }: { view: StepView }) {
       return (
         <span
           aria-hidden
-          className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--color-forest)] text-[var(--color-cream-soft)]"
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--color-persimmon)] text-[var(--color-paper-soft)]"
         >
           <CheckIcon />
         </span>
@@ -86,7 +86,7 @@ function StatusBlock({ view }: { view: StepView }) {
       return (
         <span
           aria-hidden
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-cream-deep)]/50 text-[var(--color-muted)]"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-paper-deep)]/50 text-[var(--color-muted)]"
         >
           <LockIcon />
         </span>
@@ -167,7 +167,7 @@ export function StepRow({ view, onLockedClick }: Props) {
       </div>
       <span className="flex-shrink-0 inline-flex items-center">
         {view.status === "complete" && (
-          <span className="text-[11px] font-medium text-[var(--color-forest)] group-hover:text-[var(--color-forest-deep)] transition-colors">
+          <span className="text-[11px] font-medium text-[var(--color-ink)] group-hover:text-[var(--color-ink-deep)] transition-colors">
             Review →
           </span>
         )}
@@ -182,7 +182,7 @@ export function StepRow({ view, onLockedClick }: Props) {
           </span>
         )}
         {view.status === "locked" && (
-          <span className="inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-medium bg-[var(--color-forest)] text-[var(--color-cream-soft)] group-hover:bg-[var(--color-forest-deep)] transition-colors">
+          <span className="inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-medium bg-[var(--color-persimmon)] text-[var(--color-paper-soft)] group-hover:bg-[var(--color-persimmon-deep)] transition-colors">
             Unlock
           </span>
         )}
@@ -192,7 +192,7 @@ export function StepRow({ view, onLockedClick }: Props) {
 
   const wrapperClass =
     "group w-full text-left flex items-center gap-4 px-4 sm:px-5 py-4 " +
-    "hover:bg-[var(--color-cream-deep)]/40 transition-colors " +
+    "hover:bg-[var(--color-paper-deep)]/40 transition-colors " +
     "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--color-accent)]/10";
 
   if (view.status === "locked") {

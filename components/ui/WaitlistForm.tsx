@@ -45,12 +45,12 @@ export function WaitlistForm({ variant = "light", source }: Props) {
 
   const isDark = variant === "dark";
   const inputStyles = isDark
-    ? "bg-transparent border-white/25 text-[var(--color-cream-soft)] placeholder:text-[var(--color-cream-soft)]/50 focus:border-[var(--color-cream-soft)]/60"
+    ? "bg-transparent border-white/25 text-[var(--color-paper-soft)] placeholder:text-[var(--color-paper-soft)]/50 focus:border-[var(--color-paper-soft)]/60"
     : "bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-ink)] placeholder:text-[var(--color-muted)]/70 focus:border-[var(--color-accent)]";
 
   const btnStyles = isDark
-    ? "bg-[var(--color-cream-soft)] text-[var(--color-forest)] hover:bg-[var(--color-cream)]"
-    : "bg-[var(--color-forest)] text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)]";
+    ? "bg-[var(--color-paper-soft)] text-[var(--color-ink)] hover:bg-[var(--color-paper)]"
+    : "bg-[var(--color-persimmon)] text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)]";
 
   if (result.kind === "success") {
     return (
@@ -58,11 +58,11 @@ export function WaitlistForm({ variant = "light", source }: Props) {
         className={
           "flex items-center gap-3 rounded-xl px-4 py-3 text-sm animate-fade-up " +
           (isDark
-            ? "bg-[var(--color-cream-soft)]/10 border border-[var(--color-cream-soft)]/30 text-[var(--color-cream-soft)]"
-            : "bg-[var(--color-forest)]/[0.08] border border-[var(--color-forest)]/20 text-[var(--color-forest)]")
+            ? "bg-[var(--color-paper-soft)]/10 border border-[var(--color-paper-soft)]/30 text-[var(--color-paper-soft)]"
+            : "bg-[var(--color-persimmon)]/[0.08] border border-[var(--color-ink)]/20 text-[var(--color-ink)]")
         }
       >
-        <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-current text-[var(--color-cream-soft)]">
+        <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-current text-[var(--color-paper-soft)]">
           <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <path d="M5 12l5 5 9-11" />
           </svg>

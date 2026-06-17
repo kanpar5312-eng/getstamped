@@ -141,9 +141,9 @@ export default function DPAPage() {
                 .
               </p>
 
-              <div className="mt-4 rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] overflow-hidden">
+              <div className="mt-4 rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] overflow-hidden">
                 <table className="w-full text-[14px]">
-                  <thead className="bg-[var(--color-cream-deep)] text-[var(--color-ink-soft)]">
+                  <thead className="bg-[var(--color-paper-deep)] text-[var(--color-ink-soft)]">
                     <tr>
                       <th className="px-3 py-2 text-left font-medium">Sub-processor</th>
                       <th className="px-3 py-2 text-left font-medium">Purpose</th>

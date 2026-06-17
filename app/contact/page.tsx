@@ -13,7 +13,7 @@ export default function ContactPage() {
   return (
     <>
       <Header />
-      <main className="flex-1 pt-32 lg:pt-40 pb-24 lg:pb-32 bg-[var(--color-cream)]">
+      <main className="flex-1 pt-32 lg:pt-40 pb-24 lg:pb-32 bg-[var(--color-paper)]">
         <ContactClient />
       </main>
       <Footer />

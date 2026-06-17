@@ -63,7 +63,7 @@ export function Modal({
         className={[
           "relative w-full animate-fade-up",
           "rounded-2xl border border-white/40",
-          "bg-[var(--color-cream-soft)]/95",
+          "bg-[var(--color-paper-soft)]/95",
           "backdrop-blur-2xl backdrop-saturate-150",
           "ring-1 ring-white/30",
           "shadow-[0_40px_100px_-30px_rgba(20,33,28,0.5)]",
@@ -89,7 +89,7 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="absolute top-0 right-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--color-muted)] hover:bg-[var(--color-cream-deep)] hover:text-[var(--color-ink)] transition-colors"
+            className="absolute top-0 right-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--color-muted)] hover:bg-[var(--color-paper-deep)] hover:text-[var(--color-ink)] transition-colors"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M6 6l12 12" />

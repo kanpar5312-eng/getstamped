@@ -1,16 +1,14 @@
 import { PHASE_META } from "@/lib/steps";
+import { CountUp } from "@/components/dashboard/CountUp";
 
-/**
- * 5-phase visa journey stepper. Always visible at the top of the dashboard
- * home page so the surface never reads as purposeless.
- *
- *   • Complete phases — ink-filled dot, ink label
- *   • Current phase  — ember dot with soft ring, ember label
- *   • Upcoming       — stone outline, stone label
- *
- * Renders inline. Pulls phase data from PHASE_META + the dashboard's
- * computed `currentPhase`. No client-side state.
- */
+const PHASE_LABELS: Record<number, string> = {
+  1: "Before your I-20",
+  2: "After I-20 arrival",
+  3: "DS-160 and fees",
+  4: "Interview prep",
+  5: "Post-approval",
+};
+
 export function PhaseStepper({
   currentPhase,
   stepsComplete,
@@ -18,46 +16,41 @@ export function PhaseStepper({
   currentPhase: number | null;
   stepsComplete: number;
 }) {
-  // If no current phase (visa stamped, etc.), treat all 5 as complete.
   const effectiveCurrent = currentPhase ?? 6;
 
   return (
-    <section data-stagger="" style={{ "--stagger-index": 0 } as React.CSSProperties}>
+    <section
+      data-stagger=""
+      style={{ "--stagger-index": 0 } as React.CSSProperties}
+    >
       <header className="flex items-baseline justify-between gap-4">
         <span data-eyebrow="">Visa journey</span>
-        <span className="text-[12px] text-[var(--stone,#8E8985)] tabular-nums">
-          {stepsComplete} of 47 steps
+        <span className="text-[13px] text-[var(--stone)] tabular-nums">
+          <CountUp value={stepsComplete} /> of 47 steps
         </span>
       </header>
 
-      <ol className="phase-stepper mt-4 list-none p-0">
-        {PHASE_META.map((p, i) => {
-          const state =
-            p.number < effectiveCurrent
-              ? "complete"
-              : p.number === effectiveCurrent
-              ? "current"
-              : "upcoming";
-          const railState = p.number < effectiveCurrent ? "complete" : "upcoming";
-          return (
-            <li
-              key={p.id}
-              className="phase-step"
-              data-state={state}
-            >
-              <div className="flex items-center w-full">
+      <div className="phase-stepper mt-4">
+        <span className="phase-track" aria-hidden />
+        <ol className="phase-row">
+          {PHASE_META.map((p) => {
+            const state =
+              p.number < effectiveCurrent
+                ? "complete"
+                : p.number === effectiveCurrent
+                ? "current"
+                : "upcoming";
+            return (
+              <li key={p.id} className="phase-step" data-state={state}>
                 <span className="phase-step-dot" aria-hidden />
-                {i < PHASE_META.length - 1 && (
-                  <span className="phase-step-rail" data-state={railState} aria-hidden />
-                )}
-              </div>
-              <span className="phase-step-label">
-                Phase {p.number} · {p.name}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
+                <span className="phase-step-label">
+                  Phase {p.number} · {PHASE_LABELS[p.number] ?? p.name}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
     </section>
   );
 }

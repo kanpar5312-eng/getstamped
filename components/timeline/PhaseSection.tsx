@@ -55,7 +55,7 @@ export function PhaseSection({
       }}
     >
       {/* Phase header card */}
-      <div className="rounded-2xl bg-[var(--color-cream-soft)] p-6 sm:p-7 mb-4">
+      <div className="rounded-2xl bg-[var(--color-paper-soft)] p-6 sm:p-7 mb-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-accent-deep)]">
@@ -66,7 +66,7 @@ export function PhaseSection({
             </h2>
           </div>
           <div className="text-right">
-            <div className="font-display text-2xl text-[var(--color-forest)] tabular-nums leading-none">
+            <div className="font-display text-2xl text-[var(--color-ink)] tabular-nums leading-none">
               {phase.completed}/{phase.total}
             </div>
             <p className="mt-1 text-[10px] uppercase tracking-[0.14em] font-medium text-[var(--color-muted)]">
@@ -96,7 +96,7 @@ export function PhaseSection({
 
       {/* Steps list */}
       {visibleSteps.length > 0 ? (
-        <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] overflow-hidden divide-y divide-[var(--color-border-soft)]">
+        <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] overflow-hidden divide-y divide-[var(--color-border-soft)]">
           {visibleSteps.map((view) => (
             <StepRow
               key={view.step.number}
@@ -106,7 +106,7 @@ export function PhaseSection({
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-cream-soft)] p-5 text-center text-sm text-[var(--color-ink-soft)]">
+        <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-paper-soft)] p-5 text-center text-sm text-[var(--color-ink-soft)]">
           {emptyMessage(filter)}
         </div>
       )}

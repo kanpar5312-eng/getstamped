@@ -34,7 +34,7 @@ export function UpgradeModal({ open, onClose, fromStep }: Props) {
           <Link href="/dashboard/upgrade" onClick={onClose}>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-forest)] px-5 py-2.5 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-persimmon)] px-5 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors"
             >
               Upgrade now →
             </button>
@@ -48,7 +48,7 @@ export function UpgradeModal({ open, onClose, fromStep }: Props) {
       </p>
 
       <div className="mt-6 text-center">
-        <div className="font-display text-4xl tracking-tight text-[var(--color-forest)] tabular-nums leading-none">
+        <div className="font-display text-4xl tracking-tight text-[var(--color-ink)] tabular-nums leading-none">
           {formatPrice(solo)}
         </div>
         <p className="mt-2 text-xs text-[var(--color-muted)]">

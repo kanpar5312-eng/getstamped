@@ -15,8 +15,8 @@ export default function OpenGraphImage() {
           flexDirection: "column",
           padding: "72px 88px",
           background:
-            "linear-gradient(135deg, #f5efe4 0%, #faf6ed 60%, #ece4d3 100%)",
-          color: "#14211c",
+            "linear-gradient(135deg, #F7F3EC 0%, #FFFFFF 60%, #EDE7DA 100%)",
+          color: "#1C1B1A",
           fontFamily: "Georgia, serif",
         }}
       >
@@ -27,7 +27,7 @@ export default function OpenGraphImage() {
               width: 22,
               height: 22,
               borderRadius: 5,
-              background: "#143a2f",
+              background: "#FF5B2E",
             }}
           />
           <div
@@ -35,6 +35,7 @@ export default function OpenGraphImage() {
               fontSize: 28,
               letterSpacing: "-0.02em",
               fontWeight: 500,
+              color: "#FF5B2E",
             }}
           >
             GetStamped
@@ -48,8 +49,8 @@ export default function OpenGraphImage() {
               letterSpacing: "0.18em",
               textTransform: "uppercase",
               borderRadius: 999,
-              background: "#143a2f",
-              color: "#faf6ed",
+              background: "#FF5B2E",
+              color: "#FFFFFF",
             }}
           >
             F-1 visa
@@ -71,7 +72,7 @@ export default function OpenGraphImage() {
           <div>The only F-1 visa prep</div>
           <div>
             tool you&rsquo;ll ever{" "}
-            <span style={{ color: "#143a2f", fontStyle: "italic" }}>need</span>.
+            <span style={{ color: "#FF5B2E", fontStyle: "italic" }}>need</span>.
           </div>
         </div>
 
@@ -80,7 +81,7 @@ export default function OpenGraphImage() {
           style={{
             marginTop: 36,
             fontSize: 26,
-            color: "#2a3a33",
+            color: "#55524F",
             fontFamily: "Helvetica, sans-serif",
             lineHeight: 1.4,
             maxWidth: 880,
@@ -98,7 +99,7 @@ export default function OpenGraphImage() {
             marginTop: "auto",
             fontFamily: "Helvetica, sans-serif",
             fontSize: 16,
-            color: "#2a3a33",
+            color: "#55524F",
           }}
         >
           {["47 ordered steps", "Voice mock interviews", "Document vault", "Parent View"].map(
@@ -108,7 +109,7 @@ export default function OpenGraphImage() {
                 style={{
                   padding: "8px 16px",
                   borderRadius: 999,
-                  border: "1px solid #e2d8c6",
+                  border: "1px solid #E3DDD0",
                   background: "#ffffff",
                   display: "flex",
                   alignItems: "center",

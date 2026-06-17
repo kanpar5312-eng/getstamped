@@ -13,6 +13,8 @@ export type Message = {
   createdAt: Date;
   helpful?: boolean | null;
   saved?: boolean;
+  /** Marks a freshly-generated assistant reply so the client can stream it. */
+  fresh?: boolean;
 };
 
 export type Thread = {

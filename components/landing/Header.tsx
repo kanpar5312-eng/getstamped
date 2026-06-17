@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { BrandMark } from "@/components/ui/BrandMark";
 
 const NAV = [
   { label: "Features", href: "/#features" },
   { label: "How it works", href: "/#how-it-works" },
   { label: "Pricing", href: "/#pricing" },
   { label: "FAQ", href: "/#faq" },
+  { label: "Support", href: "/support" },
 ];
 
 function MenuIcon({ open }: { open: boolean }) {
@@ -53,7 +55,7 @@ export function Header() {
         "fixed top-0 left-0 right-0 z-50",
         "transition-[background-color,backdrop-filter,border-color] duration-500 ease-out",
         scrolled
-          ? "bg-[var(--color-cream-soft)]/75 backdrop-blur-2xl backdrop-saturate-150 border-b border-white/40"
+          ? "bg-[var(--color-paper-soft)]/75 backdrop-blur-2xl backdrop-saturate-150 border-b border-white/40"
           : "bg-transparent border-b border-transparent",
       ].join(" ")}
     >
@@ -68,19 +70,16 @@ export function Header() {
         <Link
           href="/"
           aria-label="GetStamped — home"
-          className="inline-flex items-center gap-2"
+          className={[
+            "inline-flex items-center gap-2 transition-colors duration-500",
+            scrolled ? "text-[var(--color-ink)]" : "text-white",
+          ].join(" ")}
         >
-          <span
-            aria-hidden
-            className={[
-              "block h-3 w-3 rounded-sm transition-colors duration-500",
-              scrolled ? "bg-[var(--color-forest)]" : "bg-[#FAF6ED]",
-            ].join(" ")}
-          />
+          <BrandMark size={28} priority />
           <span
             className={[
               "font-display text-[22px] leading-none tracking-tight transition-colors duration-500",
-              scrolled ? "text-[var(--color-ink)]" : "text-[#FAF6ED]",
+              scrolled ? "text-[var(--color-ink)]" : "text-[#FFFFFF]",
             ].join(" ")}
             style={!scrolled ? { textShadow: "0 1px 12px rgba(0,0,0,0.55)" } : undefined}
           >
@@ -97,8 +96,8 @@ export function Header() {
               className={[
                 "text-sm px-3 py-1.5 rounded-md transition-colors duration-300",
                 scrolled
-                  ? "text-[var(--color-ink-soft)] hover:text-[var(--color-ink)] hover:bg-[var(--color-cream-deep)]/60"
-                  : "text-[rgba(250,246,237,0.82)] hover:text-[#FAF6ED] hover:bg-white/10",
+                  ? "text-[var(--color-ink-soft)] hover:text-[var(--color-ink)] hover:bg-[var(--color-paper-deep)]/60"
+                  : "text-[rgba(250,246,237,0.82)] hover:text-[#FFFFFF] hover:bg-white/10",
               ].join(" ")}
               style={!scrolled ? { textShadow: "0 1px 10px rgba(0,0,0,0.55)" } : undefined}
             >
@@ -115,7 +114,7 @@ export function Header() {
               "text-sm px-3 py-1.5 rounded-md transition-colors duration-300",
               scrolled
                 ? "text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]"
-                : "text-[rgba(250,246,237,0.85)] hover:text-[#FAF6ED]",
+                : "text-[rgba(250,246,237,0.85)] hover:text-[#FFFFFF]",
             ].join(" ")}
             style={!scrolled ? { textShadow: "0 1px 10px rgba(0,0,0,0.55)" } : undefined}
           >
@@ -126,8 +125,8 @@ export function Header() {
             className={[
               "inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-300",
               scrolled
-                ? "bg-[var(--color-forest)] text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)]"
-                : "bg-[#FAF6ED] text-[#14211c] hover:bg-[#ECE4D3]",
+                ? "bg-[var(--color-persimmon)] text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)]"
+                : "bg-[#FFFFFF] text-[#1C1B1A] hover:bg-[#EDE7DA]",
             ].join(" ")}
             style={
               !scrolled
@@ -149,7 +148,7 @@ export function Header() {
             "md:hidden inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors duration-300",
             scrolled
               ? "border-[var(--color-border-soft)] bg-[var(--color-surface)] text-[var(--color-ink-soft)]"
-              : "border-white/25 bg-white/10 text-[#FAF6ED] backdrop-blur-md",
+              : "border-white/25 bg-white/10 text-[#FFFFFF] backdrop-blur-md",
           ].join(" ")}
         >
           <MenuIcon open={mobileOpen} />
@@ -158,14 +157,14 @@ export function Header() {
 
       {/* Mobile glass dropdown */}
       {mobileOpen && (
-        <div className="md:hidden mx-4 mb-4 rounded-2xl border border-white/40 bg-[var(--color-cream-soft)]/95 backdrop-blur-2xl backdrop-saturate-150 ring-1 ring-white/30 shadow-[0_30px_80px_-30px_rgba(20,33,28,0.25)] p-4 animate-fade-up">
+        <div className="md:hidden mx-4 mb-4 rounded-2xl border border-white/40 bg-[var(--color-paper-soft)]/95 backdrop-blur-2xl backdrop-saturate-150 ring-1 ring-white/30 shadow-[0_30px_80px_-30px_rgba(20,33,28,0.25)] p-4 animate-fade-up">
           <nav aria-label="Mobile" className="flex flex-col gap-1">
             {NAV.map((n) => (
               <Link
                 key={n.href}
                 href={n.href}
                 onClick={() => setMobileOpen(false)}
-                className="text-sm text-[var(--color-ink)] px-3 py-2 rounded-md hover:bg-[var(--color-cream-deep)] transition-colors"
+                className="text-sm text-[var(--color-ink)] px-3 py-2 rounded-md hover:bg-[var(--color-paper-deep)] transition-colors"
               >
                 {n.label}
               </Link>
@@ -174,14 +173,14 @@ export function Header() {
               <Link
                 href="/sign-in"
                 onClick={() => setMobileOpen(false)}
-                className="text-sm text-[var(--color-ink-soft)] px-3 py-2 rounded-md hover:bg-[var(--color-cream-deep)] transition-colors"
+                className="text-sm text-[var(--color-ink-soft)] px-3 py-2 rounded-md hover:bg-[var(--color-paper-deep)] transition-colors"
               >
                 Sign in
               </Link>
               <Link
                 href="/sign-up"
                 onClick={() => setMobileOpen(false)}
-                className="inline-flex items-center justify-center rounded-lg bg-[var(--color-forest)] px-4 py-2 text-sm font-medium text-[var(--color-cream-soft)]"
+                className="inline-flex items-center justify-center rounded-lg bg-[var(--color-persimmon)] px-4 py-2 text-sm font-medium text-[var(--color-paper-soft)]"
               >
                 Start free
               </Link>

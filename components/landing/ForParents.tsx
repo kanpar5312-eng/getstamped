@@ -1,4 +1,5 @@
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { Parallax } from "@/components/motion/MotionKit";
 
 function CustomCheck({ className = "" }: { className?: string }) {
   return (
@@ -29,12 +30,12 @@ function ParentMockup() {
           className="absolute inset-0 origin-center"
           style={{ transform: "rotate(2deg)", opacity: 0.3 }}
         >
-          <div className="h-full w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-cream-deep)]" />
+          <div className="h-full w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper-deep)]" />
         </div>
 
         {/* Foreground mockup card */}
         <div
-          className="absolute inset-0 origin-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-cream-deep)] p-7 sm:p-8 flex flex-col shadow-[0_30px_80px_-30px_rgba(20,33,28,0.25)]"
+          className="absolute inset-0 origin-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper-deep)] p-7 sm:p-8 flex flex-col shadow-[0_30px_80px_-30px_rgba(20,33,28,0.25)]"
           style={{ transform: "rotate(-2deg)" }}
         >
           <div>
@@ -48,7 +49,7 @@ function ParentMockup() {
 
           <div className="mt-7">
             <div
-              className="h-2 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-cream-soft)] overflow-hidden"
+              className="h-2 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-paper-soft)] overflow-hidden"
               role="progressbar"
               aria-valuemin={0}
               aria-valuemax={47}
@@ -56,7 +57,7 @@ function ParentMockup() {
               aria-label="Application progress"
             >
               <div
-                className="h-full bg-[var(--color-forest)]"
+                className="h-full bg-[var(--color-persimmon)]"
                 style={{ width: `${percent}%` }}
               />
             </div>
@@ -67,13 +68,13 @@ function ParentMockup() {
 
           <ul className="mt-7 space-y-3 text-[13px] text-[var(--color-ink)]">
             <li className="flex items-start gap-3">
-              <span className="mt-[3px] text-[var(--color-forest)]">
+              <span className="mt-[3px] text-[var(--color-ink)]">
                 <CustomCheck />
               </span>
               <span>Mock interview completed yesterday</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="mt-[3px] text-[var(--color-forest)]">
+              <span className="mt-[3px] text-[var(--color-ink)]">
                 <CustomCheck />
               </span>
               <span>Financial documents uploaded 2 days ago</span>
@@ -106,13 +107,15 @@ export function ForParents() {
     <section
       id="parents"
       aria-labelledby="parents-heading"
-      className="w-full bg-[var(--color-cream)] py-24 lg:py-32"
+      className="w-full bg-[var(--color-paper)] py-24 lg:py-32"
     >
       <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-10">
         <div className="grid grid-cols-1 gap-14 lg:grid-cols-12 lg:gap-16 lg:items-center">
           {/* LEFT — visual 55% */}
           <div className="lg:col-span-7 order-1">
-            <ParentMockup />
+            <Parallax speed={0.08}>
+              <ParentMockup />
+            </Parallax>
           </div>
 
           {/* RIGHT — text 45% */}
@@ -139,7 +142,7 @@ export function ForParents() {
             <div className="mt-8 flex items-center gap-4">
               <span
                 aria-hidden
-                className="block h-[2px] w-10 bg-[var(--color-forest)]"
+                className="block h-[2px] w-10 bg-[var(--color-persimmon)]"
               />
               <span className="text-sm text-[var(--color-ink-soft)]">
                 Available with every plan.

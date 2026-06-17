@@ -111,7 +111,7 @@ export default function TermsPage() {
             <p>
               We may suspend access if you violate these terms. You may
               delete your account at any time by emailing
-              hello@getstamped.app.
+              getstamped.online@gmail.com.
             </p>
           ),
         },

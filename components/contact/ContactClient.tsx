@@ -57,7 +57,7 @@ export function ContactClient() {
         <p className="mt-3 text-base text-[var(--color-ink-soft)] leading-relaxed max-w-2xl">
           One person reads every email. Replies within <strong>24 hours</strong> on
           weekdays. If your visa interview is in the next 48 hours, mark the message{" "}
-          <span className="font-mono text-xs bg-[var(--color-cream-deep)] rounded px-1.5 py-0.5">URGENT</span>{" "}
+          <span className="font-mono text-xs bg-[var(--color-paper-deep)] rounded px-1.5 py-0.5">URGENT</span>{" "}
           and I bump it to the front.
         </p>
       </header>
@@ -66,8 +66,8 @@ export function ContactClient() {
         {/* Form */}
         <section>
           {success ? (
-            <div className="rounded-2xl border border-[var(--color-forest)]/30 bg-[var(--color-forest)]/[0.05] p-7 animate-fade-up">
-              <span aria-hidden className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-forest)] text-[var(--color-cream-soft)]">
+            <div className="rounded-2xl border border-[var(--color-ink)]/30 bg-[var(--color-persimmon)]/[0.05] p-7 animate-fade-up">
+              <span aria-hidden className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-persimmon)] text-[var(--color-paper-soft)]">
                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12l5 5 9-11" /></svg>
               </span>
               <h2 className="mt-5 font-display text-2xl tracking-tight text-[var(--color-ink)]">
@@ -121,8 +121,8 @@ export function ContactClient() {
                         className={[
                           "rounded-lg border px-3 py-2 text-left text-xs transition-colors",
                           active
-                            ? "border-[var(--color-forest)] bg-[var(--color-forest)]/[0.06] text-[var(--color-ink)]"
-                            : "border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] text-[var(--color-ink-soft)] hover:border-[var(--color-border)]",
+                            ? "border-[var(--color-ink)] bg-[var(--color-persimmon)]/[0.06] text-[var(--color-ink)]"
+                            : "border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] text-[var(--color-ink-soft)] hover:border-[var(--color-border)]",
                         ].join(" ")}
                       >
                         <span className="block font-medium">{c.label}</span>
@@ -156,7 +156,7 @@ export function ContactClient() {
               <button
                 type="submit"
                 disabled={pending}
-                className="w-full inline-flex items-center justify-center rounded-xl bg-[var(--color-forest)] px-5 py-3 text-sm font-medium text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full inline-flex items-center justify-center rounded-xl bg-[var(--color-persimmon)] px-5 py-3 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {pending ? (
                   <span className="inline-flex items-center gap-2">
@@ -173,7 +173,7 @@ export function ContactClient() {
 
         {/* Sidecar */}
         <aside className="space-y-4">
-          <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-5">
+          <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-5">
             <Eyebrow>Response time</Eyebrow>
             <p className="mt-3 text-sm text-[var(--color-ink)] leading-relaxed">
               <strong>24 hours</strong> on weekdays.{" "}
@@ -181,21 +181,21 @@ export function ContactClient() {
             </p>
             <p className="mt-2 text-xs text-[var(--color-muted)] leading-relaxed">
               Urgent visa-interview matters jump the queue — add{" "}
-              <span className="font-mono bg-[var(--color-cream-deep)] rounded px-1">URGENT</span>{" "}
+              <span className="font-mono bg-[var(--color-paper-deep)] rounded px-1">URGENT</span>{" "}
               to the subject when you reply to the confirmation email.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-5">
+          <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-5">
             <Eyebrow>Other ways</Eyebrow>
             <ul className="mt-3 space-y-1.5 text-sm text-[var(--color-ink-soft)]">
               <li>
                 Email:{" "}
                 <a
-                  href="mailto:hello@getstamped.app"
+                  href="mailto:getstamped.online@gmail.com"
                   className="text-[var(--color-accent-deep)] hover:text-[var(--color-accent)] transition-colors"
                 >
-                  hello@getstamped.app
+                  getstamped.online@gmail.com
                 </a>
               </li>
               <li>
@@ -210,7 +210,7 @@ export function ContactClient() {
             </ul>
           </div>
 
-          <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-5">
+          <div className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-5">
             <Eyebrow>Already a customer?</Eyebrow>
             <p className="mt-3 text-xs text-[var(--color-ink-soft)] leading-relaxed">
               Use the Ask page inside your dashboard for product questions —

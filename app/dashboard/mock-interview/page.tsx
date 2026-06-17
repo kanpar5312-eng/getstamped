@@ -15,5 +15,10 @@ export default async function MockInterviewPage({
 }) {
   const sp = await searchParams;
   const { profile } = await getCurrentUser(sp.state);
-  return <MockInterviewClient plan={profile.plan} />;
+  return (
+    <MockInterviewClient
+      plan={profile.plan}
+      consulate={profile.consulateLocation ?? null}
+    />
+  );
 }

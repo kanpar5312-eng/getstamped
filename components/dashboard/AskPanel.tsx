@@ -110,7 +110,7 @@ export function AskPanel({ open, onClose, stepNumber, freeTier = false }: Props)
             type="button"
             onClick={send}
             disabled={exhausted || !input.trim()}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-forest)] text-[var(--color-cream-soft)] hover:bg-[var(--color-forest-deep)] transition-colors disabled:opacity-50"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-persimmon)] text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-50"
             aria-label="Send question"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -123,7 +123,7 @@ export function AskPanel({ open, onClose, stepNumber, freeTier = false }: Props)
     >
       {/* Scope toggle + quota */}
       <div className="flex items-center justify-between gap-3">
-        <div className="inline-flex rounded-lg bg-[var(--color-cream-deep)] p-0.5 text-xs">
+        <div className="inline-flex rounded-lg bg-[var(--color-paper-deep)] p-0.5 text-xs">
           {(["step", "anything"] as const).map((s) => (
             <button
               key={s}
@@ -162,7 +162,7 @@ export function AskPanel({ open, onClose, stepNumber, freeTier = false }: Props)
             return (
               <div
                 key={m.id}
-                className="animate-bubble-in-right ml-auto max-w-[85%] rounded-2xl rounded-tr-md bg-[var(--color-accent)] text-[var(--color-cream-soft)] px-4 py-2.5 text-sm leading-relaxed"
+                className="animate-bubble-in-right ml-auto max-w-[85%] rounded-2xl rounded-tr-md bg-[var(--color-accent)] text-[var(--color-paper-soft)] px-4 py-2.5 text-sm leading-relaxed"
               >
                 {m.text}
               </div>
@@ -172,7 +172,7 @@ export function AskPanel({ open, onClose, stepNumber, freeTier = false }: Props)
             return (
               <div
                 key={m.id}
-                className="animate-bubble-in-left max-w-[90%] rounded-2xl rounded-tl-md bg-[var(--color-cream-deep)] text-[var(--color-ink)] px-4 py-2.5 text-sm leading-relaxed"
+                className="animate-bubble-in-left max-w-[90%] rounded-2xl rounded-tl-md bg-[var(--color-paper-deep)] text-[var(--color-ink)] px-4 py-2.5 text-sm leading-relaxed"
               >
                 {m.text}
               </div>
@@ -182,7 +182,7 @@ export function AskPanel({ open, onClose, stepNumber, freeTier = false }: Props)
           return (
             <div
               key={m.id}
-              className="animate-bubble-in-left inline-flex max-w-[90%] items-center gap-1.5 rounded-2xl rounded-tl-md bg-[var(--color-cream-deep)] text-[var(--color-ink-soft)] px-4 py-2.5"
+              className="animate-bubble-in-left inline-flex max-w-[90%] items-center gap-1.5 rounded-2xl rounded-tl-md bg-[var(--color-paper-deep)] text-[var(--color-ink-soft)] px-4 py-2.5"
             >
               <span className="h-1 w-1 rounded-full bg-current animate-typing-dot" />
               <span className="h-1 w-1 rounded-full bg-current animate-typing-dot" style={{ animationDelay: "0.15s" }} />

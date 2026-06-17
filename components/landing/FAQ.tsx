@@ -39,7 +39,7 @@ const FAQS = [
 
 export function FAQ() {
   return (
-    <section id="faq" className="w-full bg-[var(--color-cream-soft)] py-24 lg:py-32">
+    <section id="faq" className="w-full bg-[var(--color-paper-soft)] py-24 lg:py-32">
       <div className="mx-auto max-w-3xl px-5 sm:px-6 lg:px-10">
         <div className="text-center">
           <Eyebrow>Frequently asked</Eyebrow>
@@ -51,7 +51,7 @@ export function FAQ() {
         <ul className="mt-12 space-y-2">
           {FAQS.map((item, i) => (
             <li key={i}>
-              <details className="group rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-cream)] open:border-[var(--color-border)] transition-colors">
+              <details className="group rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-paper)] open:border-[var(--color-border)] transition-colors">
                 <summary className="flex items-center justify-between gap-4 cursor-pointer list-none p-5 select-none">
                   <span className="text-base sm:text-[17px] font-medium text-[var(--color-ink)] group-open:text-[var(--color-accent-deep)] transition-colors">
                     {item.q}

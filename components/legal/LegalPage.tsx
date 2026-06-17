@@ -36,7 +36,7 @@ export function LegalPage({ title, effectiveDate, intro, sections }: Props) {
     <>
       <Header />
       <main className="flex-1 pt-32 lg:pt-40">
-        <article className="w-full bg-[var(--color-cream)] pb-24 lg:pb-32">
+        <article className="w-full bg-[var(--color-paper)] pb-24 lg:pb-32">
           <div className="mx-auto max-w-5xl px-5 sm:px-6 lg:px-10">
             <Link
               href="/"
@@ -103,10 +103,10 @@ export function LegalPage({ title, effectiveDate, intro, sections }: Props) {
                 <div className="mt-16 border-t border-[var(--color-border)] pt-6 text-xs text-[var(--color-muted)]">
                   Questions? Email{" "}
                   <a
-                    href="mailto:hello@getstamped.app"
+                    href="mailto:getstamped.online@gmail.com"
                     className="text-[var(--color-ink)] hover:text-[var(--color-accent-deep)] transition-colors"
                   >
-                    hello@getstamped.app
+                    getstamped.online@gmail.com
                   </a>
                   .
                 </div>

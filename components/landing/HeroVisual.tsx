@@ -55,7 +55,7 @@ function Stamp({
   className: string;
   size?: number;
 }) {
-  const stroke = color === "forest" ? "#143A2F" : "#229ED9";
+  const stroke = color === "forest" ? "#FF5B2E" : "#FF5B2E";
   return (
     <div
       className={`absolute ${className}`}
@@ -122,7 +122,7 @@ function InnerDashboard() {
           {STUDENT.phaseLabel}
         </div>
 
-        <div className="mt-3 h-1.5 w-full rounded-full bg-[var(--color-cream-deep)] overflow-hidden">
+        <div className="mt-3 h-1.5 w-full rounded-full bg-[var(--color-paper-deep)] overflow-hidden">
           <div
             className="passport-progress-fill h-full bg-[var(--color-accent)]"
             style={{
@@ -137,7 +137,7 @@ function InnerDashboard() {
         </div>
       </div>
 
-      <div className="mt-3 rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-3">
+      <div className="mt-3 rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-3">
         <div className="text-[9px] uppercase tracking-[0.15em] text-[var(--color-muted)] font-medium">Next step</div>
         <div className="mt-1 flex items-start justify-between gap-2">
           <p className="text-[12px] text-[var(--color-ink)] leading-snug">{STUDENT.nextStep}</p>
@@ -170,8 +170,8 @@ function PassportCover() {
         transformOrigin: "left center",
         backfaceVisibility: "hidden",
         background:
-          "linear-gradient(135deg, #03090b 0%, #0c2a22 28%, #143a2f 58%, #0d2620 80%, #061410 100%)",
-        border: "1px solid #1d4d40",
+          "linear-gradient(135deg, #0A0D11 0%, #3B1812 28%, #FF5B2E 58%, #2A1810 80%, #1A0A05 100%)",
+        border: "1px solid #FF8A66",
         boxShadow:
           "inset 0 0 0 1px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
       }}
@@ -316,7 +316,7 @@ function PassportCover() {
 /* ============================ Passport body ============================== */
 
 function PassportBody() {
-  const bigStroke = "#143A2F";
+  const bigStroke = "#FF5B2E";
 
   return (
     <div
@@ -346,7 +346,7 @@ function PassportBody() {
         className="absolute -left-1.5 top-[3%] bottom-[3%] w-2 rounded-l-md"
         style={{
           background:
-            "linear-gradient(90deg, #02080a 0%, #0a1d19 60%, #143a2f 100%)",
+            "linear-gradient(90deg, #0A0D11 0%, #1A0F0A 60%, #FF5B2E 100%)",
           boxShadow: "inset 1px 0 0 rgba(0,0,0,0.55), inset -1px 0 0 rgba(255,255,255,0.04)",
           transformOrigin: "right center",
           transform: "rotateY(-8deg)",
@@ -393,7 +393,7 @@ function PassportBody() {
             background:
               "linear-gradient(90deg, transparent 49.5%, rgba(0,0,0,0.07) 50%, transparent 50.5%), " +
               "radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 60%), " +
-              "#faf6ed",
+              "#FFFFFF",
             boxShadow:
               "inset 0 0 14px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5)",
           }}
@@ -492,7 +492,7 @@ export function HeroVisual() {
         perspectiveOrigin: "50% 30%",
       }}
     >
-      <div className="relative rounded-2xl border border-white/40 bg-[var(--color-cream-soft)]/70 backdrop-blur-2xl backdrop-saturate-150 ring-1 ring-white/30 shadow-[0_40px_100px_-30px_rgba(20,33,28,0.5)] p-6 sm:p-8 min-h-[520px]">
+      <div className="relative rounded-2xl border border-white/40 bg-[var(--color-paper-soft)]/70 backdrop-blur-2xl backdrop-saturate-150 ring-1 ring-white/30 shadow-[0_40px_100px_-30px_rgba(20,33,28,0.5)] p-6 sm:p-8 min-h-[520px]">
         <PassportBody />
       </div>
     </div>

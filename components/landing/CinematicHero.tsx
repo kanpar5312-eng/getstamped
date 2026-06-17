@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { Magnetic, CountUp } from "@/components/motion/MotionKit";
 
 type Props = {
   totalSignups: number;
@@ -13,7 +14,7 @@ type Props = {
  * Cinematic hero — full-bleed video that plays once, ends on the doors-open
  * frame. Text reveals in a stagger, synced to the video's actual playback
  * (kicks off when the doors hit ~50% open). Bottom edge dissolves into the
- * cream of the next section so Wavly downstream blends in smoothly.
+ * paper of the next section so downstream blends in smoothly.
  *
  * Mac-cool:
  *   • One <video> element, hardware-decoded by the GPU media engine
@@ -36,7 +37,6 @@ export function CinematicHero({ totalSignups, earlyBirdClaimed }: Props) {
     const v = videoRef.current;
     if (!v) return;
 
-    // Autoplay defensively — Safari sometimes blocks without an explicit play()
     const tryPlay = () => v.play().catch(() => { /* user-gesture required, leave poster */ });
 
     const onLoaded = () => {
@@ -44,14 +44,12 @@ export function CinematicHero({ totalSignups, earlyBirdClaimed }: Props) {
       tryPlay();
     };
     const onTime = () => {
-      // Doors mostly open by ~50% — reveal text from here
       if (v.duration > 0 && v.currentTime / v.duration >= 0.45) {
         setRevealed(true);
         v.removeEventListener("timeupdate", onTime);
       }
     };
     const onEnd = () => {
-      // Hold on the last frame forever — pause one frame before end so it doesn't reset
       const last = Math.max(0, v.duration - 0.04);
       v.currentTime = last;
       v.pause();
@@ -62,7 +60,6 @@ export function CinematicHero({ totalSignups, earlyBirdClaimed }: Props) {
     v.addEventListener("timeupdate", onTime);
     v.addEventListener("ended", onEnd);
 
-    // Fail-safe: if `timeupdate` never reaches the threshold, reveal after 3.5s
     const safety = window.setTimeout(() => setRevealed(true), 3500);
 
     return () => {
@@ -84,12 +81,8 @@ export function CinematicHero({ totalSignups, earlyBirdClaimed }: Props) {
           muted
           playsInline
           preload="auto"
-          // No `loop` — we want it to hold on the last frame.
-          // No `poster` — we don't want the unrelated still-image flash before
-          // playback starts; the black bg behind the video is cleaner.
         >
-          <source src="/hero.mp4" type="video/mp4" />
-          <source src="/hero.mov" type="video/quicktime" />
+          <source src="/train.mp4" type="video/mp4" />
         </video>
 
         {/* Gemini watermark mask — bottom-right vignette that blends with the smoke */}
@@ -114,13 +107,13 @@ export function CinematicHero({ totalSignups, earlyBirdClaimed }: Props) {
           }}
         />
 
-        {/* Bottom dissolve — fades to Wavly cream so the next section blends */}
+        {/* Bottom dissolve — fades to paper so the next section blends */}
         <div
           aria-hidden
           className="absolute inset-x-0 bottom-0 h-[28vh] pointer-events-none"
           style={{
             background:
-              "linear-gradient(180deg, transparent 0%, rgba(245,239,228,0.35) 55%, rgba(245,239,228,0.85) 85%, var(--color-cream) 100%)",
+              "linear-gradient(180deg, transparent 0%, rgba(245,239,228,0.35) 55%, rgba(245,239,228,0.85) 85%, var(--color-paper) 100%)",
           }}
         />
       </div>
@@ -139,7 +132,7 @@ export function CinematicHero({ totalSignups, earlyBirdClaimed }: Props) {
         <h1
           className={`hero-cine-line mt-6 font-display text-[2.6rem] sm:text-[3.6rem] lg:text-[4.4rem] leading-[1.04] tracking-tight ${revealed ? "is-visible" : ""}`}
           style={{
-            color: "#FAF6ED",
+            color: "#FFFFFF",
             textShadow: "0 2px 24px rgba(0,0,0,0.55), 0 1px 0 rgba(0,0,0,0.35)",
             transitionDelay: "120ms",
             maxWidth: "20ch",
@@ -165,26 +158,28 @@ export function CinematicHero({ totalSignups, earlyBirdClaimed }: Props) {
           className={`hero-cine-line mt-9 flex flex-wrap items-center justify-center gap-3 ${revealed ? "is-visible" : ""}`}
           style={{ transitionDelay: "420ms" }}
         >
-          <Link href="/dashboard" aria-label="Start free — no card required">
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-medium transition-all duration-300"
-              style={{
-                background: "linear-gradient(180deg, #FAF6ED 0%, #ECE4D3 100%)",
-                color: "#14211c",
-                boxShadow: "0 12px 30px -8px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.6)",
-              }}
-            >
-              Start free — no card required
-            </button>
-          </Link>
+          <Magnetic>
+            <Link href="/dashboard" aria-label="Start free — no card required">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-medium transition-all duration-300"
+                style={{
+                  background: "linear-gradient(180deg, #FFFFFF 0%, #EDE7DA 100%)",
+                  color: "#1C1B1A",
+                  boxShadow: "0 12px 30px -8px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.6)",
+                }}
+              >
+                Start free — no card required
+              </button>
+            </Link>
+          </Magnetic>
           <Link href="#how-it-works">
             <button
               type="button"
               className="inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-medium border transition-colors duration-300"
               style={{
                 background: "rgba(255,255,255,0.06)",
-                color: "#FAF6ED",
+                color: "#FFFFFF",
                 borderColor: "rgba(255,255,255,0.25)",
                 backdropFilter: "blur(8px)",
               }}
@@ -207,13 +202,15 @@ export function CinematicHero({ totalSignups, earlyBirdClaimed }: Props) {
           >
             <span className="h-2 w-2 rounded-full bg-emerald-300 animate-soft-pulse shrink-0" />
             <span className="text-[13px] tracking-tight">
-              <span className="font-display tabular-nums" style={{ color: "#FAF6ED" }}>
-                {totalSignups}
-              </span>{" "}
+              <CountUp
+                to={totalSignups}
+                className="font-display"
+              />{" "}
               on the waitlist ·{" "}
-              <span className="font-display tabular-nums" style={{ color: "#FAF6ED" }}>
-                {earlyBirdClaimed}
-              </span>
+              <CountUp
+                to={earlyBirdClaimed}
+                className="font-display"
+              />
               /100 early-bird spots claimed
             </span>
           </div>

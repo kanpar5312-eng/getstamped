@@ -8,76 +8,115 @@
    ------------------------------------------------------------------------- */
 
 :root {
-  /* Surfaces — cream paper, no pure white */
-  --color-cream: #f5efe4;
-  --color-cream-soft: #faf6ed;
-  --color-cream-deep: #ece4d3;
-  --color-surface: #ffffff;
+  /* ---------- BRAND: Ink + Persimmon + Paper ---------- */
 
-  /* Brand accent — deep forest green */
-  --color-forest: #143a2f;
-  --color-forest-deep: #0e2a22;
-  --color-forest-soft: #1d4d40;
+  /* Paper — warm off-white surfaces */
+  --color-paper:        #F7F3EC;
+  --color-paper-soft:   #FFFFFF;
+  --color-paper-deep:   #EDE7DA;
 
-  /* Touchpoint accent — sky blue (focus rings, status, "tap here") */
-  --color-accent: #229ed9;
-  --color-accent-soft: #2aabee;
-  --color-accent-deep: #1c86b8;
-  --color-accent-tint: #e8f4fb;
+  /* Ink — primary text + brand emphasis */
+  --color-ink:          #1C1B1A;
+  --color-ink-soft:     #55524F;
+  --color-ink-deep:     #1A2330;
 
-  /* Muted (legacy "gold" name; actually a warm grey) */
-  --color-gold: #6a766f;
-  --color-gold-soft: #ede4d2;
+  /* Persimmon — primary CTAs, brand accent */
+  --color-persimmon:      #FF5B2E;
+  --color-persimmon-deep: #D9461E;
+  --color-persimmon-tint: #FFE4D8;
 
-  /* Text */
-  --color-ink: #14211c;
-  --color-ink-soft: #2a3a33;
-  --color-muted: #6a766f;
+  /* Hairlines / structure */
+  --color-border:       #E3DDD0;
+  --color-border-soft:  #ECE6D8;
+  --color-muted:        #8B8784;
 
-  /* Borders */
-  --color-border: #e2d8c6;
-  --color-border-soft: #ede4d2;
+  /* ---------- LEGACY ALIASES (kept so existing files keep rendering
+     while the codebase is being swept; do not add new uses) ---------- */
+  --color-cream:        var(--color-paper);
+  --color-cream-soft:   var(--color-paper-soft);
+  --color-cream-deep:   var(--color-paper-deep);
+  --color-surface:      var(--color-paper-soft);
+  --color-forest:       var(--color-ink);
+  --color-forest-deep:  var(--color-ink-deep);
+  --color-forest-soft:  var(--color-ink-soft);
+  --color-accent:       var(--color-persimmon);
+  --color-accent-soft:  var(--color-persimmon);
+  --color-accent-deep:  var(--color-persimmon-deep);
+  --color-accent-tint:  var(--color-persimmon-tint);
+  --color-gold:         var(--color-muted);
+  --color-gold-soft:    var(--color-border-soft);
 
   /* Type variables wired from next/font */
-  --font-sans-stack: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans-stack: var(--font-geist-sans, var(--font-sans)), ui-sans-serif, system-ui, sans-serif;
+  --font-mono-stack: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-display-stack: var(--font-display), ui-serif, Georgia, serif;
+
+  /* Motion curves — non-negotiable */
+  --ease-out:     cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out:  cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer:  cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-soft:    cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-html.dark {
-  /* Pure black canvas, warm-charcoal cards so #000 reads as ink */
-  --color-cream: #000000;
-  --color-cream-soft: #0d0b09;
-  --color-cream-deep: #181410;
-  --color-surface: #100e0c;
-
-  /* Electric mint accent in dark mode */
-  --color-forest: #4ee3a1;
-  --color-forest-deep: #2bd086;
-  --color-forest-soft: #6cf0b3;
-
-  --color-accent: #38bdf8;
-  --color-accent-soft: #5dcaf8;
-  --color-accent-deep: #7ed4f8;
-  --color-accent-tint: #0f2230;
-
-  --color-gold: #7a7a7a;
-  --color-gold-soft: #232323;
-
-  --color-ink: #f5f5f5;
-  --color-ink-soft: #c7c7c7;
-  --color-muted: #7a7a7a;
-
-  --color-border: #251f1a;
-  --color-border-soft: #1a1612;
+/* ────────────────────────────────────────────────────────────────────────
+   System awakening — staggered fade-up applied to dashboard children
+   while PersonalizationCurtain dissolves. Triggered by adding the class
+   `gs-waking` to <html>; auto-removed by DashboardWake.tsx after ~1800ms.
+   ──────────────────────────────────────────────────────────────────────── */
+@keyframes gs-wake-in {
+  from { opacity: 0; transform: translateY(14px); filter: blur(1.5px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
 }
 
-html,
-body {
-  background: var(--color-cream);
+html.gs-waking [data-surface="dashboard"] > nav,
+html.gs-waking [data-surface="dashboard"] > main,
+html.gs-waking [data-surface="dashboard"] > header,
+html.gs-waking [data-surface="dashboard"] > main > * {
+  animation: gs-wake-in 760ms var(--ease-out) both;
+}
+html.gs-waking [data-surface="dashboard"] > nav    { animation-delay:  20ms; }
+html.gs-waking [data-surface="dashboard"] > header { animation-delay:  80ms; }
+html.gs-waking [data-surface="dashboard"] > main   { animation-delay: 140ms; }
+html.gs-waking [data-surface="dashboard"] > main > *:nth-child(1) { animation-delay: 180ms; }
+html.gs-waking [data-surface="dashboard"] > main > *:nth-child(2) { animation-delay: 260ms; }
+html.gs-waking [data-surface="dashboard"] > main > *:nth-child(3) { animation-delay: 340ms; }
+html.gs-waking [data-surface="dashboard"] > main > *:nth-child(4) { animation-delay: 420ms; }
+html.gs-waking [data-surface="dashboard"] > main > *:nth-child(5) { animation-delay: 500ms; }
+html.gs-waking [data-surface="dashboard"] > main > *:nth-child(6) { animation-delay: 580ms; }
+html.gs-waking [data-surface="dashboard"] > main > *:nth-child(n+7) { animation-delay: 660ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.gs-waking [data-surface="dashboard"] > nav,
+  html.gs-waking [data-surface="dashboard"] > main,
+  html.gs-waking [data-surface="dashboard"] > header,
+  html.gs-waking [data-surface="dashboard"] > main > * {
+    animation: none !important;
+  }
+}
+
+/* Dark mode removed — the app ships light-only. */
+
+html {
+  /* Native browser scrolling — smoothest on macOS trackpad + iOS momentum.
+     scroll-behavior:smooth handles anchor-link jumps cinematically. */
+  scroll-behavior: smooth;
+  /* Anchor scroll lands below sticky headers */
+  scroll-padding-top: 80px;
+  /* iOS-style elastic bounce stays inside the page, no parent-window pull */
+  overscroll-behavior-y: contain;
+  /* Avoid layout shift when the scrollbar appears/disappears */
+  scrollbar-gutter: stable;
+}
+html, body {
+  background: var(--color-paper);
   color: var(--color-ink);
-  /* Mobile overflow safety per spec */
+  /* Mobile overflow safety */
   overflow-x: clip;
   max-width: 100vw;
+}
+body {
+  /* Legacy iOS momentum hint — harmless on modern browsers */
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Long emails / URLs inside legal-prose wrap aggressively */
@@ -97,8 +136,8 @@ body {
 }
 
 ::selection {
-  background: var(--color-forest);
-  color: var(--color-cream-soft);
+  background: var(--color-persimmon);
+  color: var(--color-paper-soft);
 }
 
 /* -------------------------------------------------------------------------
@@ -490,17 +529,11 @@ body {
 }
 .upgrade-page .upg-banner-light { display: block; }
 .upgrade-page .upg-banner-dark  { display: none;  }
-html.dark .upgrade-page .upg-banner-light { display: none;  }
-html.dark .upgrade-page .upg-banner-dark  { display: block; }
 
 /* Card surface: keep Wavly cream in light, warm charcoal in dark */
 .upgrade-page .upg-card {
   background: var(--color-cream-soft);
   border-color: var(--color-border-soft);
-}
-html.dark .upgrade-page .upg-card {
-  background: #0f1115;
-  border-color: rgba(255, 255, 255, 0.06);
 }
 
 /* Solo (primary) accent */
@@ -509,11 +542,6 @@ html.dark .upgrade-page .upg-card {
   color: var(--color-cream-soft);
 }
 .upgrade-page .upg-cta-solo:hover { background: var(--color-forest-deep); }
-html.dark .upgrade-page .upg-cta-solo {
-  background: var(--upg-lime);
-  color: #052e16;
-}
-html.dark .upgrade-page .upg-cta-solo:hover { background: var(--upg-lime-2); }
 
 /* Family (best value) accent */
 .upgrade-page .upg-cta-family {
@@ -521,44 +549,22 @@ html.dark .upgrade-page .upg-cta-solo:hover { background: var(--upg-lime-2); }
   color: #ffffff;
 }
 .upgrade-page .upg-cta-family:hover { background: var(--color-accent-deep); }
-html.dark .upgrade-page .upg-cta-family {
-  background: var(--upg-blue);
-  color: #ffffff;
-}
-html.dark .upgrade-page .upg-cta-family:hover { background: var(--upg-blue-2); }
 
 /* "Most popular" ring + banner — pink in dark, forest in light */
 .upgrade-page .upg-popular-ring {
   box-shadow: 0 0 0 2px var(--color-forest);
 }
-html.dark .upgrade-page .upg-popular-ring {
-  box-shadow: 0 0 0 2px var(--upg-pink),
-              0 24px 60px -30px rgba(236, 72, 153, 0.5);
-}
 .upgrade-page .upg-popular-banner {
   background: var(--color-forest);
   color: var(--color-cream-soft);
-}
-html.dark .upgrade-page .upg-popular-banner {
-  background: var(--upg-pink);
-  color: #ffffff;
-  box-shadow: 0 8px 24px -6px rgba(236, 72, 153, 0.6);
 }
 
 /* "Best value" ring + banner — accent in light, blue in dark */
 .upgrade-page .upg-value-ring {
   box-shadow: 0 0 0 1px var(--color-accent);
 }
-html.dark .upgrade-page .upg-value-ring {
-  box-shadow: 0 0 0 1px var(--upg-blue),
-              0 24px 60px -30px rgba(59, 130, 246, 0.4);
-}
 .upgrade-page .upg-value-banner {
   background: var(--color-accent);
-  color: #ffffff;
-}
-html.dark .upgrade-page .upg-value-banner {
-  background: var(--upg-blue);
   color: #ffffff;
 }
 
@@ -567,36 +573,21 @@ html.dark .upgrade-page .upg-value-banner {
   background: var(--color-accent);
   color: #ffffff;
 }
-html.dark .upgrade-page .upg-chip-discount {
-  background: var(--upg-pink);
-  color: #ffffff;
-}
 
 /* Sale-price tint — forest in light, vibrant in dark per tier */
 .upgrade-page .upg-price-solo  { color: var(--color-forest); }
 .upgrade-page .upg-price-max   { color: var(--color-forest); }
 .upgrade-page .upg-price-fam   { color: var(--color-accent-deep); }
-html.dark .upgrade-page .upg-price-solo { color: var(--upg-lime); }
-html.dark .upgrade-page .upg-price-max  { color: var(--upg-pink); }
-html.dark .upgrade-page .upg-price-fam  { color: var(--upg-blue); }
 
 /* Text colors inside cards stay readable in dark */
-html.dark .upgrade-page .upg-card .upg-ink       { color: #ffffff; }
-html.dark .upgrade-page .upg-card .upg-ink-soft  { color: rgba(255, 255, 255, 0.72); }
-html.dark .upgrade-page .upg-card .upg-muted     { color: rgba(255, 255, 255, 0.5); }
 
 /* Feature checkmarks — forest in light, emerald in dark */
 .upgrade-page .upg-check { color: var(--color-forest); }
-html.dark .upgrade-page .upg-check { color: #34d399; }
 
 /* Quota tile inside card */
 .upgrade-page .upg-quota {
   background: var(--color-surface);
   border-color: var(--color-border-soft);
-}
-html.dark .upgrade-page .upg-quota {
-  background: rgba(0, 0, 0, 0.35);
-  border-color: rgba(255, 255, 255, 0.06);
 }
 
 /* =========================================================================
@@ -612,19 +603,8 @@ html.dark .upgrade-page .upg-quota {
     0 0 0 1px rgba(0, 0, 0, 0.04),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
-html.dark .auth-glass {
-  background: rgba(20, 33, 28, 0.82);
-  border-color: rgba(255, 255, 255, 0.10);
-  box-shadow:
-    0 30px 80px -20px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(255, 255, 255, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
 /* In dark mode the ink token is already light — but we want text to read
    on the glass regardless of how Wavly's dark palette is set. */
-html.dark .auth-glass .auth-title   { color: #ffffff; }
-html.dark .auth-glass .auth-eyebrow { color: rgba(248, 250, 252, 0.7); }
-html.dark .auth-glass .auth-sub     { color: rgba(248, 250, 252, 0.82); }
 
 /* Inputs inside the glass card */
 .auth-glass input,
@@ -632,17 +612,6 @@ html.dark .auth-glass .auth-sub     { color: rgba(248, 250, 252, 0.82); }
 .auth-glass select {
   background: rgba(255, 255, 255, 0.65);
   border-color: rgba(20, 33, 28, 0.18);
-}
-html.dark .auth-glass input,
-html.dark .auth-glass textarea,
-html.dark .auth-glass select {
-  background: rgba(0, 0, 0, 0.28);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-}
-html.dark .auth-glass input::placeholder,
-html.dark .auth-glass textarea::placeholder {
-  color: rgba(248, 250, 252, 0.45);
 }
 
 /* =========================================================================
@@ -681,11 +650,6 @@ html.dark .auth-glass textarea::placeholder {
   --sunlight-core: 0.55;                /* center radial alpha (legacy) */
   --sunlight-layer-opacity: 0.65;       /* beam visibility */
 }
-html.dark {
-  --sunlight-rgb: 188, 212, 240;       /* cool moonlight */
-  --sunlight-core: 0.45;
-  --sunlight-layer-opacity: 0.45;
-}
 
 /* =========================================================================
    DASHBOARD SURFACE — Swiss-grade daylight system
@@ -693,41 +657,49 @@ html.dark {
    pages render byte-identical.
    ========================================================================= */
 [data-surface="dashboard"] {
-  /* Source-of-truth tokens (spec) */
+  /* Source-of-truth tokens — Swiss cool-stone daylight (preserved).
+     The brand rebrand only swaps the warm accent: ember = persimmon. */
   --bg:             #F4F3F1;
   --surface:        #FFFFFF;
-  --surface-sunken: #EDEBE8;
-  --line:           #E5E3DF;
+  --surface-sunken: #ECEBE9;
+  --line:           #E3E1DE;
   --line-hover:     #D8D5D0;
   --ink:            #1C1B1A;
-  --ink-soft:       #56524E;
-  --stone:          #8E8985;
-  --ember:          #E8602C;
-  --ember-hover:    #D4521F;
-  --ember-soft:     #FBEAE0;
-  --glow:           #F5A86B;
+  --ink-soft:       #55524F;
+  --stone:          #8B8784;
+  --ember:          #FF5B2E;
+  --ember-hover:    #D9461E;
+  --ember-soft:     #FFE4D8;
+  --glow:           #FF9E78;
   --success:        #2F7D5B;
   --warning:        #B97324;
   --error:          #B3402E;
 
-  /* Wavly token re-aliases so existing components adopt the new palette
-     without per-file rewrites */
+  /* Brand-token re-aliases — pin components to the cool-stone dashboard
+     palette regardless of which token name they use (paper/cream/ink) */
+  --color-paper:        var(--bg);
+  --color-paper-soft:   var(--surface);
+  --color-paper-deep:   var(--surface-sunken);
   --color-cream:        var(--bg);
   --color-cream-soft:   var(--surface);
   --color-cream-deep:   var(--surface-sunken);
   --color-surface:      var(--surface);
   --color-ink:          var(--ink);
   --color-ink-soft:     var(--ink-soft);
+  --color-ink-deep:     #000000;
   --color-muted:        var(--stone);
   --color-border:       var(--line);
   --color-border-soft:  var(--line);
-  --color-forest:       var(--ink);        /* primary buttons → ink, ember added surgically */
+  --color-persimmon:      var(--ember);
+  --color-persimmon-deep: var(--ember-hover);
+  --color-persimmon-tint: var(--ember-soft);
+  --color-forest:       var(--ink);
   --color-forest-deep:  #000000;
   --color-forest-soft:  var(--ink-soft);
-  --color-accent:       var(--ink);
-  --color-accent-soft:  var(--ink-soft);
-  --color-accent-deep:  var(--ink);
-  --color-accent-tint:  var(--surface-sunken);
+  --color-accent:       var(--ember);
+  --color-accent-soft:  var(--ember);
+  --color-accent-deep:  var(--ember-hover);
+  --color-accent-tint:  var(--ember-soft);
 }
 
 /* Page canvas — warm stone gray with a 2% noise overlay */
@@ -853,33 +825,50 @@ html.dark {
   animation-delay: calc(var(--stagger-index, 0) * 40ms);
 }
 
-/* Sticky nav active item — ember tint background, ember bottom border */
-[data-surface="dashboard"] [data-nav-active="true"] {
-  background-color: var(--ember-soft) !important;
-  color: var(--ember-hover) !important;
-}
+/* Sticky nav active item — underline-only, styled inline on the link */
 
-/* Phase stepper */
+/* Phase stepper — flexbox, single continuous 2px track, dots aligned */
 [data-surface="dashboard"] .phase-stepper {
+  position: relative;
+  padding-top: 6px;
+}
+[data-surface="dashboard"] .phase-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 11px;
+  height: 2px;
+  background: var(--line);
+  pointer-events: none;
+}
+[data-surface="dashboard"] .phase-row {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 16px;
 }
 [data-surface="dashboard"] .phase-step {
-  flex: 1;
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
-  padding-right: 8px;
+  gap: 14px;
+  min-width: 0;
 }
 [data-surface="dashboard"] .phase-step-dot {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   border: 1px solid var(--stone);
-  background: transparent;
+  background: var(--bg);
+  box-shadow: 0 0 0 3px var(--bg);
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 [data-surface="dashboard"] .phase-step[data-state="complete"] .phase-step-dot {
   background: var(--ink);
@@ -888,31 +877,107 @@ html.dark {
 [data-surface="dashboard"] .phase-step[data-state="current"] .phase-step-dot {
   background: var(--ember);
   border-color: var(--ember);
-  box-shadow: 0 0 0 4px var(--ember-soft);
+  box-shadow:
+    0 0 0 3px var(--bg),
+    0 0 0 11px rgba(232, 96, 44, 0.08),
+    0 0 18px 2px rgba(232, 96, 44, 0.25);
 }
 [data-surface="dashboard"] .phase-step-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   color: var(--stone);
-  line-height: 1.2;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 [data-surface="dashboard"] .phase-step[data-state="complete"] .phase-step-label {
   color: var(--ink);
-  font-weight: 500;
 }
 [data-surface="dashboard"] .phase-step[data-state="current"] .phase-step-label {
   color: var(--ember-hover);
   font-weight: 600;
 }
-[data-surface="dashboard"] .phase-step-rail {
-  flex: 1;
-  height: 1px;
-  background: var(--line);
-  margin-bottom: 18px;
+
+/* Horizon header — sun + monoliths echoing the landing hero */
+[data-surface="dashboard"] .horizon-header {
+  position: relative;
+  isolation: isolate;
+  padding-bottom: 8px;
 }
-[data-surface="dashboard"] .phase-step-rail[data-state="complete"] {
-  background: var(--ink);
+[data-surface="dashboard"] .horizon-sun {
+  position: absolute;
+  left: 50%;
+  bottom: -120px;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 600px;
+  max-width: 90vw;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    circle at 50% 100%,
+    rgba(245, 168, 107, 0.12) 0%,
+    rgba(245, 168, 107, 0.06) 30%,
+    transparent 65%
+  );
+  opacity: 0;
+  animation: horizon-sun-rise 1200ms cubic-bezier(0.22, 1, 0.36, 1) 80ms forwards;
+}
+[data-surface="dashboard"] .horizon-monolith {
+  position: absolute;
+  top: 8px;
+  bottom: 0;
+  width: 1px;
+  background: var(--line);
+  opacity: 0.06;
+  pointer-events: none;
+  z-index: 0;
+}
+[data-surface="dashboard"] .horizon-monolith::before,
+[data-surface="dashboard"] .horizon-monolith::after {
+  content: "";
+  position: absolute;
+  background: var(--line);
+}
+[data-surface="dashboard"] .horizon-monolith::before {
+  left: -22px;
+  top: 30%;
+  bottom: 0;
+  width: 1px;
+}
+[data-surface="dashboard"] .horizon-monolith::after {
+  left: 22px;
+  top: 50%;
+  bottom: 0;
+  width: 1px;
+}
+[data-surface="dashboard"] .horizon-monolith-left {
+  left: -8px;
+}
+[data-surface="dashboard"] .horizon-monolith-right {
+  right: -8px;
+}
+@keyframes horizon-sun-rise {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Card hover lift across the dashboard surface */
+[data-surface="dashboard"] .rounded-2xl.bg-\[var\(--surface\)\]:hover,
+[data-surface="dashboard"] .rounded-xl.bg-\[var\(--surface\)\]:hover {
+  box-shadow: 0 4px 20px rgba(28, 27, 26, 0.07);
+  border-color: var(--line-hover);
+}
+
+/* Quick-action pill hover */
+[data-surface="dashboard"] .quick-pill:hover {
+  box-shadow: 0 4px 20px rgba(28, 27, 26, 0.07);
+}
+[data-surface="dashboard"] .quick-pill:active {
+  transform: scale(0.98);
 }
 
 /* Monoline twin-monolith illustration for empty states */
@@ -930,4 +995,89 @@ html.dark {
   [data-surface="dashboard"] .progress-ember {
     transition: none;
   }
+  [data-surface="dashboard"] .horizon-sun {
+    animation: none;
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}
+
+/* =========================================================================
+   MOCK INTERVIEW — keyframes for the room
+   ========================================================================= */
+@keyframes ken-burns {
+  from { transform: scale(1.04) translate(0, 0); }
+  to   { transform: scale(1.10) translate(-1%, -1.5%); }
+}
+@keyframes caption-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes considering-pulse {
+  0%, 100% { opacity: 0.35; transform: translateY(0); }
+  50%      { opacity: 1;    transform: translateY(-3px); }
+}
+@keyframes upload-fill {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.35; transform: scale(0.9); }
+  50%      { opacity: 1;    transform: scale(1.15); }
+}
+
+/* =========================================================================
+   MOTION KIT — global polish (selection, scrollbar, reduced-motion)
+   ========================================================================= */
+/* =========================================================================
+   PAGE TRANSITIONS — soft fade-in on route change.
+   Each Server Component render triggers a key change, which restarts the
+   keyframe → the new page eases in without a hard cut. Combined with the
+   NavigationProgress bar, the user sees: bar starts → page fades → bar ends.
+   ========================================================================= */
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-fade > * {
+  animation: page-fade-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Native View Transitions API — if the browser supports it and Next 16's
+   experimental viewTransition flag fires document.startViewTransition, the
+   default cross-fade gets these branded easing curves. No-op in Safari. */
+::view-transition-old(root) {
+  animation: 180ms cubic-bezier(0.22, 1, 0.36, 1) both fade-out;
+}
+::view-transition-new(root) {
+  animation: 280ms cubic-bezier(0.22, 1, 0.36, 1) both fade-in-up;
+}
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Slim brand-tinted scrollbar (WebKit). Firefox uses native styling. */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--color-paper); }
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 8px;
+  border: 2px solid var(--color-paper);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-muted); }
+
+img[data-fade] { opacity: 0; transition: opacity 0.6s ease; }
+img[data-fade].loaded { opacity: 1; }
+
+/* Reduced-motion: kill long animations only. Do NOT zero out
+   transition-duration globally — that breaks scroll-behavior:smooth,
+   hover states, and focus rings. Only spec-shaped runtime animations. */
+@media (prefers-reduced-motion: reduce) {
+  [style*="ken-burns"] { animation: none !important; }
+  [style*="considering-pulse"] { animation: none !important; opacity: 0.7 !important; }
+  html { scroll-behavior: auto; }
 }

@@ -1,36 +1,27 @@
-import { Header } from "@/components/landing/Header";
-import { Hero } from "@/components/landing/Hero";
-import { SunlightLayer } from "@/components/landing/SunlightLayer";
-import { VoiceDemo } from "@/components/landing/VoiceDemo";
-import { Features } from "@/components/landing/Features";
-import { HowItWorks } from "@/components/landing/HowItWorks";
-import { TimelineFull } from "@/components/landing/TimelineFull";
-import { Pricing } from "@/components/landing/Pricing";
-import { ForParents } from "@/components/landing/ForParents";
-import { FAQ } from "@/components/landing/FAQ";
-import { FinalCTA } from "@/components/landing/FinalCTA";
-import { Footer } from "@/components/landing/Footer";
+import { cookies } from "next/headers";
+import type { Metadata } from "next";
+import { MarketingLanding } from "@/components/landing/v3/MarketingLanding";
 import { getWaitlistCount } from "@/app/actions/waitlist";
+import type { Currency } from "@/lib/pricing";
+
+export const metadata: Metadata = {
+  title: "GetStamped — The F-1 visa workspace",
+  description:
+    "47 ordered steps. AI document checks. Voice mock interviews. A view your parents can open. One workspace, until your visa is stamped.",
+};
 
 export default async function Home() {
-  const { earlyBirdClaimed } = await getWaitlistCount();
+  const { totalSignups, earlyBirdClaimed } = await getWaitlistCount();
+
+  const c = await cookies();
+  const stored = c.get("gs_currency")?.value;
+  const currency: Currency = stored === "INR" ? "INR" : "USD";
 
   return (
-    <>
-      <SunlightLayer />
-      <Header />
-      <main className="flex-1">
-        <Hero />
-        <VoiceDemo />
-        <Features />
-        <HowItWorks />
-        <TimelineFull />
-        <Pricing earlyBirdClaimed={earlyBirdClaimed} />
-        <ForParents />
-        <FAQ />
-        <FinalCTA />
-      </main>
-      <Footer />
-    </>
+    <MarketingLanding
+      currency={currency}
+      totalSignups={totalSignups}
+      earlyBirdClaimed={earlyBirdClaimed}
+    />
   );
 }

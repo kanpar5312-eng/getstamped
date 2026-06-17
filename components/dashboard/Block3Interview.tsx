@@ -30,7 +30,7 @@ export function Block3Interview({ data }: Props) {
   if (!profile.interviewDate || !profile.consulateLocation) {
     return (
       <>
-        <section className={`mt-8 rounded-2xl border bg-[var(--color-cream-soft)] p-6 sm:p-7 ${imminentRing}`}>
+        <section data-stagger="" style={{ "--stagger-index": 3 } as React.CSSProperties} className={`rounded-2xl border bg-[var(--surface)] p-6 sm:p-7 ${imminentRing}`}>
           <p className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-muted)]">
             Your interview
           </p>
@@ -63,7 +63,7 @@ export function Block3Interview({ data }: Props) {
 
   return (
     <>
-      <section className={`mt-8 rounded-2xl border bg-[var(--color-cream-soft)] p-6 sm:p-7 ${imminentRing}`}>
+      <section className={`mt-8 rounded-2xl border bg-[var(--color-paper-soft)] p-6 sm:p-7 ${imminentRing}`}>
         <p className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-muted)]">
           {eyebrow}
         </p>
@@ -76,7 +76,7 @@ export function Block3Interview({ data }: Props) {
             <span
               className={
                 isInterviewImminent
-                  ? "font-display text-4xl tracking-tight text-[var(--color-forest)] tabular-nums leading-none"
+                  ? "font-display text-4xl tracking-tight text-[var(--color-ink)] tabular-nums leading-none"
                   : "inline-flex items-center gap-1.5 rounded-full bg-[var(--color-accent-tint)] border border-[var(--color-accent)]/30 px-2.5 py-1 text-xs font-medium text-[var(--color-accent-deep)] tabular-nums"
               }
             >
@@ -94,18 +94,18 @@ export function Block3Interview({ data }: Props) {
 
         <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[var(--color-ink-soft)]">
           <span>
-            <span className="text-[var(--color-forest)] mr-1">✓</span>
+            <span className="text-[var(--color-ink)] mr-1">✓</span>
             Mock interviews: {profile.mockInterviewsCompleted}/3 complete
           </span>
           <span>
-            <span className="text-[var(--color-forest)] mr-1">✓</span>
+            <span className="text-[var(--color-ink)] mr-1">✓</span>
             Documents: {profile.documentsOrganizedPct}% organized
           </span>
           <span>
             {profile.documentsOrganizedPct >= 80 &&
             profile.mockInterviewsCompleted >= 2 ? (
               <>
-                <span className="text-[var(--color-forest)] mr-1">✓</span>
+                <span className="text-[var(--color-ink)] mr-1">✓</span>
                 On track
               </>
             ) : (

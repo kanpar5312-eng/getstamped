@@ -15,9 +15,9 @@ type Props = {
 };
 
 function progressLabel(complete: number, total: number): React.ReactNode {
-  if (complete === 0) return <span className="text-[var(--color-forest)]">Let&rsquo;s start</span>;
-  if (complete >= total) return <span className="text-[var(--color-forest)]">All complete</span>;
-  return <span className="text-[var(--color-forest)]">{complete} done</span>;
+  if (complete === 0) return <span className="text-[var(--color-ink)]">Let&rsquo;s start</span>;
+  if (complete >= total) return <span className="text-[var(--color-ink)]">All complete</span>;
+  return <span className="text-[var(--color-ink)]">{complete} done</span>;
 }
 
 function ChevronRight() {
@@ -68,14 +68,14 @@ export function TimelineClient({ view }: Props) {
         </div>
 
         {filter === "locked" && isFree && (
-          <div className="mt-4 rounded-2xl border border-dashed border-[var(--color-forest)]/40 bg-[var(--color-forest)]/[0.04] p-4 text-sm text-[var(--color-ink-soft)] flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-4 rounded-2xl border border-dashed border-[var(--color-ink)]/40 bg-[var(--color-persimmon)]/[0.04] p-4 text-sm text-[var(--color-ink-soft)] flex flex-wrap items-center justify-between gap-3">
             <span>
               These {view.phases.reduce((n, p) => n + p.steps.filter((s) => s.status === "locked").length, 0)} steps
               unlock with any paid plan.
             </span>
             <Link
               href="/dashboard/upgrade"
-              className="text-[var(--color-forest)] font-medium hover:text-[var(--color-forest-deep)] transition-colors"
+              className="text-[var(--color-ink)] font-medium hover:text-[var(--color-ink-deep)] transition-colors"
             >
               → Upgrade
             </Link>

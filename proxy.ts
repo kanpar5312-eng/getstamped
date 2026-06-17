@@ -58,10 +58,18 @@ export async function proxy(req: NextRequest) {
   }
 
   // ---- Currency cookie ----
+  // Detect country from whatever geo header the host platform provides:
+  //   • Vercel:     `request.geo.country`   (e.g. "IN", "US", "GB")
+  //   • Cloudflare: `cf-ipcountry` header
+  //   • Fastly:     `x-country-code` header
+  // Fallback chain → defaults to USD if nothing resolves.
   const existing = req.cookies.get("gs_currency")?.value;
   if (existing !== "INR" && existing !== "USD") {
-    const country =
-      (req as unknown as { geo?: { country?: string } }).geo?.country ?? "US";
+    const vercelGeo = (req as unknown as { geo?: { country?: string } }).geo?.country;
+    const cfCountry = req.headers.get("cf-ipcountry");
+    const fastlyCountry = req.headers.get("x-country-code");
+    const country = (vercelGeo ?? cfCountry ?? fastlyCountry ?? "US").toUpperCase();
+    // Only India gets rupees; everywhere else (US/UK/CA/AU/EU/SG/…) pays in USD.
     res.cookies.set("gs_currency", country === "IN" ? "INR" : "USD", {
       path: "/",
       maxAge: 60 * 60 * 24 * 365,

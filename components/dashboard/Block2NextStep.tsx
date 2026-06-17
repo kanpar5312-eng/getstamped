@@ -45,27 +45,35 @@ export function Block2NextStep({ data }: Props) {
   const [panelOpen, setPanelOpen] = useState(false);
   const { state, nextStep, currentPhase, stepsComplete, isStuck, paywallReached } = data;
 
-  // State A: onboarding card
+  // State A: onboarding card with profile progress bar at top edge
   if (state === "A") {
     return (
       <section
-        className="animate-hero-rise mt-10 rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-6 sm:p-7 hover:border-[var(--color-border)] transition-colors"
-        style={{ animationDelay: "320ms" }}
+        data-stagger=""
+        style={{ "--stagger-index": 2 } as React.CSSProperties}
+        className="relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 sm:p-8"
       >
-        <p className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-muted)]">
-          Start here
-        </p>
-        <h2 className="mt-3 font-display text-2xl sm:text-3xl tracking-tight text-[var(--color-ink)] leading-snug">
+        <div
+          className="absolute left-0 right-0 top-0 h-1 bg-[var(--surface-sunken)]"
+          aria-hidden
+        >
+          <div
+            className="progress-ember h-full"
+            style={{ width: "0%" }}
+          />
+        </div>
+        <p data-eyebrow="">Start here · Profile 0%</p>
+        <h2 className="mt-4 font-display text-[28px] sm:text-[32px] tracking-tight text-[var(--ink)] leading-snug">
           Complete your profile
         </h2>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--color-ink-soft)]">
+        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-[var(--ink-soft)]">
           Tell us your intake date and university. We&rsquo;ll generate your
           personalized 47-step timeline in seconds.
         </p>
         <div className="mt-7">
           <Link
             href="/dashboard/onboarding"
-            className="btn-ember inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-colors"
+            className="btn-ember inline-flex items-center gap-2 rounded-lg px-5 py-[10px] text-[13px] font-medium transition-colors"
           >
             Set up your timeline →
           </Link>
@@ -77,7 +85,10 @@ export function Block2NextStep({ data }: Props) {
   // State E: no next step (visa stamped) — page will have redirected, but safeguard
   if (!nextStep || !currentPhase) return null;
 
-  const tipText = nextStep.tips[stepsComplete % nextStep.tips.length] ?? nextStep.tips[0];
+  // Rotate the displayed tip between "why it matters" and the common-mistake titles
+  // so the next-step card doesn't get stale across sessions.
+  const tipPool = [nextStep.whyItMatters, ...nextStep.commonMistakes.map((m) => m.title)];
+  const tipText = tipPool[stepsComplete % tipPool.length] ?? tipPool[0];
   const eyebrow =
     state === "D"
       ? "RECOMMENDED FOCUS"
@@ -86,8 +97,9 @@ export function Block2NextStep({ data }: Props) {
   return (
     <>
       <section
-        className="animate-hero-rise mt-10 rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-6 sm:p-7 hover:border-[var(--color-border)] transition-colors"
-        style={{ animationDelay: "320ms" }}
+        data-stagger=""
+        style={{ "--stagger-index": 2 } as React.CSSProperties}
+        className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 sm:p-7"
       >
         {isStuck && (
           <p className="text-xs italic text-[var(--color-accent-deep)] mb-3">

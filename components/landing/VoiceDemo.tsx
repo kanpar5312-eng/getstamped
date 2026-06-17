@@ -115,7 +115,7 @@ export function VoiceDemo() {
   return (
     <section
       id="voice"
-      className="w-full bg-[var(--color-cream-soft)] py-24 lg:py-32"
+      className="w-full bg-[var(--color-paper-soft)] py-24 lg:py-32"
     >
       <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-10">
         <div className="mx-auto max-w-3xl text-center">
@@ -131,9 +131,9 @@ export function VoiceDemo() {
         </div>
 
         {/* Demo card — glass */}
-        <div className="mt-12 mx-auto max-w-3xl rounded-2xl border border-white/40 bg-[var(--color-cream-soft)]/80 backdrop-blur-2xl backdrop-saturate-150 ring-1 ring-white/30 shadow-[0_30px_80px_-30px_rgba(20,33,28,0.25)] p-6 sm:p-8">
+        <div className="mt-12 mx-auto max-w-3xl rounded-2xl border border-white/40 bg-[var(--color-paper-soft)]/80 backdrop-blur-2xl backdrop-saturate-150 ring-1 ring-white/30 shadow-[0_30px_80px_-30px_rgba(20,33,28,0.25)] p-6 sm:p-8">
           <div className="flex items-center justify-between gap-3">
-            <span className="inline-flex items-center gap-2 rounded-full bg-[var(--color-cream-deep)] px-2.5 py-1 text-[10px] font-medium tracking-wider text-[var(--color-muted)] uppercase">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[var(--color-paper-deep)] px-2.5 py-1 text-[10px] font-medium tracking-wider text-[var(--color-muted)] uppercase">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-accent)] animate-soft-pulse" />
               Demo · Mumbai consulate · Student visa
             </span>
@@ -163,13 +163,13 @@ export function VoiceDemo() {
                     {[0, 1, 2, 3, 4].map((i) => (
                       <span
                         key={i}
-                        className="block w-1 h-full rounded-full bg-[var(--color-cream-soft)]/90 origin-bottom animate-voice-bar"
+                        className="block w-1 h-full rounded-full bg-[var(--color-paper-soft)]/90 origin-bottom animate-voice-bar"
                         style={{ animationDelay: `${i * 0.12}s` }}
                       />
                     ))}
                   </div>
                 ) : (
-                  <svg viewBox="0 0 24 24" className="h-9 w-9 text-[var(--color-cream-soft)]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <svg viewBox="0 0 24 24" className="h-9 w-9 text-[var(--color-paper-soft)]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                     <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
                     <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
                     <line x1="12" y1="19" x2="12" y2="23" />
@@ -221,11 +221,11 @@ export function VoiceDemo() {
           {/* Transcript + feedback */}
           {(state.kind === "transcript" || state.kind === "scored") && (
             <div className="mt-8 space-y-3">
-              <div className="animate-bubble-in-right ml-auto max-w-md rounded-2xl rounded-tr-md bg-[var(--color-accent)] text-[var(--color-cream-soft)] px-4 py-3 text-sm leading-relaxed">
+              <div className="animate-bubble-in-right ml-auto max-w-md rounded-2xl rounded-tr-md bg-[var(--color-accent)] text-[var(--color-paper-soft)] px-4 py-3 text-sm leading-relaxed">
                 {state.transcript}
               </div>
               {state.kind === "scored" && (
-                <div className="animate-bubble-in-left max-w-md rounded-2xl rounded-tl-md bg-[var(--color-cream-deep)] text-[var(--color-ink)] px-4 py-3 text-sm leading-relaxed">
+                <div className="animate-bubble-in-left max-w-md rounded-2xl rounded-tl-md bg-[var(--color-paper-deep)] text-[var(--color-ink)] px-4 py-3 text-sm leading-relaxed">
                   <span className="block text-[10px] uppercase tracking-[0.15em] text-[var(--color-muted)] mb-1.5">
                     AI feedback
                   </span>
@@ -253,9 +253,9 @@ export function VoiceDemo() {
           ].map((s) => (
             <div
               key={s.label}
-              className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-4 text-center"
+              className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-4 text-center"
             >
-              <div className="font-display text-2xl tracking-tight text-[var(--color-forest)] tabular-nums leading-none">
+              <div className="font-display text-2xl tracking-tight text-[var(--color-ink)] tabular-nums leading-none">
                 {s.value}
               </div>
               <div className="mt-1.5 text-[11px] text-[var(--color-muted)]">
