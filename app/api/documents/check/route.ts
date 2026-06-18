@@ -4,6 +4,7 @@ import { getAdminSupabase, BUCKET } from "@/lib/documents/admin";
 import { getChecklistItem } from "@/lib/documents/checklist";
 import { LIMITS, tierFromPlan, utcDayStart } from "@/lib/documents/limits";
 import { checkDocument } from "@/lib/documents/vision";
+import { recomputeReadiness } from "@/lib/recompute-readiness";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -179,6 +180,7 @@ export async function POST(req: Request) {
   const hasBlocker = feedback.issues.some((i) => i.severity === "blocker") || !feedback.matches_expected;
   const hasIssues = feedback.issues.length > 0;
   const status = hasBlocker || hasIssues ? "attention" : "accepted";
+  const passed = status === "accepted";
 
   await admin
     .from("documents")
@@ -188,6 +190,25 @@ export async function POST(req: Request) {
       checked_at: new Date().toISOString(),
     })
     .eq("id", doc.id);
+
+  // Persist the scored review to the new audit table so the Feedback
+  // page can read pass/fail history without joining JSON columns.
+  await admin
+    .from("document_review_results")
+    .insert({
+      user_id: user.id,
+      country_code: sel?.country_code ?? "US",
+      document_key: doc.slug,
+      document_display_name: item.display_name,
+      passed,
+      issues: feedback.issues.map((i) => i.message),
+      suggestions: [],
+      ai_confidence: feedback.matches_expected ? 90 : 60,
+      file_url: signed.signedUrl,
+    });
+
+  // Fire-and-forget readiness recompute. Failure is non-fatal.
+  void recomputeReadiness();
 
   return NextResponse.json({ ok: true, status, feedback });
 }

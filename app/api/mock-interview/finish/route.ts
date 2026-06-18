@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getGroq, GROQ_MODEL } from "@/lib/groq";
+import { recomputeReadiness } from "@/lib/recompute-readiness";
 
 type Turn = {
   question: string;
@@ -54,6 +55,7 @@ export async function POST(req: Request) {
   if (userId && plan !== "free") {
     const sb = await getServerSupabase();
     if (sb) {
+      // Legacy table — preserved for the existing dashboard surfaces.
       await sb.from("mock_interview_sessions").insert({
         user_id: userId,
         ended_at: new Date().toISOString(),
@@ -61,6 +63,65 @@ export async function POST(req: Request) {
         transcript: turns,
         feedback: scores,
       });
+
+      // Resolve country for the new richer schema row.
+      const { data: sel } = await sb
+        .from("user_country_selection")
+        .select("country_code")
+        .eq("user_id", userId)
+        .maybeSingle();
+      const countryCode = (sel?.country_code as string | undefined) ?? "US";
+
+      // Derive the four sub-category scores from the legacy three-axis
+      // scorecard. TODO(post-launch): replace with a per-category prompt
+      // that grades study_plan / financials / ties / confidence directly.
+      const studyPlanScore = scores.clarity;
+      const tiesScore = scores.redFlag;
+      const financialsScore = Math.round((scores.clarity + scores.redFlag) / 2);
+      const confidenceScore = scores.confidence;
+      const verdict: "ready" | "almost_ready" | "needs_work" =
+        scores.overall >= 80 ? "ready"
+        : scores.overall >= 60 ? "almost_ready" : "needs_work";
+
+      const { data: sessionRow } = await sb
+        .from("interview_sessions")
+        .insert({
+          user_id: userId,
+          country_code: countryCode,
+          completed_at: new Date().toISOString(),
+          total_questions: turns.length,
+          questions_answered: turns.filter((t) => t.answer && t.answer.length > 0).length,
+          overall_score: scores.overall,
+          study_plan_score: studyPlanScore,
+          financial_credibility_score: financialsScore,
+          ties_to_home_score: tiesScore,
+          confidence_score: confidenceScore,
+          ai_summary: scores.summary,
+          ai_verdict: verdict,
+        })
+        .select("id")
+        .single();
+
+      // Per-answer rows. Without per-question categorical scoring we
+      // store the legacy feedback object's fix/worked text.
+      if (sessionRow?.id) {
+        const answerRows = turns.map((t) => ({
+          session_id: sessionRow.id,
+          question_text: t.question,
+          answer_transcript: t.answer,
+          score: null,
+          category: null,
+          ai_feedback: t.feedback?.fix ?? null,
+          red_flags_triggered: [] as string[],
+          strong_signals: t.feedback?.worked ? [t.feedback.worked] : [],
+        }));
+        if (answerRows.length > 0) {
+          await sb.from("interview_answers").insert(answerRows);
+        }
+      }
+
+      // Fire-and-forget readiness recompute.
+      void recomputeReadiness();
     }
   }
 

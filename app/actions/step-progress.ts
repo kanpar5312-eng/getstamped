@@ -5,6 +5,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { STEPS, TOTAL_STEPS } from "@/lib/steps";
 import { pushNotification } from "@/lib/notifications";
+import { recomputeReadiness } from "@/lib/recompute-readiness";
 
 export type StepStatusValue = "not_started" | "in_progress" | "complete";
 
@@ -109,6 +110,11 @@ export async function markStep(
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/timeline");
   revalidatePath(`/dashboard/timeline/${stepNumber}`);
+  revalidatePath("/dashboard/feedback");
+
+  // Fire-and-forget readiness recompute. Safe before the Edge Function
+  // is deployed — the helper swallows the error.
+  void recomputeReadiness();
 
   return { ok: true, status };
 }
