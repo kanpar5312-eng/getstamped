@@ -11,7 +11,7 @@ type AskPayload = {
   stepNumber?: number;
 };
 
-const FREE_DAILY_LIMIT = 3;
+const FREE_DAILY_LIMIT = 5;
 
 /**
  * POST /api/ask

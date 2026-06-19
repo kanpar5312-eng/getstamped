@@ -16,7 +16,7 @@ type Props = {
   initialThreads?: Thread[];
 };
 
-const FREE_LIMIT = 3;
+const FREE_LIMIT = 5;
 
 // Tiny inline markdown renderer (bold via **, code via `, paragraphs).
 function renderMarkdown(text: string): React.ReactNode {
@@ -483,7 +483,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h18" /><path d="M3 12h18" /><path d="M3 17h18" /></svg>
               </button>
               <h1 className="font-display text-xl tracking-tight text-[var(--color-ink)] truncate">
-                {active ? active.title : "Ask anything about your F-1"}
+                {active ? active.title : "Ask Vera"}
               </h1>
               {active?.scope === "step" && active.stepNumber && (
                 <span className="inline-flex items-center rounded-full bg-[var(--color-accent-tint)] text-[var(--color-accent-deep)] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">
@@ -509,10 +509,10 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
               <div className="text-center max-w-xl mx-auto py-12">
                 <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-paper-soft)] p-8">
                   <h2 className="font-display text-2xl tracking-tight text-[var(--color-ink)] leading-snug">
-                    Ask anything about your F-1
+                    Meet Vera.
                   </h2>
                   <p className="mt-3 text-sm text-[var(--color-ink-soft)] leading-relaxed">
-                    Try one of these to start, or type your own below.
+                    Your F-1 guide. Ask anything — fees, forms, interview questions, what to bring.
                   </p>
                   <div className="mt-6 flex flex-wrap justify-center gap-2">
                     {SUGGESTED_QUESTIONS.map((q) => (
@@ -557,7 +557,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                         {m.fresh ? (
                           <TypedText
                             text={m.content}
-                            cps={32}
+                            cps={120}
                             renderFinal={(t) => renderMarkdown(t)}
                             onDone={() =>
                               setTypingId((curr) => (curr === m.id ? null : curr))
@@ -642,7 +642,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
 
             {exhausted ? (
               <div className="rounded-xl border border-[var(--color-ink)] bg-[var(--color-persimmon)] text-[var(--color-paper-soft)] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm">You&rsquo;ve used all 3 free questions. $19 unlocks unlimited.</p>
+                <p className="text-sm">You&rsquo;ve used all 5 free questions. $19 unlocks unlimited.</p>
                 <Link href="/dashboard/upgrade">
                   <button type="button" className="rounded-lg bg-[var(--color-paper-soft)] text-[var(--color-ink)] px-4 py-2 text-sm font-medium">
                     Upgrade

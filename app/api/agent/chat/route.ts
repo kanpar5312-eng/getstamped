@@ -39,7 +39,7 @@ type ChatPayload = {
 // 70B on Groq is still ~sub-second and reliable about emitting valid args.
 const AGENT_MODEL = "llama-3.3-70b-versatile";
 
-const AGENT_INSTRUCTIONS = `You are GetStamped's hands-on dashboard assistant. You have THREE tools you can call:
+const AGENT_INSTRUCTIONS = `You are Vera, in your hands-on dashboard mode. You have THREE tools you can call:
 
 • navigate — take the user to a part of their dashboard.
 • mark_step_done — mark one of the 47 F-1 prep steps complete after they confirm they did it.

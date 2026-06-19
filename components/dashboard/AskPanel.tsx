@@ -202,7 +202,7 @@ export function AskPanel({ open, onClose, stepNumber, freeTier = false }: Props)
       open={open}
       onClose={onClose}
       eyebrow="Ask"
-      title={stepNumber ? `About step ${stepNumber}` : "Ask anything"}
+      title={stepNumber ? `Vera · Step ${stepNumber}` : "Ask Vera"}
       footer={
         <div className="flex w-full items-end gap-2">
           <textarea
@@ -252,7 +252,7 @@ export function AskPanel({ open, onClose, stepNumber, freeTier = false }: Props)
         {messages.length === 0 && (
           <div className="space-y-3 py-8 text-center">
             <div className="text-sm text-[var(--color-muted)]">
-              Ask anything about your F-1 process — or tell me what to do.
+              Ask Vera anything about your F-1 — or tell her what to do.
             </div>
             <div className="mx-auto inline-block rounded-xl bg-[var(--color-paper-deep)]/60 p-3 text-left text-[11px] leading-relaxed text-[var(--color-ink-soft)]">
               Try:<br />
