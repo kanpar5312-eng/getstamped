@@ -142,7 +142,12 @@ export function SignUpForm() {
     startTransition(async () => {
       const r = await signUp(fd);
       if (r.ok) {
-        setSuccess({ email });
+        // Navigate to the 6-digit OTP verification page. The action's
+        // redirectTo is the canonical destination; fall back to a built
+        // URL only if the action didn't provide one.
+        const dest = r.redirectTo ?? `/sign-up/verify?email=${encodeURIComponent(email)}`;
+        router.push(dest);
+        router.refresh();
       } else {
         setError(r.error);
       }

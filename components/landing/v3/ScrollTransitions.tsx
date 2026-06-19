@@ -168,21 +168,20 @@ export function ScrollTransitions() {
         setWC(faq, active);
         setWC(closer, active);
 
-        // Outgoing FAQ recedes over 0.4 → 0.9
+        // Outgoing FAQ recedes over 0.4 → 0.9.
+        // Filter:blur during scroll trashes paint perf — same depth-of-field
+        // illusion via a slightly larger translateZ + opacity drop.
         const r = easeOut(sub(p, 0.4, 0.9));
         if (r <= 0) {
           faq.style.transform = "";
           faq.style.opacity = "";
-          faq.style.filter = "";
         } else {
-          const tz = -120 * r;
+          const tz = -140 * r;
           const ty = -30 * r;
           const rx = 2.5 * r;
-          const blur = 2 * r;
           faq.style.transformOrigin = "center bottom";
           faq.style.transform = `perspective(1000px) translateY(${ty.toFixed(1)}px) translateZ(${tz.toFixed(1)}px) rotateX(${rx.toFixed(2)}deg)`;
-          faq.style.opacity = (1 - 0.6 * r).toFixed(3);
-          faq.style.filter = `blur(${blur.toFixed(2)}px)`;
+          faq.style.opacity = (1 - 0.7 * r).toFixed(3);
         }
 
         // Incoming closer rises to meet you over 0 → 0.7
@@ -199,7 +198,9 @@ export function ScrollTransitions() {
 
         // Cursor glow activates only past 70% of the descent. The continuous
         // glowLoop below handles the actual lerp + paint.
-        glow.active = p > 0.7;
+        const nowActive = p > 0.7;
+        if (nowActive && !glow.active) startGlowLoop();
+        glow.active = nowActive;
         if (closerGlow) closerGlow.style.opacity = glow.active ? "1" : "0";
       }
     };
@@ -211,17 +212,27 @@ export function ScrollTransitions() {
       }
     };
 
-    // Independent low-rate loop so the cursor glow keeps lerping while idle.
+    // Cursor-glow lerp loop — runs ONLY while glow.active. When inactive
+    // we cancel the rAF entirely instead of looping doing nothing, which
+    // saves a 60Hz wake on every scroll frame for everyone whose mouse
+    // isn't currently over the closer.
     let glowRaf = 0;
+    let glowRunning = false;
     const glowLoop = () => {
       if (closerGlow && glow.active) {
         glow.x += (glow.tx - glow.x) * 0.12;
         glow.y += (glow.ty - glow.y) * 0.12;
         closerGlow.style.background = `radial-gradient(440px circle at ${glow.x.toFixed(0)}px ${glow.y.toFixed(0)}px, rgba(255,91,46,0.14), transparent 60%)`;
+        glowRaf = requestAnimationFrame(glowLoop);
+      } else {
+        glowRunning = false;
       }
+    };
+    const startGlowLoop = () => {
+      if (glowRunning) return;
+      glowRunning = true;
       glowRaf = requestAnimationFrame(glowLoop);
     };
-    glowRaf = requestAnimationFrame(glowLoop);
 
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);

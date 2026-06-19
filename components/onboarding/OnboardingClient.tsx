@@ -339,20 +339,25 @@ export function OnboardingClient({ firstName: initialFirstName, initialCountry }
             <div className="ob-dest-grid">
               {SUPPORTED_COUNTRIES.map((c) => {
                 const active = f.destination === c.code;
+                const locked = Boolean(c.comingSoon);
                 return (
                   <button
                     key={c.code}
                     type="button"
                     role="radio"
                     aria-checked={active}
-                    onClick={() => setDestination(c.code)}
-                    className={`ob-dest-card${active ? " is-active" : ""}`}
+                    aria-disabled={locked}
+                    disabled={locked}
+                    onClick={() => !locked && setDestination(c.code)}
+                    className={`ob-dest-card${active ? " is-active" : ""}${locked ? " is-locked" : ""}`}
                   >
                     <span className="ob-dest-flag" aria-hidden>{c.flag_emoji}</span>
                     <span className="ob-dest-name">{c.name}</span>
                     <span className="ob-dest-visa">{c.visa_type}</span>
-                    <span className="ob-dest-pt">~{c.processing_time_weeks} weeks processing</span>
-                    {active ? (
+                    <span className="ob-dest-pt">
+                      {locked ? "Coming soon" : `~${c.processing_time_weeks} weeks processing`}
+                    </span>
+                    {active && !locked ? (
                       <span className="ob-dest-tick" aria-hidden>
                         <svg viewBox="0 0 16 16" width="14" height="14" fill="none">
                           <path d="M3 8.5L6.5 12L13 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -554,6 +559,15 @@ export function OnboardingClient({ firstName: initialFirstName, initialCountry }
         .ob-dest-soon .ob-dest-name,
         .ob-dest-soon .ob-dest-visa,
         .ob-dest-soon .ob-dest-pt { color: var(--color-muted); }
+        .ob-dest-card.is-locked {
+          opacity: 0.55;
+          cursor: not-allowed;
+          border-style: dashed;
+        }
+        .ob-dest-card.is-locked .ob-dest-pt {
+          color: var(--color-persimmon-deep);
+          font-weight: 600;
+        }
         .ob-dest-flag { font-size: 28px; line-height: 1; }
         .ob-dest-name {
           margin-top: 8px;

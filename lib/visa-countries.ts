@@ -86,12 +86,23 @@ export const SUPPORTED_COUNTRIES: ReadonlyArray<{
   flag_emoji: string;
   processing_time_weeks: number;
   currency_code: string;
+  /**
+   * MVP scoping: only US is fully wired across the dashboard surfaces
+   * (Playbook, Documents, Mock Interview). UK/CA/AU/DE have the data
+   * layer ready (visa_steps / visa_documents / visa_interview_questions)
+   * but the dashboard UI still hardcodes F-1 content, so for now they
+   * render as "Coming soon" and aren't selectable.
+   *
+   * To switch one on: flip its `comingSoon` to false here, and wire the
+   * dashboard surfaces to use lib/visa-data.ts helpers for that code.
+   */
+  comingSoon?: boolean;
 }> = [
   { code: "US", name: "United States",  visa_type: "F-1 Student Visa",            flag_emoji: "🇺🇸", processing_time_weeks: 4,  currency_code: "USD" },
-  { code: "UK", name: "United Kingdom", visa_type: "Student Visa (Tier 4)",       flag_emoji: "🇬🇧", processing_time_weeks: 3,  currency_code: "GBP" },
-  { code: "CA", name: "Canada",         visa_type: "Study Permit",                flag_emoji: "🇨🇦", processing_time_weeks: 10, currency_code: "CAD" },
-  { code: "AU", name: "Australia",      visa_type: "Student Visa (Subclass 500)", flag_emoji: "🇦🇺", processing_time_weeks: 6,  currency_code: "AUD" },
-  { code: "DE", name: "Germany",        visa_type: "Student Visa (§16b)",         flag_emoji: "🇩🇪", processing_time_weeks: 8,  currency_code: "EUR" },
+  { code: "UK", name: "United Kingdom", visa_type: "Student Visa (Tier 4)",       flag_emoji: "🇬🇧", processing_time_weeks: 3,  currency_code: "GBP", comingSoon: true },
+  { code: "CA", name: "Canada",         visa_type: "Study Permit",                flag_emoji: "🇨🇦", processing_time_weeks: 10, currency_code: "CAD", comingSoon: true },
+  { code: "AU", name: "Australia",      visa_type: "Student Visa (Subclass 500)", flag_emoji: "🇦🇺", processing_time_weeks: 6,  currency_code: "AUD", comingSoon: true },
+  { code: "DE", name: "Germany",        visa_type: "Student Visa (§16b)",         flag_emoji: "🇩🇪", processing_time_weeks: 8,  currency_code: "EUR", comingSoon: true },
 ];
 
 export function isCountryCode(v: unknown): v is CountryCode {

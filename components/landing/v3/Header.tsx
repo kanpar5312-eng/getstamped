@@ -22,7 +22,6 @@ export function Header() {
         </Link>
         <nav className="v3-nav" aria-label="Primary">
           <a href="#playbook" className="v3-nav-link"><span>Workspace</span></a>
-          <a href="#reviews" className="v3-nav-link"><span>Reviews</span></a>
           <a href="#pricing" className="v3-nav-link"><span>Pricing</span></a>
           <a href="#faq" className="v3-nav-link"><span>FAQ</span></a>
         </nav>

@@ -36,7 +36,9 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   const sb = await getServerSupabase();
   if (!sb) return { ok: false, error: "Supabase client unavailable." };
 
-  const origin = (await headers()).get("origin") ?? "http://localhost:3030";
+  const origin = (await headers()).get("origin")
+    ?? process.env.NEXT_PUBLIC_SITE_ORIGIN
+    ?? "http://localhost:3030";
 
   // First word of full legal name → first_name for greeting / avatar initials.
   const firstName = fullName.split(/\s+/)[0];
@@ -56,7 +58,44 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   });
 
   if (error) return { ok: false, error: error.message };
-  return { ok: true, redirectTo: `/sign-up/check-email?email=${encodeURIComponent(email)}` };
+  return { ok: true, redirectTo: `/sign-up/verify?email=${encodeURIComponent(email)}` };
+}
+
+/**
+ * Verifies the 6-digit OTP code Supabase emails after signUp.
+ *
+ * Supabase prerequisite: the "Confirm signup" email template must include
+ * `{{ .Token }}` (the 6-digit code). Otherwise the email will only contain
+ * a confirmation link and this verify action has nothing to validate.
+ */
+export async function verifyEmailCode(
+  email: string,
+  token: string,
+): Promise<AuthResult> {
+  if (!reasonableEmail(email)) return { ok: false, error: "Enter a valid email." };
+  const code = token.replace(/\s+/g, "");
+  if (!/^\d{6}$/.test(code)) {
+    return { ok: false, error: "Enter the 6-digit code from your email." };
+  }
+  if (!isSupabaseConfigured()) {
+    return { ok: false, error: "Auth is not configured yet." };
+  }
+  const sb = await getServerSupabase();
+  if (!sb) return { ok: false, error: "Supabase client unavailable." };
+
+  const { error } = await sb.auth.verifyOtp({
+    email,
+    token: code,
+    type: "signup",
+  });
+  if (error) {
+    // Common cases: expired (1h default), wrong code, already used.
+    if (/expired/i.test(error.message)) {
+      return { ok: false, error: "That code expired. Tap “Resend” for a fresh one." };
+    }
+    return { ok: false, error: error.message };
+  }
+  return { ok: true, redirectTo: "/onboarding" };
 }
 
 /** Re-send the verification email for an unconfirmed account. */
@@ -66,7 +105,9 @@ export async function resendVerification(email: string): Promise<AuthResult> {
   const sb = await getServerSupabase();
   if (!sb) return { ok: false, error: "Supabase client unavailable." };
 
-  const origin = (await headers()).get("origin") ?? "http://localhost:3030";
+  const origin = (await headers()).get("origin")
+    ?? process.env.NEXT_PUBLIC_SITE_ORIGIN
+    ?? "http://localhost:3030";
   const { error } = await sb.auth.resend({
     type: "signup",
     email,
@@ -125,7 +166,9 @@ export async function requestPasswordReset(formData: FormData): Promise<AuthResu
   const sb = await getServerSupabase();
   if (!sb) return { ok: false, error: "Supabase client unavailable." };
 
-  const origin = (await headers()).get("origin") ?? "http://localhost:3030";
+  const origin = (await headers()).get("origin")
+    ?? process.env.NEXT_PUBLIC_SITE_ORIGIN
+    ?? "http://localhost:3030";
 
   const { error } = await sb.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/reset`,

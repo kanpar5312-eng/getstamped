@@ -69,10 +69,11 @@ export default function OpenGraphImage() {
             flexDirection: "column",
           }}
         >
-          <div>The only F-1 visa prep</div>
-          <div>
-            tool you&rsquo;ll ever{" "}
-            <span style={{ color: "#FF5B2E", fontStyle: "italic" }}>need</span>.
+          <div style={{ display: "flex" }}>The only F-1 visa prep</div>
+          <div style={{ display: "flex", gap: "0.28em" }}>
+            <span>tool you&rsquo;ll ever</span>
+            <span style={{ color: "#FF5B2E", fontStyle: "italic" }}>need</span>
+            <span>.</span>
           </div>
         </div>
 

@@ -41,7 +41,6 @@ import { SectionDivider } from "./SectionDivider";
 import { TrustStrip } from "./TrustStrip";
 import { FeatureCycle } from "./FeatureCycle";
 import { ProblemSlam } from "./ProblemSlam";
-import { FinalCTA } from "./FinalCTA";
 import { Styles } from "./Styles";
 
 type Props = {
@@ -68,10 +67,11 @@ export function MarketingLanding({ currency }: Props) {
         <ProblemSlam />
         <Pricing currency={currency} />
         <SectionDivider label="APPROVED FOR ENTRY" bg="paper" />
-        <Reviews />
+        {/* Reviews hidden for MVP — fictional testimonials replaced when
+            we have ≥3 real student quotes from beta. Re-add <Reviews />
+            here when ready. */}
         <FAQ />
         <StampedCloser />
-        <FinalCTA />
       </main>
       <Footer />
       <ScrollTransitions />

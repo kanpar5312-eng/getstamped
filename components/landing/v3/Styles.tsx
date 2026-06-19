@@ -13,6 +13,17 @@ export function Styles() {
         font-kerning: normal;
         text-rendering: optimizeLegibility;
       }
+      /* Off-screen sections opt out of layout + paint work — biggest single
+         scroll-perf win on a long landing. contain-intrinsic-size keeps the
+         scrollbar honest so the page height doesn't jiggle as sections enter
+         the rendering window. */
+      .v3-root main > section,
+      .v3-root main > .v3-section {
+        content-visibility: auto;
+        contain-intrinsic-size: 1px 800px;
+      }
+      /* Hero is the first paint + has a video; never skip it. */
+      .v3-root main > .v3-hero { content-visibility: visible; }
       .v3-root :where(h1,h2,h3,h4,p,ul,ol,li,figure,blockquote,hr){ margin:0; }
       .v3-root ul, .v3-root ol { list-style: none; padding: 0; }
       .v3-root a { color: inherit; text-decoration: none; }
@@ -84,11 +95,15 @@ export function Styles() {
       /* ── Header ─────────────────────────────────────────────────────── */
       .v3-header {
         position: sticky; top: 0; z-index: 50;
-        background: rgba(247, 243, 236, 0.78);
-        backdrop-filter: saturate(180%) blur(20px);
-        -webkit-backdrop-filter: saturate(180%) blur(20px);
+        /* Heavier opaque tint + lighter blur — same premium look at a fraction
+           of the per-frame paint cost. backdrop-filter is one of the most
+           expensive properties in the browser. */
+        background: rgba(247, 243, 236, 0.92);
+        backdrop-filter: saturate(180%) blur(10px);
+        -webkit-backdrop-filter: saturate(180%) blur(10px);
         border-bottom: 1px solid rgba(227, 221, 208, 0.6);
         transition: border-color 200ms var(--ease-soft), background-color 200ms var(--ease-soft);
+        will-change: background-color;
       }
       .v3-header.is-scrolled {
         background: rgba(247, 243, 236, 0.92);
@@ -728,31 +743,65 @@ export function Styles() {
       }
 
       .v3-review-card {
+        position: relative;
         flex: 0 0 auto;
         width: 308px;
-        background: var(--color-paper-soft);
-        /* Ink hairline border with a subtle ink shadow halo —
-           editorial, quiet, expensive. No persimmon glow. */
-        border: 1.5px solid var(--color-ink);
+        /* Warm peach card — picks up the persimmon family quietly so the
+           running rail at the bottom feels intentional, not alien. */
+        background: color-mix(in srgb, var(--color-persimmon-tint) 28%, var(--color-paper-soft));
+        border: 1px solid color-mix(in srgb, var(--color-persimmon) 14%, var(--color-border));
         border-radius: 14px;
         padding: 20px 18px;
+        overflow: hidden;
         box-shadow:
-          0 1px 0 rgba(255, 255, 255, 0.7) inset,
-          0 6px 16px -8px rgba(28, 27, 26, 0.18),
-          0 18px 36px -22px rgba(28, 27, 26, 0.22);
+          0 1px 0 rgba(255, 255, 255, 0.55) inset,
+          0 8px 20px -12px rgba(217, 70, 30, 0.18);
         transition:
           border-color 240ms var(--ease-soft),
-          box-shadow 240ms var(--ease-soft),
+          background-color 240ms var(--ease-soft),
           transform 240ms var(--ease-soft);
       }
+      /* Running persimmon line — animated rail along the bottom edge of
+         every review card. Two layers: a faint track + a bright traveler
+         that loops left-to-right indefinitely. */
+      .v3-review-card::before,
+      .v3-review-card::after {
+        content: "";
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        height: 2px;
+        pointer-events: none;
+      }
+      .v3-review-card::before {
+        background: color-mix(in srgb, var(--color-persimmon) 18%, transparent);
+      }
+      .v3-review-card::after {
+        width: 45%;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          var(--color-persimmon) 50%,
+          transparent 100%
+        );
+        animation: v3-review-rail 3.2s linear infinite;
+      }
+      @keyframes v3-review-rail {
+        0%   { transform: translateX(-100%); }
+        100% { transform: translateX(220%); }
+      }
+      /* Stagger each card's rail so the rows don't pulse in lockstep. */
+      .v3-review-card:nth-child(3n)::after   { animation-delay: -0.9s; }
+      .v3-review-card:nth-child(3n + 1)::after { animation-delay: -1.8s; }
+      .v3-review-card:nth-child(3n + 2)::after { animation-delay: -2.4s; }
       @media (hover: hover) and (pointer: fine) {
         .v3-review-card:hover {
-          border-color: var(--color-ink);
-          box-shadow:
-            0 1px 0 rgba(255, 255, 255, 0.8) inset,
-            0 10px 22px -10px rgba(28, 27, 26, 0.26),
-            0 24px 48px -24px rgba(28, 27, 26, 0.28);
+          background: color-mix(in srgb, var(--color-persimmon-tint) 42%, var(--color-paper-soft));
+          border-color: color-mix(in srgb, var(--color-persimmon) 38%, var(--color-border));
+          transform: translateY(-2px);
         }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .v3-review-card::after { animation: none; transform: translateX(28%); }
       }
       @media (max-width: 640px) {
         .v3-review-card { width: 268px; padding: 18px 16px; }
@@ -785,8 +834,18 @@ export function Styles() {
       .v3-review-meta { display: block; font-size: 12.5px; color: var(--color-muted); }
 
       /* ── FAQ ────────────────────────────────────────────────────────── */
-      .v3-faq-head { max-width: 720px; margin-bottom: 48px; }
-      .v3-faq-list { display: flex; flex-direction: column; gap: 12px; max-width: 920px; }
+      .v3-faq-head {
+        max-width: 720px;
+        margin: 0 auto 48px;
+        text-align: center;
+      }
+      .v3-faq-head .v3-h2,
+      .v3-faq-head .v3-lead { margin-left: auto; margin-right: auto; }
+      .v3-faq-list {
+        display: flex; flex-direction: column; gap: 12px;
+        max-width: 920px;
+        margin: 0 auto;
+      }
       .v3-faq-item {
         background: var(--color-paper-soft);
         border: 1px solid var(--color-border);

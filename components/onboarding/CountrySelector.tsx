@@ -113,20 +113,25 @@ export function CountrySelector({ open, onClose, mode = "first", onComplete }: P
         <div className="cs-grid" role="radiogroup" aria-label="Destination country">
           {SUPPORTED_COUNTRIES.map((c) => {
             const isSelected = selected === c.code;
+            const locked = Boolean(c.comingSoon);
             return (
               <button
                 key={c.code}
                 type="button"
                 role="radio"
                 aria-checked={isSelected}
-                onClick={() => setSelected(c.code)}
-                className={`cs-card-country${isSelected ? " is-selected" : ""}`}
+                aria-disabled={locked}
+                disabled={locked}
+                onClick={() => !locked && setSelected(c.code)}
+                className={`cs-card-country${isSelected ? " is-selected" : ""}${locked ? " is-locked" : ""}`}
               >
                 <span className="cs-flag" aria-hidden>{c.flag_emoji}</span>
                 <span className="cs-name">{c.name}</span>
                 <span className="cs-visa">{c.visa_type}</span>
-                <span className="cs-pt">~{c.processing_time_weeks} weeks processing</span>
-                {isSelected ? (
+                <span className="cs-pt">
+                  {locked ? "Coming soon" : `~${c.processing_time_weeks} weeks processing`}
+                </span>
+                {isSelected && !locked ? (
                   <span className="cs-check" aria-hidden>
                     <svg viewBox="0 0 16 16" width="16" height="16" fill="none">
                       <path d="M3 8.5L6.5 12L13 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -275,6 +280,19 @@ export function CountrySelector({ open, onClose, mode = "first", onComplete }: P
           background: transparent;
         }
         .cs-card-soon .cs-name, .cs-card-soon .cs-visa, .cs-card-soon .cs-pt { color: var(--color-muted); }
+        .cs-card-country.is-locked {
+          opacity: 0.5;
+          cursor: not-allowed;
+          border-style: dashed;
+        }
+        .cs-card-country.is-locked:hover {
+          border-color: rgba(28,27,26,0.1) !important;
+          background: var(--color-paper-soft) !important;
+        }
+        .cs-card-country.is-locked .cs-pt {
+          color: var(--color-persimmon-deep);
+          font-weight: 600;
+        }
         .cs-flag { font-size: 32px; line-height: 1; }
         .cs-name { font-size: 15px; font-weight: 600; color: var(--color-ink); margin-top: 8px; }
         .cs-visa {

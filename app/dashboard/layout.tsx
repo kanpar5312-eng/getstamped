@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { DashboardNav } from "@/components/dashboard/DashboardNav";
 import { CountryPill } from "@/components/dashboard/CountryPill";
 import { DashboardWake } from "@/components/dashboard/DashboardWake";
+import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 import { CommandPalette } from "@/components/dashboard/CommandPalette";
 import { RealtimeRefresher } from "@/components/horizon/RealtimeRefresher";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
@@ -39,6 +40,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         </div>
         {children}
       </main>
+      <DashboardFooter />
     </div>
   );
 }
