@@ -55,6 +55,7 @@ export function DashboardFooter() {
           display: flex;
           flex-wrap: wrap;
           align-items: center;
+          justify-content: center;
           gap: 12px 28px;
           color: var(--color-ink-soft);
           font-size: 12.5px;

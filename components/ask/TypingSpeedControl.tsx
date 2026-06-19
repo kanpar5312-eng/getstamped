@@ -1,17 +1,16 @@
 "use client";
 
 /* ════════════════════════════════════════════════════════════════════════════
-   TypingSpeedControl — Claude-Code-style "Effort" picker for Vera's
-   character-per-second animation. Five stops from Slow → Instant, with the
-   active label inlined in the header (Speed **Fast**) and a row of dots
-   below bookended by "Slower" / "Instant".
+   TypingSpeedControl — small pill trigger that opens a Claude-style popover
+   listing the five typing-speed presets for Vera. The active option is
+   marked with a persimmon dot, others are muted. Click outside or press
+   Escape to close.
 
-   The current value is persisted to localStorage so the user's preference
-   survives page reload. The hook also exports `cpsFor(level)` so the
-   parent can wire it straight into <TypedText cps={…}>.
+   Selection persists to localStorage so it survives navigation/reload.
+   `cpsFor(level)` is exported so the parent wires it into <TypedText cps={…}>.
    ═════════════════════════════════════════════════════════════════════════ */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const SPEED_LEVELS = ["slow", "normal", "fast", "faster", "instant"] as const;
 export type SpeedLevel = (typeof SPEED_LEVELS)[number];
@@ -24,8 +23,14 @@ const LABELS: Record<SpeedLevel, string> = {
   instant: "Instant",
 };
 
-/* Characters per second per level. "instant" uses an absurdly high cps so
-   TypedText completes inside a single frame — no extra branch needed. */
+const HINTS: Record<SpeedLevel, string> = {
+  slow: "Easy to read along",
+  normal: "Steady cadence",
+  fast: "Default — quick but readable",
+  faster: "Skim the answer",
+  instant: "No animation",
+};
+
 const CPS: Record<SpeedLevel, number> = {
   slow: 35,
   normal: 70,
@@ -42,7 +47,6 @@ const DEFAULT: SpeedLevel = "fast";
 export function useTypingSpeed(): [SpeedLevel, (l: SpeedLevel) => void] {
   const [level, setLevel] = useState<SpeedLevel>(DEFAULT);
 
-  // Read once on mount. SSR returns DEFAULT; client hydrates after.
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -66,6 +70,32 @@ export function useTypingSpeed(): [SpeedLevel, (l: SpeedLevel) => void] {
   return [level, update];
 }
 
+function BoltIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
+      <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" />
+    </svg>
+  );
+}
+
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-3 w-3 transition-transform"
+      style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
 export function TypingSpeedControl({
   level,
   onChange,
@@ -73,55 +103,93 @@ export function TypingSpeedControl({
   level: SpeedLevel;
   onChange: (l: SpeedLevel) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  /* Close on outside-click / Escape */
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   return (
-    <div className="rounded-lg border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] px-3 py-2">
-      <div className="flex items-center justify-between">
-        <div className="text-[11px] text-[var(--color-ink-soft)]">
-          Speed <span className="font-medium text-[var(--color-ink)]">{LABELS[level]}</span>
-        </div>
-        <div className="font-mono text-[9px] uppercase tracking-wider text-[var(--color-muted)]">
-          Vera
-        </div>
-      </div>
-      <div className="mt-2 flex items-center gap-2">
-        <span className="text-[10px] text-[var(--color-muted)]">Slower</span>
+    <div ref={wrapRef} className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-[11px] text-[var(--color-ink-soft)] hover:border-[var(--color-ink-soft)] hover:text-[var(--color-ink)] transition-colors"
+      >
+        <span className="text-[var(--color-persimmon)]"><BoltIcon /></span>
+        <span>
+          Speed{" "}
+          <span className="font-medium text-[var(--color-ink)]">{LABELS[level]}</span>
+        </span>
+        <ChevronIcon open={open} />
+      </button>
+
+      {open && (
         <div
-          role="radiogroup"
-          aria-label="Typing speed"
-          className="relative flex flex-1 items-center justify-between"
+          role="listbox"
+          aria-label="Vera typing speed"
+          className="absolute bottom-full left-0 z-30 mb-2 w-[220px] rounded-xl border border-[var(--color-border)] bg-[var(--color-paper-soft)] shadow-[0_8px_28px_-12px_rgba(15,20,25,0.18)] p-1.5 animate-bubble-in-left"
         >
-          {/* Hairline rail behind the dots */}
-          <span
-            aria-hidden
-            className="absolute left-1.5 right-1.5 top-1/2 h-px -translate-y-1/2 bg-[var(--color-border)]"
-          />
+          <div className="px-2.5 pt-1.5 pb-1 text-[9px] font-mono uppercase tracking-wider text-[var(--color-muted)]">
+            Vera typing speed
+          </div>
           {SPEED_LEVELS.map((l) => {
             const active = l === level;
             return (
               <button
                 key={l}
                 type="button"
-                role="radio"
-                aria-checked={active}
-                aria-label={LABELS[l]}
-                title={LABELS[l]}
-                onClick={() => onChange(l)}
-                className="relative z-10 inline-flex h-4 w-4 items-center justify-center"
+                role="option"
+                aria-selected={active}
+                onClick={() => {
+                  onChange(l);
+                  setOpen(false);
+                }}
+                className={[
+                  "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left transition-colors",
+                  active
+                    ? "bg-[var(--color-persimmon-tint)]/60"
+                    : "hover:bg-[var(--color-paper-deep)]/60",
+                ].join(" ")}
               >
+                <div className="min-w-0">
+                  <div className={`text-[12.5px] ${active ? "font-semibold text-[var(--color-ink)]" : "text-[var(--color-ink)]"}`}>
+                    {LABELS[l]}
+                  </div>
+                  <div className="text-[10px] text-[var(--color-ink-soft)]/80 truncate">
+                    {HINTS[l]}
+                  </div>
+                </div>
                 <span
+                  aria-hidden
                   className={[
-                    "block rounded-full transition-all",
+                    "block h-2 w-2 flex-shrink-0 rounded-full transition-all",
                     active
-                      ? "h-3 w-3 bg-[var(--color-persimmon)] shadow-[0_0_0_2px_var(--color-paper-soft)]"
-                      : "h-1.5 w-1.5 bg-[var(--color-border)] hover:bg-[var(--color-ink-soft)]",
+                      ? "bg-[var(--color-persimmon)] shadow-[0_0_0_3px_var(--color-persimmon-tint)]"
+                      : "bg-[var(--color-border)]",
                   ].join(" ")}
                 />
               </button>
             );
           })}
         </div>
-        <span className="text-[10px] text-[var(--color-muted)]">Instant</span>
-      </div>
+      )}
     </div>
   );
 }

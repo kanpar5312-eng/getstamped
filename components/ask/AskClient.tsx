@@ -616,10 +616,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
 
           {/* Input area */}
           <div className="border-t border-[var(--color-border-soft)] pt-4">
-            <div className="mb-3">
-              <TypingSpeedControl level={speed} onChange={setSpeed} />
-            </div>
-            {/* Scope chips + counter */}
+            {/* Scope chips + speed + counter */}
             <div className="flex items-center justify-between gap-3 mb-2">
               <div className="inline-flex rounded-lg bg-[var(--color-paper-deep)] p-0.5 text-xs">
                 {(["general", "step", "documents", "interview"] as Scope[]).map((s) => (
@@ -638,11 +635,14 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                   </button>
                 ))}
               </div>
-              {plan === "free" && (
-                <span className="font-mono text-[10px] text-[var(--color-muted)] tabular-nums">
-                  {questionsUsed}/{FREE_LIMIT} free questions used
-                </span>
-              )}
+              <div className="flex items-center gap-3">
+                <TypingSpeedControl level={speed} onChange={setSpeed} />
+                {plan === "free" && (
+                  <span className="font-mono text-[10px] text-[var(--color-muted)] tabular-nums">
+                    {questionsUsed}/{FREE_LIMIT}
+                  </span>
+                )}
+              </div>
             </div>
 
             {exhausted ? (
