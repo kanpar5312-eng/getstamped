@@ -7,6 +7,7 @@ import { TypedText } from "@/components/ask/TypedText";
 import { timeAgo } from "@/lib/relative-time";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { deleteThread as deleteThreadAction, setMessageHelpful, setMessageSaved } from "@/app/actions/ai-threads";
+import { TypingSpeedControl, useTypingSpeed, cpsFor } from "@/components/ask/TypingSpeedControl";
 
 type Plan = "free" | "solo" | "family";
 
@@ -138,6 +139,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
      the request mid-generation. Replaced on each new send. */
   const aborterRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [speed, setSpeed] = useTypingSpeed();
 
   const isBusy = sending || typingId !== null;
 
@@ -557,7 +559,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                         {m.fresh ? (
                           <TypedText
                             text={m.content}
-                            cps={120}
+                            cps={cpsFor(speed)}
                             renderFinal={(t) => renderMarkdown(t)}
                             onDone={() =>
                               setTypingId((curr) => (curr === m.id ? null : curr))
@@ -614,6 +616,9 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
 
           {/* Input area */}
           <div className="border-t border-[var(--color-border-soft)] pt-4">
+            <div className="mb-3">
+              <TypingSpeedControl level={speed} onChange={setSpeed} />
+            </div>
             {/* Scope chips + counter */}
             <div className="flex items-center justify-between gap-3 mb-2">
               <div className="inline-flex rounded-lg bg-[var(--color-paper-deep)] p-0.5 text-xs">
