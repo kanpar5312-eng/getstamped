@@ -129,7 +129,17 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
   const [sending, setSending] = useState(false);
   const [questionsUsed, setQuestionsUsed] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  /* The id of the assistant message currently being typed out. While set,
+     the send button flips to a Stop button that instantly reveals the
+     full markdown render (no character animation). Cleared by TypedText's
+     onDone, or by stop(). */
+  const [typingId, setTypingId] = useState<string | null>(null);
+  /* In-flight fetch's AbortController. stop() calls .abort() to cancel
+     the request mid-generation. Replaced on each new send. */
+  const aborterRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const isBusy = sending || typingId !== null;
 
   const active = threads.find((t) => t.id === activeId) ?? null;
 
@@ -184,6 +194,12 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
       );
     }
 
+    // Cancel any previous in-flight call. If the user spam-clicks send,
+    // only the latest request survives.
+    aborterRef.current?.abort();
+    const ac = new AbortController();
+    aborterRef.current = ac;
+
     try {
       const r = await fetch("/api/ask", {
         method: "POST",
@@ -194,6 +210,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
           scope,
           stepNumber: scope === "step" ? threads.find((t) => t.id === activeId)?.stepNumber : undefined,
         }),
+        signal: ac.signal,
       });
       if (r.status === 429) {
         const data = await r.json().catch(() => ({}));
@@ -219,13 +236,17 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
       };
       const answer = data.assistantMessage?.content ?? data.answer ?? "Sorry, I couldn't answer that right now.";
       const realThreadId = data.threadId ?? optimisticThreadId ?? threadId;
+      const aiMsgId = data.assistantMessage?.id ?? crypto.randomUUID();
       const aiMsg: Message = {
-        id: data.assistantMessage?.id ?? crypto.randomUUID(),
+        id: aiMsgId,
         role: "assistant",
         content: answer,
         createdAt: new Date(),
         fresh: true,
       };
+      // Mark this message as the one currently being type-animated.
+      // TypedText's onDone clears it; stop() can also clear it early.
+      setTypingId(aiMsgId);
       setThreads((ts) =>
         ts.map((t) => {
           // Patch optimistic thread id → real
@@ -242,11 +263,16 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
         setActiveId(realThreadId);
       }
       setQuestionsUsed((n) => n + 1);
-    } catch {
+    } catch (err) {
+      // User-initiated stop — surface a short note, no error styling.
+      const aborted =
+        err instanceof DOMException && err.name === "AbortError";
       const aiMsg: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: "Network error. Please try again.",
+        content: aborted
+          ? "_Stopped._"
+          : "Network error. Please try again.",
         createdAt: new Date(),
       };
       setThreads((ts) =>
@@ -256,6 +282,35 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
       );
     } finally {
       setSending(false);
+      // Clear the controller only if it's still ours — a newer send() may
+      // have already replaced it.
+      if (aborterRef.current === ac) aborterRef.current = null;
+    }
+  };
+
+  /* Stop the AI — works in two phases:
+     1. If the fetch is still in flight, abort it (catch block handles the
+        rest, marking the message as "Stopped").
+     2. If the response arrived and TypedText is mid-animation, flip the
+        message's `fresh` flag so it falls through to the static markdown
+        renderer immediately. */
+  const stop = () => {
+    aborterRef.current?.abort();
+    if (typingId && activeId) {
+      const id = typingId;
+      setThreads((ts) =>
+        ts.map((t) =>
+          t.id === activeId
+            ? {
+                ...t,
+                messages: t.messages.map((m) =>
+                  m.id === id ? { ...m, fresh: false } : m,
+                ),
+              }
+            : t,
+        ),
+      );
+      setTypingId(null);
     }
   };
 
@@ -504,6 +559,9 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                             text={m.content}
                             cps={32}
                             renderFinal={(t) => renderMarkdown(t)}
+                            onDone={() =>
+                              setTypingId((curr) => (curr === m.id ? null : curr))
+                            }
                           />
                         ) : (
                           renderMarkdown(m.content)
@@ -599,7 +657,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
-                      send();
+                      if (!isBusy) send();
                     }
                   }}
                   rows={1}
@@ -607,15 +665,29 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                   className="flex-1 resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted)]/70 outline-none focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent)]/10 transition-colors max-h-48"
                   style={{ minHeight: "44px" }}
                 />
-                <button
-                  type="button"
-                  onClick={send}
-                  disabled={!input.trim() || sending}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--color-persimmon)] text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-50"
-                  aria-label="Send"
-                >
-                  <PaperPlane />
-                </button>
+                {isBusy ? (
+                  <button
+                    type="button"
+                    onClick={stop}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--color-ink)] text-[var(--color-paper-soft)] hover:bg-[var(--color-ink-soft)] transition-colors"
+                    aria-label="Stop"
+                    title="Stop"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
+                      <rect x="6" y="6" width="12" height="12" rx="1.5" />
+                    </svg>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={send}
+                    disabled={!input.trim()}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--color-persimmon)] text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-50"
+                    aria-label="Send"
+                  >
+                    <PaperPlane />
+                  </button>
+                )}
               </div>
             )}
             <div className="mt-2 flex items-center justify-between text-[10px] text-[var(--color-muted)]">
