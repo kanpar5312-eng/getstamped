@@ -20,9 +20,17 @@ export function IntroGate() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (pathname !== "/") return;
+    const clearPending = () =>
+      document.documentElement.classList.remove("gs-intro-pending");
+    if (pathname !== "/") {
+      clearPending();
+      return;
+    }
     try {
-      if (sessionStorage.getItem("gs_intro_seen") === "1") return;
+      if (sessionStorage.getItem("gs_intro_seen") === "1") {
+        clearPending();
+        return;
+      }
     } catch {
       // sessionStorage blocked (Safari private mode, etc.) — fall through and play
     }
@@ -30,5 +38,12 @@ export function IntroGate() {
   }, [pathname]);
 
   if (!show) return null;
-  return <OpeningSequence onComplete={() => setShow(false)} />;
+  return (
+    <OpeningSequence
+      onComplete={() => {
+        document.documentElement.classList.remove("gs-intro-pending");
+        setShow(false);
+      }}
+    />
+  );
 }
