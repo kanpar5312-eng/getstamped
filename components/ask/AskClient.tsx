@@ -61,6 +61,48 @@ function renderInline(text: string): React.ReactNode {
   return out;
 }
 
+/* Per-message timestamp formatter. Compact relative form so the chat
+   doesn't shout dates at the reader:
+   • same day      → "10:42 PM"
+   • yesterday     → "Yesterday, 10:42 PM"
+   • this year     → "Jun 19, 10:42 PM"
+   • older         → "Jun 19, 2025, 10:42 PM"
+   Renders inside <time> with the full ISO in title for accessibility. */
+function MessageTime({ when }: { when: Date | string | null | undefined }) {
+  if (!when) return null;
+  const d = when instanceof Date ? when : new Date(when);
+  if (Number.isNaN(d.getTime())) return null;
+  const now = new Date();
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  const yest = new Date(now);
+  yest.setDate(now.getDate() - 1);
+  const isYesterday =
+    d.getFullYear() === yest.getFullYear() &&
+    d.getMonth() === yest.getMonth() &&
+    d.getDate() === yest.getDate();
+  const time = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  let label: string;
+  if (sameDay) label = time;
+  else if (isYesterday) label = `Yesterday, ${time}`;
+  else if (d.getFullYear() === now.getFullYear()) {
+    label = `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })}, ${time}`;
+  } else {
+    label = `${d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}, ${time}`;
+  }
+  return (
+    <time
+      dateTime={d.toISOString()}
+      title={d.toLocaleString()}
+      className="font-mono text-[10px] tabular-nums text-[var(--color-muted)]"
+    >
+      {label}
+    </time>
+  );
+}
+
 function PaperPlane() {
   return <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>;
 }
@@ -436,8 +478,13 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                 {active.messages.map((m) => {
                   if (m.role === "user") {
                     return (
-                      <div key={m.id} className="ml-auto max-w-[80%] rounded-2xl rounded-tr-md bg-[var(--color-accent)] text-[var(--color-paper-soft)] px-4 py-2.5 text-sm leading-relaxed animate-bubble-in-right">
-                        {m.content}
+                      <div key={m.id} className="ml-auto max-w-[80%] animate-bubble-in-right">
+                        <div className="rounded-2xl rounded-tr-md bg-[var(--color-accent)] text-[var(--color-paper-soft)] px-4 py-2.5 text-sm leading-relaxed">
+                          {m.content}
+                        </div>
+                        <div className="mt-1 flex justify-end pr-1">
+                          <MessageTime when={m.createdAt} />
+                        </div>
                       </div>
                     );
                   }
@@ -461,6 +508,9 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                         ) : (
                           renderMarkdown(m.content)
                         )}
+                      </div>
+                      <div className="mt-2">
+                        <MessageTime when={m.createdAt} />
                       </div>
                       <div className="mt-3 flex items-center gap-3 text-[var(--color-muted)]">
                         <span className="text-[11px]">Was this helpful?</span>
