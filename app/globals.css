@@ -120,6 +120,52 @@ body {
 }
 
 /* ──────────────────────────────────────────────────────────────────────
+   Upgrade-chip glow — a single persimmon "light" tracking around the
+   border, ~4s lap. Uses @property + conic-gradient with a mask cutout
+   so only the ring shows. Falls back gracefully (no animation, plain
+   border) in browsers without @property support.
+   ────────────────────────────────────────────────────────────────────── */
+@property --gs-glow-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+.gs-glow {
+  position: relative;
+  isolation: isolate;
+}
+.gs-glow::before {
+  content: "";
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--gs-glow-angle),
+    transparent 0deg,
+    transparent 280deg,
+    rgba(255, 91, 46, 0.0) 290deg,
+    #FF5B2E 320deg,
+    rgba(255, 91, 46, 0.0) 350deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  animation: gs-glow-spin 3.6s linear infinite;
+  filter: drop-shadow(0 0 4px rgba(255, 91, 46, 0.55));
+}
+@keyframes gs-glow-spin {
+  to { --gs-glow-angle: 360deg; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gs-glow::before { animation: none; }
+}
+
+/* ──────────────────────────────────────────────────────────────────────
    iOS Safari auto-zooms into any text input whose computed font-size is
    < 16px on focus, then refuses to zoom back out cleanly — that's why
    the sign-in/Ask page felt "out of frame" after tapping a field. Force

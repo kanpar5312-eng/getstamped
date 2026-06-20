@@ -235,7 +235,7 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
           {/* Upgrade chip — Free · 30% off */}
           <Link
             href="/dashboard/upgrade"
-            className="group inline-flex items-center gap-1.5 rounded-lg border border-[var(--line)] bg-[var(--surface)] h-8 px-2.5 text-[12px] font-medium text-[var(--ink)] hover:border-[var(--ember)] transition-colors"
+            className="gs-glow group inline-flex items-center gap-1.5 rounded-lg border border-[var(--line)] bg-[var(--surface)] h-8 px-2.5 text-[12px] font-medium text-[var(--ink)] hover:border-[var(--ember)] transition-colors"
             aria-label={`Plan · ${planLabel}`}
           >
             <span className="text-[var(--ember)]">
