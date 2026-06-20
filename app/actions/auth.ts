@@ -43,7 +43,7 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   // First word of full legal name → first_name for greeting / avatar initials.
   const firstName = fullName.split(/\s+/)[0];
 
-  const { error } = await sb.auth.signUp({
+  const { data: signUpData, error } = await sb.auth.signUp({
     email,
     password,
     options: {
@@ -58,6 +58,23 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   });
 
   if (error) return { ok: false, error: error.message };
+
+  // If Supabase's "Confirm email" toggle is OFF, signUp returns a live
+  // session already — drop the user straight into onboarding, no OTP
+  // detour. If the toggle is ON (current state, pending email-template
+  // fix), session is null and we fall through to the verify page.
+  if (signUpData.session) {
+    return { ok: true, redirectTo: "/onboarding" };
+  }
+
+  // Fallback: try a password sign-in to obtain a session anyway. Works
+  // whenever Supabase doesn't strictly require email confirmation. If
+  // it fails (email-confirm-required policy), we send them to verify.
+  const signIn = await sb.auth.signInWithPassword({ email, password });
+  if (signIn.data.session) {
+    return { ok: true, redirectTo: "/onboarding" };
+  }
+
   return { ok: true, redirectTo: `/sign-up/verify?email=${encodeURIComponent(email)}` };
 }
 
