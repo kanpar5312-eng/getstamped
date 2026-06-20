@@ -211,6 +211,16 @@ export function Styles() {
         max-height: 78vh;
         overflow: hidden;
       }
+      /* Mobile: drop the 16:9 aspect (it forces a tall blank video band
+         on phones) and let content set the height. Keep the stage at a
+         comfortable readable size, not a billboard. */
+      @media (max-width: 640px) {
+        .v3-hero-stage {
+          aspect-ratio: auto;
+          min-height: 0;
+          max-height: none;
+        }
+      }
       .v3-hero-video {
         position: absolute; inset: 0; z-index: 0;
         width: 100%; height: 100%; object-fit: cover;
@@ -227,7 +237,7 @@ export function Styles() {
       .v3-hero-inner {
         position: relative; z-index: 2;
         max-width: 1180px; margin: 0 auto;
-        padding: clamp(56px, 10vw, 120px) 24px clamp(64px, 8vw, 96px);
+        padding: clamp(40px, 10vw, 120px) 20px clamp(48px, 8vw, 96px);
         color: #fff;
         text-align: left;
       }
@@ -251,8 +261,8 @@ export function Styles() {
       .v3-hero-h1 {
         margin-top: 24px;
         font-family: var(--font-display-stack); font-weight: 400;
-        font-size: clamp(56px, 10vw, 96px);
-        line-height: 0.96; letter-spacing: -0.022em;
+        font-size: clamp(40px, 10vw, 96px);
+        line-height: 0.98; letter-spacing: -0.022em;
         color: #fff; max-width: 14ch;
         text-wrap: balance;
       }
@@ -277,7 +287,7 @@ export function Styles() {
 
       .v3-hero-sub {
         margin-top: 28px; max-width: 520px;
-        font-size: 21px; line-height: 1.55;
+        font-size: clamp(16px, 4vw, 21px); line-height: 1.55;
         color: rgba(255,255,255,0.88);
         opacity: 1; animation: v3-fade-in 500ms var(--ease-out) 600ms backwards;
       }

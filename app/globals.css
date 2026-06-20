@@ -119,6 +119,24 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ──────────────────────────────────────────────────────────────────────
+   iOS Safari auto-zooms into any text input whose computed font-size is
+   < 16px on focus, then refuses to zoom back out cleanly — that's why
+   the sign-in/Ask page felt "out of frame" after tapping a field. Force
+   16px on every text-style input on small viewports and the zoom never
+   triggers. Desktop styling is untouched.
+   ────────────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  input:where(
+    [type="text"], [type="email"], [type="password"], [type="search"],
+    [type="tel"], [type="url"], [type="number"], [type="date"], :not([type])
+  ),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
 /* Long emails / URLs inside legal-prose wrap aggressively */
 .legal-prose {
   overflow-wrap: anywhere;

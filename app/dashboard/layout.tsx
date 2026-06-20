@@ -1,7 +1,5 @@
 import type { ReactNode } from "react";
 import { DashboardNav } from "@/components/dashboard/DashboardNav";
-import { CountryPill } from "@/components/dashboard/CountryPill";
-import { DashboardClock } from "@/components/dashboard/DashboardClock";
 import { DashboardWake } from "@/components/dashboard/DashboardWake";
 import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 import { CommandPalette } from "@/components/dashboard/CommandPalette";
@@ -41,10 +39,6 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       />
       <NotificationCenter userId={sessionUser?.id ?? null} />
       <main className="flex-1 mx-auto w-full max-w-[1140px] px-5 sm:px-6 py-8 sm:py-10 lg:py-12 relative z-10">
-        <div className="mb-4 flex items-center justify-end gap-3">
-          <DashboardClock />
-          <CountryPill authed={Boolean(sessionUser?.id)} />
-        </div>
         {children}
       </main>
       <DashboardFooter />
