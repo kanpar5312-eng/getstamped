@@ -11,7 +11,7 @@ export type RoomState =
   | "paused";            // connection issue overlay
 
 const SRC: Record<Interviewer, string> = {
-  female: "/female.png",
+  female: "/female.svg",
   male: "/male.png",
 };
 

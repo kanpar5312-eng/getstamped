@@ -144,7 +144,10 @@ export function TypingSpeedControl({
         <div
           role="listbox"
           aria-label="Vera typing speed"
-          className="absolute bottom-full left-0 z-30 mb-2 w-[220px] rounded-xl border border-[var(--color-border)] bg-[var(--color-paper-soft)] shadow-[0_8px_28px_-12px_rgba(15,20,25,0.18)] p-1.5 animate-bubble-in-left"
+          /* Anchor to the trigger's RIGHT edge so the popover grows leftward —
+             otherwise the 220px panel overflows the viewport on mobile,
+             since the speed button sits in the right side of the toolbar. */
+          className="absolute bottom-full right-0 z-30 mb-2 w-[220px] max-w-[calc(100vw-32px)] rounded-xl border border-[var(--color-border)] bg-[var(--color-paper-soft)] shadow-[0_8px_28px_-12px_rgba(15,20,25,0.18)] p-1.5 animate-bubble-in-left"
         >
           <div className="px-2.5 pt-1.5 pb-1 text-[9px] font-mono uppercase tracking-wider text-[var(--color-muted)]">
             Vera typing speed
