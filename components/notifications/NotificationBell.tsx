@@ -180,11 +180,8 @@ export function NotificationBell({ userId }: Props) {
       {open && (
         <div
           role="menu"
+          className="gs-notif-panel"
           style={{
-            position: "absolute",
-            top: "calc(100% + 10px)",
-            right: 0,
-            width: "min(420px, calc(100vw - 32px))",
             background: "#0F1A24",
             color: "#E6ECF2",
             borderRadius: 18,
