@@ -162,8 +162,11 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
 
   const exhausted = plan === "free" && questionsUsed >= FREE_LIMIT;
 
-  const send = async () => {
-    const q = input.trim();
+  const send = async (override?: string) => {
+    // Accept an override so suggested-question buttons can send immediately
+    // without waiting for `setInput` to commit (the stale-closure trap that
+    // previously made those buttons silently no-op).
+    const q = (override ?? input).trim();
     if (!q || sending) return;
     if (exhausted) return;
 
@@ -266,9 +269,16 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
       }
       setQuestionsUsed((n) => n + 1);
     } catch (err) {
-      // User-initiated stop — surface a short note, no error styling.
+      // Only the *current* send's controller should write a "Stopped"/error
+      // message. If a newer send() has already replaced aborterRef, this
+      // catch is from an obsolete request — swallow silently. Otherwise
+      // pin the message to the thread that originated this send, not the
+      // user's currently-active thread (they may have switched).
+      if (aborterRef.current !== ac) return;
       const aborted =
         err instanceof DOMException && err.name === "AbortError";
+      const targetThreadId = optimisticThreadId ?? threadId;
+      if (!targetThreadId) return;
       const aiMsg: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -278,7 +288,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
         createdAt: new Date(),
       };
       setThreads((ts) =>
-        ts.map((t) => (t.id === (optimisticThreadId ?? threadId)
+        ts.map((t) => (t.id === targetThreadId
           ? { ...t, messages: [...t.messages, aiMsg] }
           : t)),
       );
@@ -521,7 +531,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                       <button
                         key={q}
                         type="button"
-                        onClick={() => { setInput(q); setTimeout(send, 50); }}
+                        onClick={() => send(q)}
                         className="rounded-full bg-[var(--color-paper)] border border-[var(--color-border-soft)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-deep)] px-3 py-1.5 text-xs text-[var(--color-ink-soft)] transition-colors"
                       >
                         {q}
@@ -685,7 +695,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                 ) : (
                   <button
                     type="button"
-                    onClick={send}
+                    onClick={() => send()}
                     disabled={!input.trim()}
                     className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--color-persimmon)] text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-50"
                     aria-label="Send"

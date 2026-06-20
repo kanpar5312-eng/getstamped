@@ -17,10 +17,22 @@ export default async function AskPage({
   searchParams: SearchParams;
 }) {
   const sp = await searchParams;
-  const { profile } = await getCurrentUser(sp.state);
-
-  const isReal = isSupabaseConfigured() && Boolean(await getSessionUser());
-  const initialThreads = isReal ? await listThreads() : [];
+  // Parallel + cache-deduped session. listThreads is wrapped so a transient
+  // DB error (or an unmigrated schema) renders the empty Ask page instead
+  // of throwing the entire route into a 500.
+  const [{ profile }, sessionUser] = await Promise.all([
+    getCurrentUser(sp.state),
+    getSessionUser(),
+  ]);
+  const isReal = isSupabaseConfigured() && Boolean(sessionUser);
+  let initialThreads: Awaited<ReturnType<typeof listThreads>> = [];
+  if (isReal) {
+    try {
+      initialThreads = await listThreads();
+    } catch (err) {
+      console.error("[AskPage] listThreads failed:", err);
+    }
+  }
 
   return (
     <AskClient
