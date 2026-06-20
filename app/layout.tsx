@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import "./globals.css";
-import { inter, instrumentSerif } from "@/lib/fonts";
+import { instrumentSerif } from "@/lib/fonts";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { PricingProvider } from "@/lib/PricingContext";
@@ -49,7 +49,6 @@ export default async function RootLayout({
     <html
       lang="en"
       className={[
-        inter.variable,
         instrumentSerif.variable,
         GeistSans.variable,
         GeistMono.variable,

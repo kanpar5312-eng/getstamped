@@ -1,15 +1,18 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseAnonKey, getSupabaseUrl, isSupabaseConfigured } from "@/lib/supabase/config";
 
 /**
- * Server Supabase client (per-request — never cached).
- * Reads + writes session cookies via Next 16's async cookies() API.
- * Returns null when Supabase env vars are missing.
+ * Server Supabase client — memoized per request via React.cache so that
+ * multiple callers in the same render (layout + page + helpers) share one
+ * client instance and one cookie read. Without this, a single dashboard
+ * render was instantiating 3–4 clients and hitting auth.getUser() that
+ * many times.
  */
-export async function getServerSupabase(): Promise<SupabaseClient | null> {
+export const getServerSupabase = cache(async function getServerSupabase(): Promise<SupabaseClient | null> {
   if (!isSupabaseConfigured()) return null;
   const store = await cookies();
 
@@ -30,15 +33,15 @@ export async function getServerSupabase(): Promise<SupabaseClient | null> {
       },
     },
   });
-}
+});
 
 /**
- * Convenience: returns the signed-in user (or null) without forcing the
- * caller to instantiate the client just to read auth state.
+ * Convenience: returns the signed-in user (or null). Also memoized so the
+ * layout, page, and helpers all share one auth.getUser() network round-trip.
  */
-export async function getSessionUser() {
+export const getSessionUser = cache(async function getSessionUser() {
   const sb = await getServerSupabase();
   if (!sb) return null;
   const { data } = await sb.auth.getUser();
   return data.user;
-}
+});

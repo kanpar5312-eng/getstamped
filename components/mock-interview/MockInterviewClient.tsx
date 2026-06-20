@@ -1,10 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { SetupScreen, type Difficulty, type Interviewer, type Length } from "./SetupScreen";
 import { InterviewRoom, type RoomState } from "./InterviewRoom";
 import { FeedbackScreen, type Scores, type TurnSummary } from "./FeedbackScreen";
-import FirstPersonEntry from "./FirstPersonEntry";
+
+// Three.js (~600KB gz) only needs to load when the user actually starts an
+// interview. Keeping it out of the dashboard's shared chunk shaves a huge
+// chunk off every other route's first paint.
+const FirstPersonEntry = dynamic(() => import("./FirstPersonEntry"), {
+  ssr: false,
+  loading: () => null,
+});
 
 type Plan = "free" | "solo" | "family";
 type Phase = "setup" | "cinematic" | "room" | "feedback";

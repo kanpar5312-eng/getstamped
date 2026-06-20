@@ -1,5 +1,5 @@
 import "server-only";
-import { getServerSupabase } from "@/lib/supabase/server";
+import { getServerSupabase, getSessionUser } from "@/lib/supabase/server";
 
 /**
  * Returns true when the Feedback nav item should show a red urgency dot:
@@ -10,30 +10,28 @@ import { getServerSupabase } from "@/lib/supabase/server";
  */
 export async function getFeedbackUrgency(): Promise<boolean> {
   try {
-    const sb = await getServerSupabase();
-    if (!sb) return false;
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) return false;
+    const [sb, user] = await Promise.all([getServerSupabase(), getSessionUser()]);
+    if (!sb || !user) return false;
 
-    // Latest snapshot
-    const { data: snap } = await sb
-      .from("preparation_snapshots")
-      .select("overall_readiness_score")
-      .eq("user_id", user.id)
-      .order("snapshot_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    // Both lookups run in parallel — neither depends on the other.
+    const [snapRes, reviewsRes] = await Promise.all([
+      sb.from("preparation_snapshots")
+        .select("overall_readiness_score")
+        .eq("user_id", user.id)
+        .order("snapshot_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      sb.from("document_review_results")
+        .select("document_key, passed, reviewed_at")
+        .eq("user_id", user.id)
+        .order("reviewed_at", { ascending: false }),
+    ]);
+    const snap = snapRes.data;
+    const reviews = reviewsRes.data;
     if (typeof snap?.overall_readiness_score === "number"
       && snap.overall_readiness_score < 60) {
       return true;
     }
-
-    // Any failed doc (latest per key)
-    const { data: reviews } = await sb
-      .from("document_review_results")
-      .select("document_key, passed, reviewed_at")
-      .eq("user_id", user.id)
-      .order("reviewed_at", { ascending: false });
     const seen = new Set<string>();
     for (const r of reviews ?? []) {
       if (seen.has(r.document_key as string)) continue;

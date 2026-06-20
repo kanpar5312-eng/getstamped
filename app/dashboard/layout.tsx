@@ -20,10 +20,15 @@ function initialsFrom(name: string): string {
 }
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const { profile } = await getCurrentUser();
-  const sessionUser = await getSessionUser();
+  // Fire all three in parallel. They share a memoized session lookup
+  // under the hood (lib/supabase/server.ts), so this is effectively one
+  // auth round-trip instead of the previous three serial ones.
+  const [{ profile }, sessionUser, feedbackUrgent] = await Promise.all([
+    getCurrentUser(),
+    getSessionUser(),
+    getFeedbackUrgency(),
+  ]);
   const initials = initialsFrom(profile.firstName);
-  const feedbackUrgent = await getFeedbackUrgency();
 
   return (
     <div data-surface="dashboard" className="min-h-screen flex flex-col relative">

@@ -1,5 +1,5 @@
 import "server-only";
-import { getServerSupabase } from "@/lib/supabase/server";
+import { getServerSupabase, getSessionUser } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getMock, isValidState } from "@/lib/mock-user";
 import type {
@@ -27,8 +27,8 @@ export async function getCurrentUser(stateParam?: string): Promise<{
   if (isSupabaseConfigured()) {
     const sb = await getServerSupabase();
     if (sb) {
-      const { data: userData } = await sb.auth.getUser();
-      const user = userData.user;
+      // Cached — shared with layout's getSessionUser() call, so this is free.
+      const user = await getSessionUser();
       if (user) {
         const [{ data: profileRow }, { data: progressRows }] = await Promise.all([
           sb.from("profiles").select("*").eq("id", user.id).maybeSingle(),
