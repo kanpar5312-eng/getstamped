@@ -857,6 +857,7 @@ export function Styles() {
         margin: 0 auto;
       }
       .v3-faq-item {
+        position: relative;
         background: var(--color-paper-soft);
         border: 1px solid var(--color-border);
         border-radius: 16px; overflow: hidden;
@@ -865,8 +866,8 @@ export function Styles() {
       .v3-faq-item.is-open { border-color: color-mix(in srgb, var(--color-persimmon) 30%, var(--color-border)); }
       .v3-faq-btn {
         all: unset; cursor: pointer; width: 100%; box-sizing: border-box;
-        display: grid; grid-template-columns: auto 1fr auto;
-        gap: 22px; align-items: center; padding: 22px 26px;
+        display: grid; grid-template-columns: auto 1fr;
+        gap: 22px; align-items: start; padding: 22px 70px 22px 26px;
       }
       .v3-faq-num { color: var(--color-muted); font-size: 12.5px; align-self: start; padding-top: 6px;
         transition: color 240ms var(--ease-soft); }
@@ -885,12 +886,14 @@ export function Styles() {
         font-size: 24px; line-height: 1.25; color: var(--color-ink);
       }
       .v3-faq-toggle {
+        position: absolute; top: 22px; right: 22px;
         width: 32px; height: 32px; border-radius: 999px;
         background: var(--color-paper-deep); color: var(--color-ink-soft);
         display: inline-flex; align-items: center; justify-content: center;
         transition: transform 360ms var(--ease-out),
           background-color 360ms var(--ease-out),
           color 360ms var(--ease-out);
+        pointer-events: none; /* button is the click target, not the chevron */
       }
       .v3-faq-item.is-open .v3-faq-toggle {
         transform: rotate(180deg); background: var(--color-persimmon); color: #fff;
@@ -907,10 +910,11 @@ export function Styles() {
         color: var(--color-ink-soft); max-width: 64ch;
       }
       @media (max-width: 640px) {
-        .v3-faq-btn { grid-template-columns: auto 1fr auto; gap: 14px; padding: 20px 22px; }
+        .v3-faq-btn { grid-template-columns: 1fr; gap: 14px; padding: 18px 64px 18px 18px; }
         .v3-faq-num { display: none; }
         .v3-faq-q { font-size: 18px; }
-        .v3-faq-panel-inner p { padding: 0 22px 20px 22px; font-size: 15.5px; }
+        .v3-faq-toggle { top: 18px; right: 18px; width: 28px; height: 28px; }
+        .v3-faq-panel-inner p { padding: 0 18px 18px 18px; font-size: 15.5px; }
       }
 
       /* ── Scroll-transition support layers ───────────────────────────── */
