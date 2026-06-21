@@ -35,14 +35,25 @@ type Profile = {
 
 type Notif = "deadlines" | "weekly" | "stepUpdates" | "marketing";
 
+type ReferralProps = {
+  code: string | null;
+  link: string | null;
+  totalReferred: number;
+  totalCompleted: number;
+  creditInrPaise: number;
+  creditUsdCents: number;
+};
+
 type Props = {
   initial: Profile;
+  referral?: ReferralProps;
 };
 
 const SECTIONS = [
   { id: "profile", label: "Profile" },
   { id: "application", label: "Application" },
   { id: "plan", label: "Plan" },
+  { id: "refer", label: "Refer a friend" },
   { id: "notifications", label: "Notifications" },
   { id: "account", label: "Account" },
   { id: "danger", label: "Danger zone" },
@@ -65,7 +76,7 @@ function Field({ label, children, hint }: { label: string; children: React.React
 
 const input = "w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted)]/70 outline-none focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent)]/10 transition-colors";
 
-export function SettingsClient({ initial }: Props) {
+export function SettingsClient({ initial, referral }: Props) {
   const router = useRouter();
   const [active, setActive] = useState<SectionId>("profile");
   const [data, setData] = useState<Profile>(initial);
@@ -452,6 +463,10 @@ export function SettingsClient({ initial }: Props) {
             </section>
           )}
 
+          {active === "refer" && (
+            <ReferSection referral={referral} />
+          )}
+
           {active === "notifications" && (
             <section className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-6 sm:p-7">
               <h2 className="text-base font-medium text-[var(--color-ink)]">Notifications</h2>
@@ -710,6 +725,94 @@ function SaveRow({ show, section, saving, saved, onSave }: { show: boolean; sect
       >
         {saving ? "Saving…" : saved ? "Saved ✓" : "Save changes"}
       </button>
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   Refer a friend — link + copy button + earned-rewards summary.
+   Credit balances are formatted from the smallest currency unit the
+   API stores them in (paise / cents), and both are shown so the user
+   sees whatever they've actually accrued.
+   ────────────────────────────────────────────────────────────────────── */
+function ReferSection({ referral }: { referral?: ReferralProps }) {
+  const [copied, setCopied] = useState(false);
+  const link = referral?.link ?? "";
+  const code = referral?.code ?? null;
+
+  const fmtInr = (paise: number) =>
+    `₹${(paise / 100).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+  const fmtUsd = (cents: number) =>
+    `$${(cents / 100).toFixed(2)}`;
+
+  const copy = async () => {
+    if (!link) return;
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard blocked — user can manually select */
+    }
+  };
+
+  return (
+    <section
+      id="refer"
+      className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] p-6 sm:p-7"
+    >
+      <h2 className="text-base font-medium text-[var(--color-ink)]">Refer a friend</h2>
+      <p className="mt-0.5 text-xs text-[var(--color-muted)]">
+        Share your link. When a friend signs up + upgrades, they get 10% off and you earn ₹500 / $8 in credit.
+      </p>
+
+      {/* Share link */}
+      <div className="mt-5">
+        <span className="text-xs font-medium text-[var(--color-ink-soft)]">Your share link</span>
+        <div className="mt-1.5 flex items-stretch gap-2">
+          <input
+            readOnly
+            value={link || "Generating…"}
+            onFocus={(e) => e.currentTarget.select()}
+            className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm font-mono text-[var(--color-ink)] outline-none"
+          />
+          <button
+            type="button"
+            onClick={copy}
+            disabled={!link}
+            className="rounded-xl bg-[var(--color-persimmon)] px-4 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-50"
+          >
+            {copied ? "Copied ✓" : "Copy"}
+          </button>
+        </div>
+        {code && (
+          <p className="mt-2 text-[11px] text-[var(--color-muted)]">
+            Your code: <span className="font-mono text-[var(--color-ink-soft)]">{code}</span>
+          </p>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <StatTile label="Friends referred"  value={referral?.totalReferred ?? 0} />
+        <StatTile label="Rewards earned"    value={referral?.totalCompleted ?? 0} />
+        <StatTile label="Credit (INR)"      value={fmtInr(referral?.creditInrPaise ?? 0)} />
+        <StatTile label="Credit (USD)"      value={fmtUsd(referral?.creditUsdCents ?? 0)} />
+      </div>
+
+      <p className="mt-5 text-[11px] text-[var(--color-muted)] leading-relaxed">
+        Credit is applied automatically at your next checkout. Self-referrals don&rsquo;t count;
+        one credit per friend.
+      </p>
+    </section>
+  );
+}
+
+function StatTile({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-paper)] p-3">
+      <div className="text-[10px] font-mono uppercase tracking-wider text-[var(--color-muted)]">{label}</div>
+      <div className="mt-1 font-display text-xl tracking-tight text-[var(--color-ink)] tabular-nums">{value}</div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { verifyTurnstile } from "@/lib/turnstile";
+import { attachReferralFromCookie } from "@/lib/referrals";
 
 export type AuthResult =
   | { ok: true; redirectTo?: string }
@@ -58,6 +59,16 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   });
 
   if (error) return { ok: false, error: error.message };
+
+  // If a /r/<code> cookie is on the request, attribute the new user to
+  // their referrer. Best-effort — never fail signup over a broken link.
+  if (signUpData.user?.id) {
+    try {
+      await attachReferralFromCookie(signUpData.user.id);
+    } catch (err) {
+      console.error("[signUp] referral attach failed:", err);
+    }
+  }
 
   // If Supabase's "Confirm email" toggle is OFF, signUp returns a live
   // session already — drop the user straight into onboarding, no OTP
