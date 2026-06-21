@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import type { StepView } from "@/lib/timeline-data";
 import { timeAgo } from "@/lib/relative-time";
+import { ExampleModal } from "@/components/documents/ExampleModal";
+import { getDocumentExample } from "@/components/documents/examples";
 
 type Props = {
   view: StepView;
@@ -126,11 +129,21 @@ function ariaLabel(view: StepView): string {
 }
 
 export function StepRow({ view, onLockedClick }: Props) {
+  const [exampleKey, setExampleKey] = useState<string | null>(null);
+
   const titleClass =
     "text-sm sm:text-base font-medium leading-snug " +
     (view.status === "locked"
       ? "text-[var(--color-muted)]"
       : "text-[var(--color-ink)]");
+
+  // Pick the first document on this step that we actually have a mockup
+  // for. Locked steps have their `documents` array stripped server-side,
+  // so this naturally produces no Example pill for paywalled phases.
+  const exampleDoc =
+    view.status === "locked"
+      ? null
+      : (view.step.documents ?? []).find((d) => getDocumentExample(d.key)) ?? null;
 
   const meta = (
     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-[var(--color-muted)]">
@@ -161,6 +174,22 @@ export function StepRow({ view, onLockedClick }: Props) {
             <span className="inline-flex items-center rounded-full bg-[var(--color-accent)]/10 text-[var(--color-accent-deep)] px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-medium">
               TIP
             </span>
+          )}
+          {exampleDoc && (
+            <button
+              type="button"
+              onClick={(e) => {
+                // The row is wrapped in a <Link>; stop the click so we
+                // open the modal instead of navigating to the step page.
+                e.preventDefault();
+                e.stopPropagation();
+                setExampleKey(exampleDoc.key);
+              }}
+              className="inline-flex items-center rounded-md border border-[rgba(28,27,26,0.2)] bg-transparent px-2 py-0.5 text-[10px] text-[var(--color-muted)] hover:border-[var(--color-persimmon)] hover:text-[var(--color-persimmon)] transition-colors"
+              aria-label={`See an example of ${exampleDoc.name}`}
+            >
+              Example
+            </button>
           )}
         </div>
         {meta}
@@ -195,26 +224,41 @@ export function StepRow({ view, onLockedClick }: Props) {
     "hover:bg-[var(--color-paper-deep)]/40 transition-colors " +
     "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--color-accent)]/10";
 
+  const modal = exampleDoc ? (
+    <ExampleModal
+      documentKey={exampleDoc.key}
+      displayName={exampleDoc.name}
+      isOpen={exampleKey !== null}
+      onClose={() => setExampleKey(null)}
+    />
+  ) : null;
+
   if (view.status === "locked") {
     return (
-      <button
-        type="button"
-        onClick={() => onLockedClick(view.step.number)}
-        aria-label={ariaLabel(view)}
-        className={wrapperClass}
-      >
-        {inner}
-      </button>
+      <>
+        <button
+          type="button"
+          onClick={() => onLockedClick(view.step.number)}
+          aria-label={ariaLabel(view)}
+          className={wrapperClass}
+        >
+          {inner}
+        </button>
+        {modal}
+      </>
     );
   }
 
   return (
-    <Link
-      href={`/dashboard/timeline/${view.step.number}`}
-      aria-label={ariaLabel(view)}
-      className={wrapperClass}
-    >
-      {inner}
-    </Link>
+    <>
+      <Link
+        href={`/dashboard/timeline/${view.step.number}`}
+        aria-label={ariaLabel(view)}
+        className={wrapperClass}
+      >
+        {inner}
+      </Link>
+      {modal}
+    </>
   );
 }

@@ -144,6 +144,22 @@ body {
 }
 
 /* ──────────────────────────────────────────────────────────────────────
+   ExampleModal — on phones the card stretches to the full viewport
+   (no rounded corners, reduced padding) so long mockups remain
+   scrollable instead of disappearing inside a tiny centered card.
+   ────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .gs-example-modal-card {
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 100vh !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+    padding: 24px !important;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────
    Upgrade-chip glow — a single persimmon "light" tracking around the
    border, ~4s lap. Uses @property + conic-gradient with a mask cutout
    so only the ring shows. Falls back gracefully (no animation, plain

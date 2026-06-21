@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CHECKLIST, PHASES, PHASE_TITLES, getChecklistItem } from "@/lib/documents/checklist";
 import { CountUp } from "@/components/dashboard/CountUp";
+import { ExampleModal } from "@/components/documents/ExampleModal";
+import { getDocumentExample } from "@/components/documents/examples";
 
 type Plan = "free" | "solo" | "family";
 
@@ -334,6 +336,7 @@ function DocumentRowView({
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [expand, setExpand] = useState(false);
+  const [exampleOpen, setExampleOpen] = useState(false);
 
   useEffect(() => {
     if (row.status === "attention") setExpand(true);
@@ -395,6 +398,19 @@ function DocumentRowView({
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <StatusChip status={row.status} />
+          {/* Example trigger — only render when we actually have a mockup
+              for this slug; otherwise the button would just be a dead-end
+              "Example coming soon" pop-up. */}
+          {getDocumentExample(row.slug) && (
+            <button
+              type="button"
+              onClick={() => setExampleOpen(true)}
+              className="inline-flex items-center rounded-md border border-[rgba(28,27,26,0.2)] bg-transparent px-3 py-1 text-[12px] text-[var(--stone)] hover:border-[var(--ember)] hover:text-[var(--ember)] transition-colors"
+              aria-label={`See an example of ${displayName}`}
+            >
+              Example
+            </button>
+          )}
           {row.status === "missing" || row.status === "attention" ? (
             <button
               type="button"
@@ -458,6 +474,12 @@ function DocumentRowView({
           style={{ animation: "upload-fill 1.2s ease-out forwards" }}
         />
       )}
+      <ExampleModal
+        documentKey={row.slug}
+        displayName={displayName}
+        isOpen={exampleOpen}
+        onClose={() => setExampleOpen(false)}
+      />
     </li>
   );
 }
