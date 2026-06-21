@@ -92,13 +92,6 @@ function GoogleMark() {
     </svg>
   );
 }
-function AppleMark() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden>
-      <path d="M16.4 12.6c-.03-3.3 2.7-4.9 2.83-4.97a6.1 6.1 0 0 0-4.79-2.59c-2.04-.21-3.98 1.2-5.02 1.2-1.04 0-2.64-1.17-4.35-1.14a6.4 6.4 0 0 0-5.42 3.3C-2.3 12.2-.6 17.9 1.61 21c1.1 1.52 2.4 3.22 4.1 3.16 1.66-.07 2.28-1.06 4.28-1.06 2 0 2.56 1.06 4.31 1.03 1.78-.03 2.9-1.55 3.98-3.08 1.25-1.76 1.77-3.47 1.8-3.56-.04-.02-3.45-1.32-3.48-5.24M13.4 3.05c.92-1.1 1.54-2.64 1.37-4.17-1.32.05-2.92.88-3.86 1.98-.85.97-1.6 2.53-1.4 4.03 1.47.12 2.97-.74 3.89-1.84" />
-    </svg>
-  );
-}
 
 /* ----------------------------- Styles ----------------------------- */
 const fieldWrap = "relative flex items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] focus-within:border-[var(--color-tg)] focus-within:ring-4 focus-within:ring-[var(--color-tg)]/10 transition-colors";
@@ -371,20 +364,13 @@ export function SignUpForm() {
         </div>
       </div>
 
-      <div className="field-rise field-rise-7 grid grid-cols-2 gap-2">
+      <div className="field-rise field-rise-7">
         <button
           type="button"
           onClick={() => oauthSoon("Google")}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-[13px] font-medium text-[var(--color-ink)] hover:border-[var(--color-tg)] transition-colors"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-[13px] font-medium text-[var(--color-ink)] hover:border-[var(--color-tg)] transition-colors"
         >
-          <GoogleMark /> Google
-        </button>
-        <button
-          type="button"
-          onClick={() => oauthSoon("Apple")}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-black text-white px-3 py-2 text-[13px] font-medium hover:opacity-90 transition-opacity"
-        >
-          <AppleMark /> Apple
+          <GoogleMark /> Continue with Google
         </button>
       </div>
     </form>

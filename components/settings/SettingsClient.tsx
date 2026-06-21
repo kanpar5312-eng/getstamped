@@ -66,15 +66,20 @@ const COUNTRIES = ["India", "China", "Vietnam", "Nigeria", "Brazil", "South Kore
 
 function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return (
-    <label className="block">
+    <label className="block min-w-0">
       <span className="text-xs font-medium text-[var(--color-ink-soft)]">{label}</span>
-      <div className="mt-1.5">{children}</div>
+      <div className="mt-1.5 min-w-0">{children}</div>
       {hint && <p className="mt-1 text-[11px] text-[var(--color-muted)]">{hint}</p>}
     </label>
   );
 }
 
 const input = "w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted)]/70 outline-none focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent)]/10 transition-colors";
+
+// iOS Safari gives <input type="date"> an intrinsic min-width and ignores
+// w-full, so the field overflows its grid cell. appearance-none + min-w-0 +
+// box-border force it to shrink to the container like every other input.
+const dateInput = `${input} appearance-none min-w-0 max-w-full box-border`;
 
 export function SettingsClient({ initial, referral }: Props) {
   const router = useRouter();
@@ -376,10 +381,10 @@ export function SettingsClient({ initial, referral }: Props) {
                   </select>
                 </Field>
                 <Field label="Intake date">
-                  <input type="date" className={input} value={data.intakeDate} onChange={(e) => set("intakeDate", e.target.value)} />
+                  <input type="date" className={dateInput} value={data.intakeDate} onChange={(e) => set("intakeDate", e.target.value)} />
                 </Field>
                 <Field label="Interview date">
-                  <input type="date" className={input} value={data.interviewDate} onChange={(e) => set("interviewDate", e.target.value)} />
+                  <input type="date" className={dateInput} value={data.interviewDate} onChange={(e) => set("interviewDate", e.target.value)} />
                 </Field>
                 <Field label="Consulate location">
                   <select className={input} value={data.consulate} onChange={(e) => set("consulate", e.target.value)}>
