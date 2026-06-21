@@ -15,7 +15,7 @@ export default async function SignInPage() {
 
   return (
     <AuthShell
-      background
+      bgImage="/sign-bg.png"
       eyebrow="Sign in"
       title="Welcome back."
       subtitle="Pick up where you left off."

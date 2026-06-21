@@ -15,6 +15,12 @@ type Props = {
    * three soft glow blobs and a low-contrast paper card. No image, no glass.
    */
   background?: boolean;
+  /**
+   * When set, uses this image (path under /public) as the full-bleed page
+   * background with a dark scrim on top. Takes precedence over `background`.
+   * Scoped per-page so only the caller that opts in (sign-in) changes.
+   */
+  bgImage?: string;
 };
 
 export function AuthShell({
@@ -24,10 +30,29 @@ export function AuthShell({
   children,
   belowCard,
   background = false,
+  bgImage,
 }: Props) {
   return (
-    <main className="relative min-h-screen flex flex-col overflow-hidden bg-[var(--color-paper)]">
-      {background ? (
+    <main
+      className="relative min-h-screen flex flex-col overflow-hidden bg-[var(--color-paper)]"
+      style={
+        bgImage
+          ? {
+              backgroundImage: `url('${bgImage}')`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }
+          : undefined
+      }
+    >
+      {bgImage ? (
+        <div
+          aria-hidden
+          className="absolute inset-0 z-0 pointer-events-none"
+          style={{ background: "rgba(28,25,23,0.35)" }}
+        />
+      ) : background ? (
         <>
           {/* Warm base gradient — cream paper with afternoon-gold pooling */}
           <div
