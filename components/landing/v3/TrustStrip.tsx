@@ -9,10 +9,14 @@ import { fadeUp, inViewOnce, staggerContainer } from "@/lib/motion";
    relying on Tailwind arbitrary-value compilation.
    ═════════════════════════════════════════════════════════════════════════ */
 
+// TODO: replace with real numbers before outreach
+// Pre-launch placeholders — we have no real student count or approval-rate
+// data yet, and shipping inflated stats would burn trust on day one. The
+// 47-step number is structural to the product, so it stays.
 const STATS = [
-  { value: "2,847", label: "students stamped" },
-  { value: "96%", label: "visa approval rate" },
-  { value: "47", label: "steps. nothing skipped." },
+  { value: "Early",     label: "access" },
+  { value: "F-1",       label: "focused" },
+  { value: "47",        label: "steps. nothing skipped." },
 ];
 
 export function TrustStrip() {

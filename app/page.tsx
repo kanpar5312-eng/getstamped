@@ -15,7 +15,8 @@ export default async function Home() {
 
   const c = await cookies();
   const stored = c.get("gs_currency")?.value;
-  const currency: Currency = stored === "INR" ? "INR" : "USD";
+  // Default to INR; only flip to USD if the cookie says so explicitly.
+  const currency: Currency = stored === "USD" ? "USD" : "INR";
 
   return (
     <MarketingLanding

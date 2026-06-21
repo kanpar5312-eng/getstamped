@@ -14,7 +14,10 @@ import { IntroGate } from "@/components/intro/IntroGate";
 import type { Currency } from "@/lib/pricing";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://getstamped.app"),
+  // Site lives on the Vercel preview domain until the custom apex
+  // (getstamped.app) is wired up. Update both this base AND openGraph.url
+  // when DNS lands so social cards stop pointing to the Vercel host.
+  metadataBase: new URL("https://getstampedonline.vercel.app"),
   title: "GetStamped — F-1 visa preparation, end to end",
   description:
     "The 47-step F-1 visa process, organized into a single guided experience. Built for international students applying to US universities.",
@@ -22,7 +25,7 @@ export const metadata: Metadata = {
     title: "GetStamped",
     description:
       "The F-1 visa has forty-seven steps. We made sure you don’t miss one.",
-    url: "https://getstamped.app",
+    url: "https://getstampedonline.vercel.app",
     siteName: "GetStamped",
     // Image auto-discovered from app/opengraph-image.tsx
     type: "website",
@@ -43,7 +46,9 @@ export default async function RootLayout({
 }>) {
   const c = await cookies();
   const storedCurrency = c.get("gs_currency")?.value;
-  const initialCurrency: Currency = storedCurrency === "INR" ? "INR" : "USD";
+  // Default to INR; only flip to USD if the user has explicitly toggled
+  // (which sets the cookie). INR is now the default state on first load.
+  const initialCurrency: Currency = storedCurrency === "USD" ? "USD" : "INR";
 
   return (
     <html

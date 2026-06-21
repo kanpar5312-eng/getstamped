@@ -18,15 +18,22 @@ const LINE_2: Word[] = [
 
 export function Hero() {
   let n = 0;
-  const render = (w: Word) => {
+  // Words are individual spans for the staggered fade-in animation; the
+  // flex parent uses `gap` for spacing, but we also emit a real space
+  // text node between siblings so the line reads correctly even if a
+  // browser ever collapses the flex gap or the layout falls back to
+  // inline rendering.
+  const render = (w: Word, i: number, arr: Word[]) => {
     const idx = n++;
     return (
-      <span
-        key={`w-${idx}`}
-        className={`v3-hero-word${w.italic ? " v3-hero-italic" : ""}`}
-        style={{ animationDelay: `${200 + idx * 80}ms` }}
-      >
-        {w.text}
+      <span key={`wf-${idx}`}>
+        <span
+          className={`v3-hero-word${w.italic ? " v3-hero-italic" : ""}`}
+          style={{ animationDelay: `${200 + idx * 80}ms` }}
+        >
+          {w.text}
+        </span>
+        {i < arr.length - 1 ? " " : null}
       </span>
     );
   };

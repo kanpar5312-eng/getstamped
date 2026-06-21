@@ -62,15 +62,18 @@ export async function proxy(req: NextRequest) {
   //   • Vercel:     `request.geo.country`   (e.g. "IN", "US", "GB")
   //   • Cloudflare: `cf-ipcountry` header
   //   • Fastly:     `x-country-code` header
-  // Fallback chain → defaults to USD if nothing resolves.
+  // Default is INR for every first-time visitor; geo only flips it to USD
+  // when we positively detect a non-India IP. Unknown geo → INR. (The
+  // header is just a hint; the pricing toggle still lets users override.)
   const existing = req.cookies.get("gs_currency")?.value;
   if (existing !== "INR" && existing !== "USD") {
     const vercelGeo = (req as unknown as { geo?: { country?: string } }).geo?.country;
     const cfCountry = req.headers.get("cf-ipcountry");
     const fastlyCountry = req.headers.get("x-country-code");
-    const country = (vercelGeo ?? cfCountry ?? fastlyCountry ?? "US").toUpperCase();
-    // Only India gets rupees; everywhere else (US/UK/CA/AU/EU/SG/…) pays in USD.
-    res.cookies.set("gs_currency", country === "IN" ? "INR" : "USD", {
+    const country = (vercelGeo ?? cfCountry ?? fastlyCountry ?? "").toUpperCase();
+    // Default INR; only confirmed non-India geos get USD.
+    const isNonIndia = country !== "" && country !== "IN";
+    res.cookies.set("gs_currency", isNonIndia ? "USD" : "INR", {
       path: "/",
       maxAge: 60 * 60 * 24 * 365,
       sameSite: "lax",
