@@ -8,6 +8,7 @@ import { timeAgo } from "@/lib/relative-time";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { deleteThread as deleteThreadAction, setMessageHelpful, setMessageSaved } from "@/app/actions/ai-threads";
 import { TypingSpeedControl, useTypingSpeed, cpsFor } from "@/components/ask/TypingSpeedControl";
+import { PaywallOverlay } from "@/components/paywall/PaywallOverlay";
 
 type Plan = "free" | "solo" | "family";
 
@@ -17,7 +18,7 @@ type Props = {
   initialThreads?: Thread[];
 };
 
-const FREE_LIMIT = 5;
+const FREE_LIMIT = 3;
 
 // Tiny inline markdown renderer (bold via **, code via `, paragraphs).
 function renderMarkdown(text: string): React.ReactNode {
@@ -135,6 +136,9 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
      full markdown render (no character animation). Cleared by TypedText's
      onDone, or by stop(). */
   const [typingId, setTypingId] = useState<string | null>(null);
+  /* When the server returns 429 with a reset timestamp, we render
+     <PaywallOverlay type="limit_reached" /> in place of the input. */
+  const [limitResetAt, setLimitResetAt] = useState<string | null>(null);
   /* In-flight fetch's AbortController. stop() calls .abort() to cancel
      the request mid-generation. Replaced on each new send. */
   const aborterRef = useRef<AbortController | null>(null);
@@ -160,7 +164,10 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
     setSidebarOpen(false);
   };
 
-  const exhausted = plan === "free" && questionsUsed >= FREE_LIMIT;
+  // Exhausted = server told us so via 429 (limitResetAt set) OR client-side
+  // optimistic local count for free plan. Either way, render PaywallOverlay.
+  const exhausted =
+    limitResetAt !== null || (plan === "free" && questionsUsed >= FREE_LIMIT);
 
   const send = async (override?: string) => {
     // Accept an override so suggested-question buttons can send immediately
@@ -219,17 +226,9 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
       });
       if (r.status === 429) {
         const data = await r.json().catch(() => ({}));
-        const msg: Message = {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: data.error ?? "Free tier limit reached. Upgrade for unlimited.",
-          createdAt: new Date(),
-        };
-        setThreads((ts) =>
-          ts.map((t) => (t.id === (optimisticThreadId ?? threadId)
-            ? { ...t, messages: [...t.messages, msg] }
-            : t)),
-        );
+        // Surface the structured reset_at the API now sends back; the
+        // PaywallOverlay renders inline instead of the input.
+        setLimitResetAt(typeof data.reset_at === "string" ? data.reset_at : new Date(Date.now() + 86_400_000).toISOString());
         setQuestionsUsed(FREE_LIMIT);
         return;
       }
@@ -656,14 +655,16 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
             </div>
 
             {exhausted ? (
-              <div className="rounded-xl border border-[var(--color-ink)] bg-[var(--color-persimmon)] text-[var(--color-paper-soft)] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm">You&rsquo;ve used all 5 free questions. $19 unlocks unlimited.</p>
-                <Link href="/dashboard/upgrade">
-                  <button type="button" className="rounded-lg bg-[var(--color-paper-soft)] text-[var(--color-ink)] px-4 py-2 text-sm font-medium">
-                    Upgrade
-                  </button>
-                </Link>
-              </div>
+              <PaywallOverlay
+                type="limit_reached"
+                feature="Ask Vera"
+                resetAt={
+                  limitResetAt ??
+                  // No server timestamp yet (local optimistic exhaust)?
+                  // Use tomorrow 00:00 UTC as a sensible default.
+                  new Date(Math.floor(Date.now() / 86_400_000 + 1) * 86_400_000).toISOString()
+                }
+              />
             ) : (
               <div className="flex items-end gap-2">
                 <textarea

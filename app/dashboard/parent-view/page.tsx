@@ -5,6 +5,7 @@ import { getTokenForUser } from "@/lib/parent-view";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getSessionUser } from "@/lib/supabase/server";
 import { ParentViewClient } from "@/components/parent-view/ParentViewClient";
+import { PaywallOverlay } from "@/components/paywall/PaywallOverlay";
 
 export const metadata: Metadata = {
   title: "Parent View — GetStamped",
@@ -19,6 +20,16 @@ export default async function ParentViewPage({
 }) {
   const sp = await searchParams;
   const { profile } = await getCurrentUser(sp.state);
+
+  // Free tier doesn't get parent share. Block at the page level so we
+  // never mint a token or expose the page chrome.
+  if (profile.plan === "free") {
+    return (
+      <div className="mx-auto max-w-2xl py-20 px-4">
+        <PaywallOverlay type="upgrade" feature="Parent share" />
+      </div>
+    );
+  }
 
   const isReal = isSupabaseConfigured() && Boolean(await getSessionUser());
   const real = isReal ? await getOrCreateParentToken() : null;

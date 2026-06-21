@@ -3,6 +3,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { buildSystemPrompt, getGroq, GROQ_MODEL } from "@/lib/groq";
 import { stepByNumber } from "@/lib/steps";
+import { checkLimit, logUsage } from "@/lib/checkLimit";
 
 type AskPayload = {
   question: string;
@@ -10,8 +11,6 @@ type AskPayload = {
   scope?: "general" | "step" | "documents" | "interview";
   stepNumber?: number;
 };
-
-const FREE_DAILY_LIMIT = 5;
 
 /**
  * POST /api/ask
@@ -52,33 +51,26 @@ export async function POST(req: Request) {
   const userId = user.id;
 
   /* ---------- Quota check ---------- */
-  const today = new Date().toISOString().slice(0, 10);
+  // Plan + limit check moved into lib/checkLimit (usage_logs is the
+  // single source of truth now; ai_quota writes are deprecated).
   const { data: profileRow } = await sb
     .from("profiles")
     .select("plan, country, university, consulate, program_type, intake_term")
     .eq("id", userId)
     .maybeSingle();
 
-  const plan = (profileRow?.plan as "free" | "solo" | "family" | undefined) ?? "free";
-
-  if (plan === "free") {
-    const { data: quotaRow } = await sb
-      .from("ai_quota")
-      .select("count")
-      .eq("user_id", userId)
-      .eq("day", today)
-      .maybeSingle();
-    const used = quotaRow?.count ?? 0;
-    if (used >= FREE_DAILY_LIMIT) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "Free tier limit reached. Upgrade for unlimited.",
-          quota: { used, limit: FREE_DAILY_LIMIT },
-        },
-        { status: 429 },
-      );
-    }
+  const limit = await checkLimit(userId, "ai_question");
+  if (!limit.allowed) {
+    return NextResponse.json(
+      {
+        error: "limit_reached",
+        message: `You have used your ${limit.limit} free questions today.`,
+        reset_at: limit.reset_at,
+        used: limit.used,
+        quota: { used: limit.used, limit: limit.limit },
+      },
+      { status: 429 },
+    );
   }
 
   /* ---------- Resolve or create thread ---------- */
@@ -166,21 +158,12 @@ export async function POST(req: Request) {
     .select("id, created_at")
     .single();
 
-  /* ---------- Bump quota (manual upsert; no RPC required) ---------- */
-  const { data: existing } = await sb
-    .from("ai_quota")
-    .select("count")
-    .eq("user_id", userId)
-    .eq("day", today)
-    .maybeSingle();
-  if (existing) {
-    await sb
-      .from("ai_quota")
-      .update({ count: (existing.count ?? 0) + 1 })
-      .eq("user_id", userId)
-      .eq("day", today);
-  } else {
-    await sb.from("ai_quota").insert({ user_id: userId, day: today, count: 1 });
+  /* ---------- Log usage AFTER the assistant reply was persisted ---------- */
+  // Failed Groq calls still hit the fallback() string, so we only log
+  // when we got an assistant message row back from Supabase. A genuinely
+  // broken save means no quota consumed.
+  if (aiMsg) {
+    await logUsage(userId, "ai_question");
   }
 
   return NextResponse.json({

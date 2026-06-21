@@ -5,6 +5,7 @@ import { getChecklistItem } from "@/lib/documents/checklist";
 import { LIMITS, tierFromPlan, utcDayStart } from "@/lib/documents/limits";
 import { checkDocument } from "@/lib/documents/vision";
 import { recomputeReadiness } from "@/lib/recompute-readiness";
+import { checkLimit, logUsage } from "@/lib/checkLimit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -42,6 +43,20 @@ export async function POST(req: Request) {
     .maybeSingle();
   const tier = tierFromPlan(profile?.plan ?? "free");
   const cfg = LIMITS[tier];
+
+  // Hard paywall: free tier doesn't get document review at all.
+  // checkLimit returns allowed=false with limit=0 for free users on
+  // this action; paid tiers fall through to the per-day metering below.
+  const reviewGate = await checkLimit(user.id, "document_review");
+  if (!reviewGate.allowed) {
+    return NextResponse.json(
+      {
+        error: "upgrade_required",
+        message: "AI document review is part of Solo.",
+      },
+      { status: 403 },
+    );
+  }
 
   // ---------- Rate-limit check (server-authoritative) ----------
   const dayStart = utcDayStart();
@@ -209,6 +224,11 @@ export async function POST(req: Request) {
 
   // Fire-and-forget readiness recompute. Failure is non-fatal.
   void recomputeReadiness();
+
+  // Log AFTER a successful review (the action_type is included for
+  // future analytics; free tier is already hard-blocked above so this
+  // line only fires for paid users in practice).
+  await logUsage(user.id, "document_review");
 
   return NextResponse.json({ ok: true, status, feedback });
 }

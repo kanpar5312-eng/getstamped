@@ -80,11 +80,25 @@ export function buildTimelineView(
 
   const totalComplete = completeSet.size;
 
-  const stepViews: StepView[] = STEPS.map((step) => {
+  const stepViews: StepView[] = STEPS.map((rawStep) => {
+    // Free tier sees Phase 1 only — every step in phases 2+ is locked.
+    // We also strip the content fields off locked steps so a client
+    // inspector never sees full paid content even if it scrapes props.
+    const isPaywalled =
+      profile.plan === "free" && rawStep.phase > 1;
+    const step = isPaywalled
+      ? {
+          ...rawStep,
+          shortDescription: "",
+          instructions: { intro: "", steps: [] },
+          documents: [],
+        }
+      : rawStep;
+
     let status: StepStatus;
     if (completeSet.has(step.number)) status = "complete";
     else if (inProgressSet.has(step.number)) status = "in_progress";
-    else if (profile.plan === "free" && !step.isFree) status = "locked";
+    else if (isPaywalled) status = "locked";
     else status = "available";
 
     // Synthesize activity timestamps so the UI feels alive in mock mode.

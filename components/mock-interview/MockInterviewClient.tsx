@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { SetupScreen, type Difficulty, type Interviewer, type Length } from "./SetupScreen";
 import { InterviewRoom, type RoomState } from "./InterviewRoom";
 import { FeedbackScreen, type Scores, type TurnSummary } from "./FeedbackScreen";
+import { PaywallOverlay } from "@/components/paywall/PaywallOverlay";
 
 // Three.js (~600KB gz) only needs to load when the user actually starts an
 // interview. Keeping it out of the dashboard's shared chunk shaves a huge
@@ -54,6 +55,10 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   const [length, setLength] = useState<Length>(10);
   const [difficulty, setDifficulty] = useState<Difficulty>("standard");
   const [paywallHit, setPaywallHit] = useState(false);
+  /* When /api/mock-interview/start returns 429, we render the
+     <PaywallOverlay type="limit_reached"/> with this reset timestamp. */
+  const [limitResetAt, setLimitResetAt] = useState<string | null>(null);
+  const [starting, setStarting] = useState(false);
 
   const [questionIdx, setQuestionIdx] = useState(0);
   const [roomState, setRoomState] = useState<RoomState>("officer-speaking");
@@ -77,12 +82,31 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   }, []);
 
   // -------- session lifecycle --------
-  const startSession = () => {
-    if (plan === "free" && hasUsedFreeMock()) {
-      setPaywallHit(true);
-      return;
+  const startSession = async () => {
+    if (starting) return;
+    setStarting(true);
+    try {
+      // Server-authoritative quota check. logUsage runs inside the
+      // route on success, so failing here never burns the user's slot.
+      const r = await fetch("/api/mock-interview/start", { method: "POST" });
+      if (r.status === 429) {
+        const data = await r.json().catch(() => ({}));
+        setLimitResetAt(typeof data.reset_at === "string" ? data.reset_at : null);
+        setPaywallHit(true);
+        return;
+      }
+      if (!r.ok) {
+        // Unauthenticated or transient — fall back to the legacy local
+        // session flag so a flaky network never bricks the page.
+        if (plan === "free" && hasUsedFreeMock()) {
+          setPaywallHit(true);
+          return;
+        }
+      }
+      setPhase("cinematic");
+    } finally {
+      setStarting(false);
     }
-    setPhase("cinematic");
   };
 
   const enterRoom = () => {
@@ -258,6 +282,22 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   };
 
   // -------- render --------
+  // Weekly-limit hit (server said 429) → full-screen paywall, no setup UI.
+  // Falls through to the normal SetupScreen otherwise; SetupScreen's
+  // own `paywallHit` prop is kept as the in-screen banner fallback for
+  // the rare local-flag path.
+  if (paywallHit && limitResetAt) {
+    return (
+      <div className="mx-auto max-w-md py-20 px-4">
+        <PaywallOverlay
+          type="limit_reached"
+          feature="Mock interview"
+          resetAt={limitResetAt}
+        />
+      </div>
+    );
+  }
+
   if (phase === "setup") {
     return (
       <SetupScreen
