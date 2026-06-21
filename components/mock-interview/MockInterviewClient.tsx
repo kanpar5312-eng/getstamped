@@ -70,6 +70,10 @@ export function MockInterviewClient({ plan, consulate }: Props) {
      <PaywallOverlay type="limit_reached"/> with this reset timestamp. */
   const [limitResetAt, setLimitResetAt] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  /* Mic permission gate. We ask getUserMedia *before* starting the
+     session so the user lands on a clear blocker (with iPhone fix
+     instructions) instead of silently producing a no-audio session. */
+  const [micDenied, setMicDenied] = useState(false);
 
   const [questionIdx, setQuestionIdx] = useState(0);
   const [roomState, setRoomState] = useState<RoomState>("officer-speaking");
@@ -175,10 +179,30 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   }, []);
 
   // -------- session lifecycle --------
+  const requestMic = async (): Promise<boolean> => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Release the tracks immediately; startAudioMonitor reopens its
+      // own stream when the room mounts. Holding them across the
+      // cinematic intro confuses iOS Safari.
+      stream.getTracks().forEach((t) => t.stop());
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const startSession = async () => {
     if (starting) return;
     setStarting(true);
     try {
+      // Mic gate runs BEFORE the quota check so a denied permission
+      // doesn't burn the user's weekly slot.
+      const granted = await requestMic();
+      if (!granted) {
+        setMicDenied(true);
+        return;
+      }
       // Server-authoritative quota check. logUsage runs inside the
       // route on success, so failing here never burns the user's slot.
       const r = await fetch("/api/mock-interview/start", { method: "POST" });
@@ -300,6 +324,13 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     audioCleanupRef.current?.();
     if (tickRef.current) window.clearInterval(tickRef.current);
     if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
+    // Snap the final duration from the session start timestamp so very
+    // short runs don't show "0 min" — the 1s interval can lag by up to
+    // a second otherwise, which rounded down to zero for quick sessions.
+    if (startTsRef.current > 0) {
+      const finalSec = Math.max(0, Math.round((Date.now() - startTsRef.current) / 1000));
+      setElapsedSec(finalSec);
+    }
     if (plan === "free") markFreeMockUsed();
     setPhase("feedback");
   };
@@ -345,6 +376,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     scores: Scores;
     turns: TurnSummary[];
     durationSec: number;
+    summary: string;
   } => {
     const answered = transcripts.filter((t) => (t ?? "").trim().length > 12).length;
     const ratio = totalQuestions ? answered / totalQuestions : 0;
@@ -380,21 +412,87 @@ export function MockInterviewClient({ plan, consulate }: Props) {
       const ans = (transcripts[i] ?? "").trim();
       const t = Math.min(elapsedSec, Math.round((i + 1) * (elapsedSec / Math.max(1, totalQuestions))));
       const isWeakest = i === weakestIdx;
-      const note = !ans
-        ? "Silence reads as unprepared. Aim for two sentences minimum."
+      const noAudio = ans.length === 0;
+      const question = QUESTIONS[i] ?? "—";
+      // Per-question notes: each picks an angle that matches what the
+      // question is actually probing. The blanket "silence reads as
+      // unprepared" repetition is gone — no-audio turns have a
+      // dedicated UI state in FeedbackScreen and don't show a note.
+      const note = noAudio
+        ? ""
         : ans.length < 40
-        ? "Too short. Name the program, sponsor, or specific reason."
-        : "Direct and on-topic. Tighten the second half for crispness.";
+        ? shortAnswerHint(question)
+        : decentAnswerHint(question);
+      // Crude per-turn score derived from answer length × overall band.
+      const lenScore = noAudio ? 0 : ans.length < 25 ? 35 : ans.length < 80 ? 60 : 82;
+      const score = Math.round((lenScore + scores.overall) / 2);
       return {
-        question: QUESTIONS[i] ?? "—",
-        answer: ans || "(no audio captured)",
+        question,
+        answer: noAudio ? "" : ans,
         timestampSec: t,
         note,
         isWeakest,
+        noAudio,
+        score,
+        category: categoryFor(question),
       };
     });
 
-    return { verdict, scores, turns, durationSec: elapsedSec };
+    const summary = buildSummary(scores.overall, turns);
+
+    return { verdict, scores, turns, durationSec: elapsedSec, summary };
+  };
+
+  // Per-question hints used when the user answered but the answer was
+  // short. The point is to be specific to what each question probes — no
+  // copy-paste lines across cards.
+  const shortAnswerHint = (q: string): string => {
+    const lower = q.toLowerCase();
+    if (lower.includes("fund"))
+      return "Name the sponsor and the dollar figure. Vague funding is the #1 reason for 221(g).";
+    if (lower.includes("major") || lower.includes("program"))
+      return "Tie the program to a concrete career outcome — one job title, one industry.";
+    if (lower.includes("home") || lower.includes("ties"))
+      return "Name a specific anchor: family business, job offer, property. Generic 'family' isn't enough.";
+    if (lower.includes("after graduation") || lower.includes("post"))
+      return "State the country and the role you're targeting. Officers read vagueness as immigrant intent.";
+    if (lower.includes("backup") || lower.includes("denied"))
+      return "Don't downplay it — show you've thought about it. One sentence on the realistic plan B.";
+    return "Add one specific name, number, or date. Specifics move the needle more than confidence does.";
+  };
+
+  const decentAnswerHint = (q: string): string => {
+    const lower = q.toLowerCase();
+    if (lower.includes("fund"))
+      return "Strong shape. Add the source's relationship to you (parent, scholarship body) for full credibility.";
+    if (lower.includes("major") || lower.includes("program"))
+      return "Good. Tighten the second sentence — one fewer adjective, one more concrete detail.";
+    if (lower.includes("home") || lower.includes("ties"))
+      return "Solid. Lead with the most concrete anchor first; emotional ties come second.";
+    return "Direct and on-topic. Cut filler words; an officer hears confidence in compression.";
+  };
+
+  const categoryFor = (q: string): string | undefined => {
+    const lower = q.toLowerCase();
+    if (lower.includes("fund")) return "Financial";
+    if (lower.includes("home") || lower.includes("ties")) return "Ties";
+    if (lower.includes("major") || lower.includes("program") || lower.includes("university") || lower.includes("graduation")) return "Study plan";
+    return undefined;
+  };
+
+  const buildSummary = (overall: number, turns: TurnSummary[]): string => {
+    const strong = turns.filter((t) => !t.noAudio && (t.score ?? 0) >= 75).length;
+    const weak = turns.filter((t) => t.noAudio || (t.score ?? 100) < 50).length;
+    if (overall >= 86) {
+      return `Confident, specific, consistent. ${strong} of your answers would land cleanly with an officer. Keep the pace — you're rehearsing for poise now, not new content.`;
+    }
+    if (overall >= 66) {
+      return `The shape of a good interview is here. ${strong} answers landed cleanly. Tighten the ${weak} weak ones — specifics over generalities, names over categories.`;
+    }
+    if (overall >= 41) {
+      return `The basics are forming but the answers lean general. Officers read general as unprepared. Name the program, the sponsor, the city. Specifics build credibility faster than confidence does.`;
+    }
+    return `Most answers wouldn't pass an officer's "specifics" bar yet — and that's fine at this stage. Pick the two weakest topics, rehearse one specific sentence for each, and run another session.`;
   };
 
   const onRetryWeak = () => {
@@ -414,6 +512,43 @@ export function MockInterviewClient({ plan, consulate }: Props) {
           feature="Mock interview"
           resetAt={limitResetAt}
         />
+      </div>
+    );
+  }
+
+  if (micDenied) {
+    return (
+      <div className="mx-auto max-w-md py-20 px-4 text-center">
+        <span
+          aria-hidden
+          className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-persimmon-tint)] text-[var(--color-persimmon)]"
+        >
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
+            strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
+            <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
+            <line x1="12" y1="19" x2="12" y2="22" />
+            <line x1="3" y1="3" x2="21" y2="21" />
+          </svg>
+        </span>
+        <h2
+          className="mt-4 text-[20px] leading-snug text-[var(--color-ink)]"
+          style={{ fontFamily: "var(--font-display-stack)" }}
+        >
+          Microphone access is required for mock interviews.
+        </h2>
+        <p className="mt-3 text-[13px] leading-relaxed text-[var(--color-ink-soft)]">
+          On iPhone: <strong>Settings → Safari → Microphone → Allow</strong>, then return here.
+          <br />
+          On Mac/Chrome: click the camera/mic icon in the address bar and choose Allow.
+        </p>
+        <button
+          type="button"
+          onClick={() => { setMicDenied(false); void startSession(); }}
+          className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-[var(--color-persimmon)] px-5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors"
+        >
+          I've allowed it — try again
+        </button>
       </div>
     );
   }
@@ -476,6 +611,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
       scores={fb.scores}
       turns={fb.turns}
       durationSec={fb.durationSec}
+      summary={fb.summary}
       blurredPaywall={plan === "free"}
       onRetryWeak={onRetryWeak}
     />
