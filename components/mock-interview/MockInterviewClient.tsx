@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { SetupScreen, type Difficulty, type Interviewer, type Length } from "./SetupScreen";
 import { InterviewRoom, type RoomState } from "./InterviewRoom";
@@ -19,6 +19,17 @@ type Plan = "free" | "solo" | "family";
 type Phase = "setup" | "cinematic" | "room" | "feedback";
 
 type Props = { plan: Plan; consulate?: string | null };
+
+// Short interstitial lines the officer says after a turn finishes, before
+// the next question fires. Kept conversational + brief — most of the
+// monthly char budget should go to the questions themselves, not filler.
+const TRANSITION_LINES = [
+  "Okay. Good. Let's head to the next question.",
+  "Got it. Let's continue.",
+  "Alright, next question.",
+  "Mm-hmm. Moving on.",
+  "Thank you. One more thing.",
+];
 
 const QUESTIONS = [
   "Why this university over others that admitted you?",
@@ -74,6 +85,88 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   const startTsRef = useRef<number>(0);
   const lastTranscriptRef = useRef<string>("");
 
+  // ─── ElevenLabs TTS state ────────────────────────────────────────────
+  // ttsAvail flips false the first time /api/mock-interview/tts errors,
+  // so a missing API key or quota exhaustion silently falls back to the
+  // original length-heuristic timer (the session keeps working).
+  const [ttsAvail, setTtsAvail] = useState(true);
+  const [muted, setMuted] = useState(false);
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
+  const audioElRef = useRef<HTMLAudioElement | null>(null);
+  // Pre-fetched MP3 blob URL keyed by `${interviewer}:${text-hash}`. We
+  // prefetch the *next* question while the user is answering the current
+  // one, so playback starts instantly when the turn flips.
+  const prefetchRef = useRef<Map<string, string>>(new Map());
+
+  /** Hit the TTS route, return an object-URL the <audio> tag can play. */
+  const fetchTtsUrl = useCallback(
+    async (text: string): Promise<string | null> => {
+      const cacheKey = `${interviewer}:${text}`;
+      const cached = prefetchRef.current.get(cacheKey);
+      if (cached) return cached;
+      try {
+        const r = await fetch("/api/mock-interview/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, interviewer }),
+        });
+        if (!r.ok) {
+          if (r.status === 503) setTtsAvail(false); // not configured
+          return null;
+        }
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        prefetchRef.current.set(cacheKey, url);
+        return url;
+      } catch (err) {
+        console.error("[mock-interview] tts fetch failed:", err);
+        return null;
+      }
+    },
+    [interviewer],
+  );
+
+  /**
+   * Play `text` through the officer voice. Resolves when audio ends or
+   * playback fails — caller can treat the resolution as "officer done
+   * speaking" regardless of whether TTS actually worked. If the user is
+   * muted, resolves after a sensible read-along delay so the visual
+   * pacing of the interview is preserved.
+   */
+  const speak = useCallback(
+    async (text: string): Promise<void> => {
+      const readDelay = Math.max(1500, Math.min(5000, text.split(/\s+/).length * 220));
+
+      if (mutedRef.current || !ttsAvail) {
+        await new Promise((r) => setTimeout(r, readDelay));
+        return;
+      }
+
+      const url = await fetchTtsUrl(text);
+      if (!url) {
+        await new Promise((r) => setTimeout(r, readDelay));
+        return;
+      }
+
+      await new Promise<void>((resolve) => {
+        const audio = new Audio(url);
+        audioElRef.current = audio;
+        audio.onended = () => resolve();
+        audio.onerror = () => resolve();
+        audio.play().catch(() => resolve());
+      });
+    },
+    [fetchTtsUrl, ttsAvail],
+  );
+
+  // On unmount: pause any playing audio + revoke prefetched object URLs.
+  useEffect(() => () => {
+    audioElRef.current?.pause();
+    prefetchRef.current.forEach((url) => URL.revokeObjectURL(url));
+    prefetchRef.current.clear();
+  }, []);
+
   useEffect(() => () => {
     audioCleanupRef.current?.();
     if (tickRef.current) window.clearInterval(tickRef.current);
@@ -122,15 +215,25 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     void startAudioMonitor();
   };
 
-  const runQuestion = (idx: number) => {
+  const runQuestion = async (idx: number) => {
     setQuestionIdx(idx);
     setRoomState("officer-speaking");
     const q = QUESTIONS[idx] ?? "";
-    const speakMs = Math.max(1800, Math.min(4500, q.split(/\s+/).length * 220));
-    advanceTimerRef.current = window.setTimeout(() => {
-      setRoomState("listening");
-      startRecognition(idx);
-    }, speakMs);
+
+    // Speak the question, then start listening for the answer. If TTS is
+    // available, this waits on the actual audio's `ended` event; if it
+    // isn't (no API key / quota out), `speak` falls back to a read-along
+    // timer so the visual pacing still feels right.
+    await speak(q);
+
+    // Prefetch the NEXT question's audio while the user is answering this
+    // one — by the time they finish, the next mp3 blob is already in the
+    // cache and playback starts instantly.
+    const nextQ = QUESTIONS[idx + 1];
+    if (nextQ) void fetchTtsUrl(nextQ);
+
+    setRoomState("listening");
+    startRecognition(idx);
   };
 
   const startRecognition = (idx: number) => {
@@ -158,21 +261,38 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     recog.start();
   };
 
-  const finishTurn = (idx: number, answer: string) => {
+  const finishTurn = async (idx: number, answer: string) => {
     setTranscripts((arr) => {
       const next = [...arr];
       next[idx] = answer;
       return next;
     });
     setRoomState("considering");
-    advanceTimerRef.current = window.setTimeout(() => {
-      const nextIdx = idx + 1;
-      if (nextIdx >= totalQuestions) {
-        endSession();
-      } else {
-        runQuestion(nextIdx);
-      }
-    }, 1600);
+
+    const nextIdx = idx + 1;
+    const isLast = nextIdx >= totalQuestions;
+
+    // Speak a short transition line — only between questions, not after
+    // the very last answer (that ends with a closing line or the
+    // feedback screen). Picked deterministically by idx so a session
+    // doesn't repeat the same line twice.
+    if (!isLast) {
+      const line = TRANSITION_LINES[idx % TRANSITION_LINES.length];
+      // Brief beat before the officer responds so it doesn't feel
+      // robot-quick on the heels of the user's last word.
+      await new Promise((r) => setTimeout(r, 700));
+      setRoomState("officer-speaking");
+      await speak(line);
+    } else {
+      // Last question — keep the original 1.6s think pause.
+      await new Promise((r) => setTimeout(r, 1600));
+    }
+
+    if (isLast) {
+      endSession();
+    } else {
+      runQuestion(nextIdx);
+    }
   };
 
   const endSession = () => {
@@ -337,6 +457,14 @@ export function MockInterviewClient({ plan, consulate }: Props) {
         liveLevel={liveLevel}
         elapsedSec={elapsedSec}
         onEnd={endSession}
+        muted={muted}
+        onToggleMute={() => {
+          // If the user mutes mid-question, immediately pause whatever is
+          // playing. Unmuting doesn't replay — they just hear the next
+          // turn onwards.
+          if (!muted) audioElRef.current?.pause();
+          setMuted((m) => !m);
+        }}
       />
     );
   }

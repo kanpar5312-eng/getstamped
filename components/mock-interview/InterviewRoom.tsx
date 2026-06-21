@@ -30,6 +30,8 @@ type Props = {
   liveLevel: number; // 0..1, user mic amplitude
   elapsedSec: number;
   onEnd: () => void;
+  muted?: boolean;
+  onToggleMute?: () => void;
 };
 
 export function InterviewRoom({
@@ -42,6 +44,8 @@ export function InterviewRoom({
   liveLevel,
   elapsedSec,
   onEnd,
+  muted,
+  onToggleMute,
 }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [caption, setCaption] = useState("");
@@ -205,13 +209,38 @@ export function InterviewRoom({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setConfirmOpen(true)}
-            className="text-[13px] text-white/55 hover:text-white/85 transition-colors px-3 py-2 rounded-md"
-          >
-            End interview
-          </button>
+          <div className="flex items-center gap-1">
+            {onToggleMute && (
+              <button
+                type="button"
+                onClick={onToggleMute}
+                aria-label={muted ? "Unmute officer voice" : "Mute officer voice"}
+                title={muted ? "Unmute officer" : "Mute officer"}
+                className="text-white/55 hover:text-white/85 transition-colors p-2 rounded-md"
+              >
+                {muted ? (
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                    <line x1="23" y1="9" x2="17" y2="15" />
+                    <line x1="17" y1="9" x2="23" y2="15" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                  </svg>
+                )}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setConfirmOpen(true)}
+              className="text-[13px] text-white/55 hover:text-white/85 transition-colors px-3 py-2 rounded-md"
+            >
+              End interview
+            </button>
+          </div>
         </div>
       </div>
 
