@@ -15,7 +15,7 @@ export default async function SignUpPage() {
 
   return (
     <AuthShell
-      background
+      bgImage="/sign-bg.png"
       eyebrow="Create account"
       title="Start free."
       subtitle="Phase 1 is unlocked forever. Upgrade only when you hit Phase 2."
