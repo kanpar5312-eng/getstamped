@@ -157,6 +157,14 @@ export function StepDetailClient({
     void markStep(step.number, "in_progress");
   };
 
+  // "Save for later" — keep the step in_progress (so it shows on the
+  // dashboard as a resume point) and bounce back to the timeline list.
+  const saveForLater = async () => {
+    setStatus("in_progress");
+    void markStep(step.number, "in_progress");
+    startTransition(() => router.push("/dashboard/timeline"));
+  };
+
   // ------------------------- Paywall variant -------------------------
   if (isLocked) {
     return (
@@ -173,6 +181,7 @@ export function StepDetailClient({
             onUpload={() => {}}
             onMarkComplete={() => {}}
             onReopen={() => {}}
+            onSaveForLater={() => {}}
             showCelebrate={false}
             prevStep={prevStep}
             nextStep={nextStep}
@@ -234,6 +243,7 @@ export function StepDetailClient({
         onUpload={handleUpload}
         onMarkComplete={markComplete}
         onReopen={reopen}
+        onSaveForLater={saveForLater}
         showCelebrate={showCelebrate}
         prevStep={prevStep}
         nextStep={nextStep}
@@ -271,6 +281,7 @@ type MainProps = {
   onUpload: (i: number) => void;
   onMarkComplete: () => void;
   onReopen: () => void;
+  onSaveForLater: () => void;
   showCelebrate: boolean;
   prevStep: Step | null;
   nextStep: Step | null;
@@ -291,6 +302,7 @@ function StepDetailMain({
   onUpload,
   onMarkComplete,
   onReopen,
+  onSaveForLater,
   showCelebrate,
   prevStep,
   nextStep,
@@ -299,6 +311,22 @@ function StepDetailMain({
   phaseCompleted,
   phaseTotal,
 }: MainProps) {
+  // Hide the mobile sticky CTA bar once the user has scrolled to the
+  // footer, so it stops overlapping copyright/links at the bottom of
+  // the page. Observed via a sentinel placed just above the spacer.
+  const [barHidden, setBarHidden] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => setBarHidden(entries[0]?.isIntersecting ?? false),
+      { rootMargin: "0px 0px -10% 0px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
   return (
     <>
       {/* Celebration overlay */}
@@ -489,7 +517,7 @@ function StepDetailMain({
                   <p className="text-xs text-[var(--color-muted)]">Marking complete updates your dashboard and unlocks the next step.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-transparent px-4 py-2 text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-deep)] transition-colors">
+                  <button type="button" onClick={onSaveForLater} className="inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-transparent px-4 py-2 text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-deep)] transition-colors">
                     Save for later
                   </button>
                   <button type="button" onClick={onMarkComplete} className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-persimmon)] px-4 py-2 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors">
@@ -599,8 +627,15 @@ function StepDetailMain({
         </aside>
       </div>
 
-      {/* Mobile sticky bottom bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border-soft)] bg-[var(--color-paper-soft)]/95 backdrop-blur-2xl backdrop-saturate-150 px-4 py-3 flex items-center gap-3">
+      {/* Mobile sticky bottom bar — fades out once the footer is in
+          view so it stops covering © + footer links. */}
+      <div
+        className={[
+          "lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border-soft)] bg-[var(--color-paper-soft)]/95 backdrop-blur-2xl backdrop-saturate-150 px-4 py-3 flex items-center gap-3 transition-all duration-300",
+          barHidden ? "opacity-0 pointer-events-none translate-y-2" : "opacity-100",
+        ].join(" ")}
+        aria-hidden={barHidden}
+      >
         {prevStep ? (
           <Link href={`/dashboard/timeline/${prevStep.number}`} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-ink-soft)]">
             <ArrowLeft />
@@ -629,7 +664,12 @@ function StepDetailMain({
           </Link>
         ) : <div className="w-10" />}
       </div>
-      <div className="lg:hidden h-20" aria-hidden />
+      {/* Sentinel — when this enters view the IntersectionObserver
+          hides the sticky bar. Sits just above the bottom spacer,
+          which itself gives the user enough scroll room to reach the
+          footer area cleanly. */}
+      <div ref={sentinelRef} className="lg:hidden h-1" aria-hidden />
+      <div className="lg:hidden h-[88px]" aria-hidden />
     </>
   );
 }

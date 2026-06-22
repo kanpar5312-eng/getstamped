@@ -406,12 +406,23 @@ export function UpgradeClient({ currentPlan, earlyBirdRemaining }: Props) {
         ))}
       </section>
 
-      {/* Trust strip */}
+      {/* Trust strip — three reasons the price isn't the whole story.
+          Concrete promises, no marketing fluff: refund mechanics, the
+          early-bird ceiling, and who actually replies to support. */}
       <section className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {[
-          { label: "14-day refund", body: "Don't like it? Email us within 14 days for a full refund." },
-          { label: `${earlyBirdRemaining} early-bird spots left`, body: "First 100 Solo buyers lock $9 / ₹799 pricing forever." },
-          { label: "Receipt + email support", body: "Resend-powered receipts. Reply-to-founder support on every plan." },
+          {
+            label: "14 days to change your mind",
+            body: "Try every step, every tool. One email gets you a full refund — no forms, no questions.",
+          },
+          {
+            label: `${earlyBirdRemaining} early-bird spots left`,
+            body: "First 100 Solo buyers lock $9 / ₹799 pricing forever, even as the public price climbs.",
+          },
+          {
+            label: "A founder reads every email",
+            body: "Support replies come from the team, not a bot. Typical weekday turnaround is under 6 hours.",
+          },
         ].map((row) => (
           <div key={row.label} className="upg-card rounded-2xl border p-4 sm:p-5">
             <span className="upg-ink text-[12px] font-medium text-[var(--color-ink)]">{row.label}</span>
@@ -422,8 +433,8 @@ export function UpgradeClient({ currentPlan, earlyBirdRemaining }: Props) {
 
       <p className="upg-muted mt-8 mb-2 text-center text-[11px] text-[var(--color-muted)]">
         Prices in {currency === "USD" ? "US dollars" : "Indian rupees"}. Checkout wires up in Phase 3 — email{" "}
-        <a href="mailto:parneet@getstamped.app" className="text-[var(--color-accent-deep)] dark:text-blue-400 hover:text-[var(--color-accent)] transition-colors">
-          parneet@getstamped.app
+        <a href="mailto:getstamped.online@gmail.com" className="text-[var(--color-accent-deep)] dark:text-blue-400 hover:text-[var(--color-accent)] transition-colors">
+          getstamped.online@gmail.com
         </a>{" "}
         for early-bird interest.
       </p>
