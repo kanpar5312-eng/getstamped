@@ -1497,3 +1497,55 @@ img[data-fade].loaded { opacity: 1; }
   border-radius: 999px;
   box-shadow: 0 0 6px rgba(232, 98, 42, 0.3);
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   Dashboard-wide Apple polish — retrofit common card / input patterns
+   without touching every component. These rules only target the
+   dashboard surface, so the landing page rendering is unaffected.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* All dashboard "rounded-2xl border" cards get the Apple recipe:
+   slightly bigger radius, lit top edge, paired shadow.
+   Border becomes hairline (0.5px). */
+[data-surface="dashboard"] .rounded-2xl {
+  border-radius: 20px;
+}
+[data-surface="dashboard"] [class*="rounded-2xl"][class*="border"]:not([class*="border-0"]):not([class*="border-l"]):not([class*="border-r"]):not([class*="border-t"]):not([class*="border-b"]) {
+  border-width: 0.5px;
+  box-shadow: var(--gs-shadow-sm);
+  transition: box-shadow 200ms var(--gs-ease), transform 200ms var(--gs-ease);
+}
+
+/* All dashboard text inputs / textareas / selects get the refined feel:
+   softer border, inset hint, persimmon focus ring, no blue Chrome glow. */
+[data-surface="dashboard"] input:where([type="text"], [type="email"], [type="password"], [type="search"], [type="tel"], [type="url"], [type="number"], [type="date"], :not([type])),
+[data-surface="dashboard"] textarea,
+[data-surface="dashboard"] select {
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+[data-surface="dashboard"] input:focus-visible,
+[data-surface="dashboard"] textarea:focus-visible,
+[data-surface="dashboard"] select:focus-visible {
+  outline: none;
+  border-color: rgba(232, 98, 42, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(232, 98, 42, 0.12);
+}
+
+/* Dashboard primary button (.btn-ember already done above).
+   Generic dashboard buttons get a tiny press feedback. */
+[data-surface="dashboard"] button:not(.btn-ember):not(:disabled):active {
+  transform: scale(0.98);
+  transition: transform 80ms ease;
+}
+
+/* Soften any remaining hard 1px borders on dashboard hairlines */
+[data-surface="dashboard"] [class*="border-[var(--color-border-soft)]"] {
+  border-color: rgba(28, 25, 23, 0.06) !important;
+}
+
+/* Score / progress bar fills on dashboard get the subtle glow.
+   Targets common patterns: any rounded-full bg-persimmon as a fill. */
+[data-surface="dashboard"] .progress-ember {
+  background: linear-gradient(90deg, #E8622A, #F07040) !important;
+  box-shadow: 0 0 6px rgba(232, 98, 42, 0.3);
+}

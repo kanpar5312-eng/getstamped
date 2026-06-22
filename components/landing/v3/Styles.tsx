@@ -626,31 +626,52 @@ export function Styles() {
       @media (min-width: 880px) {
         .v3-price-grid { grid-template-columns: repeat(3, 1fr); align-items: stretch; }
       }
+      /* Apple-style: 28px radius, soft outer shadow, 1px lit top edge.
+         Free + Family use a frosted white surface; Solo gets the dark
+         "most chosen" treatment with a persimmon halo and an inset
+         highlight that catches the eye without screaming. */
       .v3-price-card {
         position: relative; display: flex; flex-direction: column;
-        background: var(--color-paper-soft);
-        border: 1px solid var(--color-border);
-        border-radius: 16px; padding: 32px 28px;
-        transition: border-color 240ms var(--ease-soft),
-          transform 240ms var(--ease-soft),
+        background: rgba(255, 255, 255, 0.85);
+        border: 0.5px solid rgba(28,27,26,0.08);
+        border-radius: 28px; padding: 32px 28px;
+        box-shadow: var(--gs-shadow-md);
+        overflow: hidden;
+        transform: translateZ(0);
+        transition: transform 240ms var(--ease-soft),
           box-shadow 240ms var(--ease-soft);
       }
+      .v3-price-card::before {
+        content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.85) 20%, rgba(255,255,255,0.85) 80%, transparent 100%);
+        pointer-events: none;
+      }
       .v3-price-solo {
-        border: 1.5px solid var(--color-persimmon);
-        box-shadow: 0 20px 40px -24px rgba(28,27,26,0.18);
+        background: rgba(28, 25, 23, 0.96);
+        border: 0.5px solid rgba(255,255,255,0.10);
+        box-shadow: var(--gs-shadow-lg), 0 0 0 1px rgba(232,98,42,0.3);
+        color: var(--color-paper);
+      }
+      .v3-price-solo::before {
+        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.10) 20%, rgba(255,255,255,0.10) 80%, transparent 100%);
       }
       @media (hover: hover) and (pointer: fine) {
         .v3-price-card:not(.v3-price-solo):hover {
-          border-color: color-mix(in srgb, var(--color-persimmon) 35%, var(--color-border));
-          transform: translateY(-2px);
+          transform: translateY(-2px) translateZ(0);
+          box-shadow: var(--gs-shadow-lg);
+        }
+        .v3-price-solo:hover {
+          transform: translateY(-2px) translateZ(0);
         }
       }
       .v3-price-chip {
-        position: absolute; top: -12px; left: 24px;
-        background: var(--color-persimmon-tint); color: var(--color-persimmon-deep);
-        font-family: var(--font-mono-stack);
-        font-size: 11px; font-weight: 600; letter-spacing: 0.14em;
-        text-transform: uppercase; padding: 5px 10px; border-radius: 999px;
+        position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+        background: var(--color-persimmon); color: var(--color-paper);
+        font-family: var(--font-sans-stack);
+        font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+        text-transform: uppercase; padding: 5px 14px; border-radius: 999px;
+        box-shadow: 0 4px 12px rgba(232, 98, 42, 0.4);
+        white-space: nowrap;
       }
       .v3-price-name {
         font-family: var(--font-sans-stack);
