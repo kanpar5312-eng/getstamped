@@ -127,9 +127,15 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
       setMobileIndicator((s) => ({ ...s, visible: false }));
       return;
     }
+    // We measure the [data-nav-label] span inside each tab, NOT the
+    // whole anchor — otherwise sibling "NEW" pills inflate the rect
+    // and the orange bar overshoots the heading text.
+    const labelOf = (a: HTMLAnchorElement | null) =>
+      (a?.querySelector("[data-nav-label]") as HTMLElement | null) ?? a;
+
     // Desktop indicator
     const nav = navRef.current;
-    const tab = tabRefs.current[activeHref];
+    const tab = labelOf(tabRefs.current[activeHref]);
     if (nav && tab) {
       const navRect = nav.getBoundingClientRect();
       const tabRect = tab.getBoundingClientRect();
@@ -143,7 +149,7 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
     // it stays anchored to the active tab even if the user scrolls the
     // strip horizontally.
     const mnav = mobileNavRef.current;
-    const mtab = mobileTabRefs.current[activeHref];
+    const mtab = labelOf(mobileTabRefs.current[activeHref]);
     if (mnav && mtab) {
       const navLeft = mnav.getBoundingClientRect().left;
       const navScroll = mnav.scrollLeft;
@@ -213,7 +219,10 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
                 data-nav-active={active ? "true" : undefined}
                 className={tabClass(active)}
               >
-                {t.label}
+                {/* Span wraps ONLY the label text — the indicator measures
+                    this element so the orange bar matches the heading
+                    width even when a "NEW" pill or red dot trails it. */}
+                <span data-nav-label>{t.label}</span>
                 {t.badge === "new" && <NewPill />}
                 {feedbackUrgent && t.href === "/dashboard/feedback" ? (
                   <span
@@ -316,7 +325,7 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
                   : "text-[var(--ink-soft)] hover:text-[var(--ink)]",
               ].join(" ")}
             >
-              {t.label}
+              <span data-nav-label>{t.label}</span>
               {t.badge === "new" && <NewPill />}
             </Link>
           );

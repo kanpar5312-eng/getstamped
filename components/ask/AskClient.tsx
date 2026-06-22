@@ -399,7 +399,10 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
           className={[
             "w-[280px] flex-shrink-0",
             "lg:block",
-            sidebarOpen ? "fixed inset-y-0 left-0 z-40 w-[280px] bg-[var(--color-paper-soft)] p-4 overflow-y-auto" : "hidden lg:block",
+            // z-50 puts the drawer above the dashboard's glass header
+            // (which itself has a backdrop-filter stacking context).
+            // Without this, the header pokes through on mobile.
+            sidebarOpen ? "fixed inset-y-0 left-0 z-50 w-[280px] bg-[var(--color-paper-soft)] p-4 overflow-y-auto shadow-2xl" : "hidden lg:block",
           ].join(" ")}
         >
           <button
@@ -487,7 +490,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
           <div
             aria-hidden
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden fixed inset-0 z-30 bg-[var(--color-ink)]/40 backdrop-blur-sm"
+            className="lg:hidden fixed inset-0 z-40 bg-[var(--color-ink)]/40 backdrop-blur-sm"
           />
         )}
 
