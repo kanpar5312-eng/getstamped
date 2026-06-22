@@ -60,7 +60,8 @@ export function PaywallOverlay(props: Props) {
     <div
       role="region"
       aria-label={isLimit ? "Daily limit reached" : "Upgrade required"}
-      className="mx-auto max-w-md text-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper-soft)] shadow-[0_24px_60px_-24px_rgba(15,20,25,0.18)] p-7"
+      className="gs-card mx-auto max-w-md text-center p-7"
+      style={{ borderRadius: "var(--gs-radius-xl)" }}
     >
       <span
         aria-hidden
@@ -87,7 +88,7 @@ export function PaywallOverlay(props: Props) {
 
       <Link
         href="/dashboard/upgrade"
-        className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-[var(--color-persimmon)] px-5 py-3 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors"
+        className="gs-btn-primary mt-5 inline-flex w-full items-center justify-center px-5 py-3 text-sm font-medium"
       >
         {cta}
       </Link>

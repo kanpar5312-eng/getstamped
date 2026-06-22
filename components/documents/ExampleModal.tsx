@@ -66,10 +66,10 @@ export function ExampleModal({ documentKey, displayName, isOpen, onClose }: Prop
           role="dialog"
           aria-modal="true"
           aria-label={`Example: ${title}`}
+          className="gs-modal-backdrop"
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(28,27,26,0.6)",
             zIndex: 50,
             display: "flex",
             alignItems: "center",
@@ -79,23 +79,19 @@ export function ExampleModal({ documentKey, displayName, isOpen, onClose }: Prop
         >
           <motion.div
             key="card"
-            initial={{ opacity: 0, scale: 0.95, y: 12 }}
+            initial={{ opacity: 0, scale: 0.94, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
-            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className="gs-example-modal-card"
+            className="gs-example-modal-card gs-modal-card"
             style={{
-              position: "relative",
-              background: "var(--color-paper, #FAF6EE)",
               color: "var(--color-ink, #1C1B1A)",
-              borderRadius: 16,
               maxWidth: 640,
               width: "100%",
               maxHeight: "85vh",
               overflowY: "auto",
               padding: 40,
-              boxShadow: "0 24px 60px -20px rgba(0,0,0,0.35)",
               WebkitOverflowScrolling: "touch",
             }}
           >

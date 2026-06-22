@@ -143,10 +143,12 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
   return (
     <header
       className={[
-        "sticky top-0 z-40 w-full bg-[var(--surface)] border-b border-[var(--line)]",
-        "transition-shadow duration-200 ease-out",
-        scrolled ? "shadow-[0_1px_12px_rgba(28,27,26,0.05)]" : "shadow-none",
+        "sticky top-0 z-40 w-full transition-all duration-350",
+        // Apple-style glass: only kicks in once the user has scrolled,
+        // so the page top feels open and the chrome surfaces on demand.
+        scrolled ? "gs-glass-header" : "bg-transparent border-b border-transparent",
       ].join(" ")}
+      style={{ transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
     >
       <div className="w-full pl-4 pr-5 sm:pl-5 sm:pr-6 h-16 flex items-center">
         {/* Logo — pinned to viewport top-left */}

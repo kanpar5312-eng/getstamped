@@ -124,28 +124,24 @@ function ErrorFallback() {
           <button
             type="button"
             onClick={() => { if (typeof window !== "undefined") window.location.reload(); }}
+            className="gs-btn-primary"
             style={{
-              background: PERSIMMON,
-              color: PAPER,
               fontSize: 14,
               fontWeight: 600,
-              borderRadius: 8,
-              border: "none",
               padding: "13px 22px",
-              cursor: "pointer",
             }}
           >
             Refresh page
           </button>
           <a
             href="/dashboard"
+            className="gs-btn-secondary"
             style={{
               display: "inline-block",
-              border: "1px solid rgba(28,25,23,0.2)",
+              textAlign: "center",
               color: INK,
               fontSize: 14,
               fontWeight: 500,
-              borderRadius: 8,
               padding: "12px 22px",
               textDecoration: "none",
             }}

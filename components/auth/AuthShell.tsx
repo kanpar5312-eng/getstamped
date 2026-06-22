@@ -156,14 +156,32 @@ export function AuthShell({
             </span>
           </Link>
 
-          {/* Card — same surface in both modes; airy, paper-like */}
+          {/* Card — Apple-style glass: 36px radius, frosted backdrop, paired
+              shadow + inset highlight. The top-edge filament below stays. */}
           <div
-            className="relative rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper-soft)] p-7 sm:p-10"
+            className="relative p-7 sm:p-10"
             style={{
+              background: "rgba(250, 248, 244, 0.85)",
+              WebkitBackdropFilter: "blur(32px) saturate(200%)",
+              backdropFilter: "blur(32px) saturate(200%)",
+              border: "0.5px solid rgba(255, 255, 255, 0.65)",
+              borderRadius: "var(--gs-radius-2xl)",
               boxShadow:
-                "0 30px 80px -28px rgba(20, 33, 28, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.5) inset",
+                "var(--gs-shadow-glass), 0 32px 64px rgba(0, 0, 0, 0.20)",
+              transform: "translateZ(0)",
             }}
           >
+            {/* Apple's signature 1px top-light line — makes the surface
+                feel lit from above. Subtle, fades at both ends. */}
+            <span
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-px pointer-events-none"
+              style={{
+                background:
+                  "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.9) 20%, rgba(255,255,255,0.9) 80%, transparent 100%)",
+                borderRadius: "var(--gs-radius-2xl) var(--gs-radius-2xl) 0 0",
+              }}
+            />
             {/* Gold filament along the top edge — pulls in the wire palette */}
             {background && (
               <span

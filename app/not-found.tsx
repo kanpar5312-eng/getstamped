@@ -73,15 +73,13 @@ export default function NotFound() {
         </p>
         <Link
           href="/"
+          className="gs-btn-primary"
           style={{
             marginTop: 32,
             display: "inline-block",
-            background: PERSIMMON,
-            color: PAPER,
             fontSize: 14,
             fontWeight: 600,
             padding: "14px 32px",
-            borderRadius: 8,
             textDecoration: "none",
           }}
         >
