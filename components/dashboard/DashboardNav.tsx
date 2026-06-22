@@ -88,10 +88,19 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
         : "text-[var(--ink-soft)] font-normal hover:text-[var(--ink)]",
     ].join(" ");
 
-  // Refs for each tab + the gliding underline
+  // Refs for each tab + the gliding underline — desktop AND mobile
+  // (mobile got dropped during a redesign; restoring it here keeps the
+  // active tab discoverable inside the horizontal scroll strip).
   const navRef = useRef<HTMLElement>(null);
+  const mobileNavRef = useRef<HTMLElement>(null);
   const tabRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const mobileTabRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const [indicator, setIndicator] = useState<{ left: number; width: number; visible: boolean }>({
+    left: 0,
+    width: 0,
+    visible: false,
+  });
+  const [mobileIndicator, setMobileIndicator] = useState<{ left: number; width: number; visible: boolean }>({
     left: 0,
     width: 0,
     visible: false,
@@ -104,23 +113,47 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
     },
     [],
   );
+  const setMobileTabRef = useCallback(
+    (href: string) => (el: HTMLAnchorElement | null) => {
+      mobileTabRefs.current[href] = el;
+    },
+    [],
+  );
 
   const measure = useCallback(() => {
     const activeHref = TABS.find((t) => isActive(t.href))?.href;
     if (!activeHref) {
       setIndicator((s) => ({ ...s, visible: false }));
+      setMobileIndicator((s) => ({ ...s, visible: false }));
       return;
     }
+    // Desktop indicator
     const nav = navRef.current;
     const tab = tabRefs.current[activeHref];
-    if (!nav || !tab) return;
-    const navRect = nav.getBoundingClientRect();
-    const tabRect = tab.getBoundingClientRect();
-    setIndicator({
-      left: tabRect.left - navRect.left,
-      width: tabRect.width,
-      visible: true,
-    });
+    if (nav && tab) {
+      const navRect = nav.getBoundingClientRect();
+      const tabRect = tab.getBoundingClientRect();
+      setIndicator({
+        left: tabRect.left - navRect.left,
+        width: tabRect.width,
+        visible: true,
+      });
+    }
+    // Mobile indicator — position is RELATIVE to the scrollable nav, so
+    // it stays anchored to the active tab even if the user scrolls the
+    // strip horizontally.
+    const mnav = mobileNavRef.current;
+    const mtab = mobileTabRefs.current[activeHref];
+    if (mnav && mtab) {
+      const navLeft = mnav.getBoundingClientRect().left;
+      const navScroll = mnav.scrollLeft;
+      const mtabRect = mtab.getBoundingClientRect();
+      setMobileIndicator({
+        left: mtabRect.left - navLeft + navScroll,
+        width: mtabRect.width,
+        visible: true,
+      });
+    }
   }, [pathname]); // re-measure when route changes
 
   // Measure synchronously after layout to avoid first-paint flicker
@@ -196,7 +229,7 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
           {/* Shared underline — glides between tabs on route change */}
           <span
             aria-hidden
-            className="pointer-events-none absolute bottom-[-1px] h-[2px] bg-[var(--ember)]"
+            className="pointer-events-none absolute bottom-[-1px] h-[2px] rounded-full bg-[var(--ember)]"
             style={{
               transform: `translateX(${indicator.left}px)`,
               width: `${indicator.width}px`,
@@ -206,6 +239,7 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
                 ? "transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), width 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease"
                 : "opacity 0.2s ease",
               willChange: "transform, width",
+              boxShadow: "0 0 8px rgba(232, 98, 42, 0.45)",
             }}
           />
         </nav>
@@ -260,10 +294,13 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
         </div>
       </div>
 
-      {/* Mobile / tablet section row */}
+      {/* Mobile / tablet section row — with the same gliding orange
+          underline as desktop. Positioned relative so the absolute
+          indicator anchors against the scrollable nav element. */}
       <nav
+        ref={mobileNavRef}
         aria-label="Dashboard sections (mobile)"
-        className="lg:hidden flex items-center gap-1 px-5 pb-2.5 overflow-x-auto scrollbar-none"
+        className="lg:hidden relative flex items-center gap-1 px-5 pb-2.5 overflow-x-auto scrollbar-none"
       >
         {TABS.map((t) => {
           const active = isActive(t.href);
@@ -271,6 +308,7 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
             <Link
               key={t.href}
               href={t.href}
+              ref={setMobileTabRef(t.href)}
               className={[
                 "relative text-[12px] px-2.5 py-1.5 rounded-md transition-colors whitespace-nowrap inline-flex items-center",
                 active
@@ -283,6 +321,22 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
             </Link>
           );
         })}
+        {/* Gliding mobile underline. Matches desktop curve + duration so
+            the same motion language reads across both layouts. */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute bottom-0 h-[2px] rounded-full bg-[var(--ember)]"
+          style={{
+            transform: `translateX(${mobileIndicator.left}px)`,
+            width: `${mobileIndicator.width}px`,
+            opacity: mobileIndicator.visible ? 1 : 0,
+            transition: hasMounted
+              ? "transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), width 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease"
+              : "opacity 0.2s ease",
+            willChange: "transform, width",
+            boxShadow: "0 0 8px rgba(232, 98, 42, 0.45)",
+          }}
+        />
       </nav>
     </header>
   );

@@ -33,7 +33,11 @@ export function SectionDivider({ label, bg = "paper" }: Props) {
       <motion.span
         aria-hidden
         className="block h-px flex-1 origin-right"
-        style={{ background: "currentColor", opacity: 0.1 }}
+        style={{
+          background:
+            "linear-gradient(90deg, transparent 0%, currentColor 25%, currentColor 75%, transparent 100%)",
+          opacity: 0.12,
+        }}
         variants={slideLeft}
         initial="hidden"
         whileInView="visible"
@@ -53,7 +57,11 @@ export function SectionDivider({ label, bg = "paper" }: Props) {
       <motion.span
         aria-hidden
         className="block h-px flex-1 origin-left"
-        style={{ background: "currentColor", opacity: 0.1 }}
+        style={{
+          background:
+            "linear-gradient(90deg, transparent 0%, currentColor 25%, currentColor 75%, transparent 100%)",
+          opacity: 0.12,
+        }}
         variants={slideRight}
         initial="hidden"
         whileInView="visible"

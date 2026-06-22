@@ -919,17 +919,40 @@ body {
 /* Buttons — primary stays generic via tokens (becomes ink). Ember class
    is the one-per-view escalation. */
 [data-surface="dashboard"] .btn-ember {
+  position: relative;
   background-color: var(--ember) !important;
   color: #ffffff !important;
-  border: 1px solid var(--ember) !important;
-  transition: background-color 160ms ease, transform 120ms ease;
+  border: none !important;
+  box-shadow:
+    0 1px 3px rgba(232, 98, 42, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  overflow: hidden;
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
 }
-[data-surface="dashboard"] .btn-ember:hover {
-  background-color: var(--ember-hover) !important;
-  border-color: var(--ember-hover) !important;
+/* Apple-style 1px lit-from-above top edge on every ember CTA */
+[data-surface="dashboard"] .btn-ember::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+  background: rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  [data-surface="dashboard"] .btn-ember:hover {
+    background-color: #F07040 !important;
+    box-shadow:
+      0 4px 12px rgba(232, 98, 42, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    transform: translateY(-0.5px);
+  }
 }
 [data-surface="dashboard"] .btn-ember:active {
-  transform: scale(0.98);
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 1px 4px rgba(232, 98, 42, 0.2) !important;
+  transition: transform 80ms ease, box-shadow 80ms ease;
 }
 [data-surface="dashboard"] button:active {
   transform: scale(0.98);
