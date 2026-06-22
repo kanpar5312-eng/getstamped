@@ -108,20 +108,14 @@ function formatN(n: number, currency: Currency) {
 function Sym(c: Currency) { return c === "INR" ? "₹" : "$"; }
 
 function priceFor(id: Plan, currency: Currency): { full: number; sale?: number } {
+  // Source of truth = the shared PRICES table in lib/pricing.ts, so the
+  // dashboard always matches what's rendered on the landing page. The
+  // previous sale-override hardcoded ₹1,199/$15 (Solo) and ₹1,749/$20
+  // (Family) — different from the landing — which is what the user kept
+  // seeing as a price mismatch.
   if (id === "free") return { full: 0 };
-  if (id === "solo") {
-    const p = PRICES.solo[currency];
-    return {
-      full: parseInt(p.amount.replace(/,/g, ""), 10),
-      sale: currency === "USD" ? 15 : 1199,
-    };
-  }
-  // family
-  const p = PRICES.family[currency];
-  return {
-    full: parseInt(p.amount.replace(/,/g, ""), 10),
-    sale: currency === "USD" ? 20 : 1749,
-  };
+  const p = id === "solo" ? PRICES.solo[currency] : PRICES.family[currency];
+  return { full: parseInt(p.amount.replace(/,/g, ""), 10) };
 }
 
 /* ---------- Banner ---------- */

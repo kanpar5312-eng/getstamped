@@ -36,6 +36,7 @@ function renderInline(text: string): React.ReactNode {
   const out: React.ReactNode[] = [];
   let i = 0;
   while (i < text.length) {
+    // Bold: **...**  (only if a closing pair exists)
     if (text.slice(i, i + 2) === "**") {
       const end = text.indexOf("**", i + 2);
       if (end > -1) {
@@ -44,6 +45,7 @@ function renderInline(text: string): React.ReactNode {
         continue;
       }
     }
+    // Inline code: `...` (only if a closing backtick exists)
     if (text[i] === "`") {
       const end = text.indexOf("`", i + 1);
       if (end > -1) {
@@ -56,7 +58,11 @@ function renderInline(text: string): React.ReactNode {
         continue;
       }
     }
-    let j = i;
+    // Walk forward to the next * or ` AFTER the current position. The
+    // `j > i` guard guarantees we always consume at least one char even
+    // when text[i] is itself * or ` (e.g. an unclosed single * in the
+    // message body) — without it the loop spins forever and pegs the CPU.
+    let j = i + 1;
     while (j < text.length && text[j] !== "*" && text[j] !== "`") j++;
     out.push(text.slice(i, j));
     i = j;
