@@ -11,6 +11,8 @@ import { CookieBanner } from "@/components/ui/CookieBanner";
 import { Analytics } from "@/components/ui/Analytics";
 import { NavigationProgress } from "@/components/ui/NavigationProgress";
 import { IntroGate } from "@/components/intro/IntroGate";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { NetworkToast } from "@/components/NetworkToast";
 import type { Currency } from "@/lib/pricing";
 
 export const metadata: Metadata = {
@@ -77,10 +79,13 @@ export default async function RootLayout({
               <NavigationProgress />
             </Suspense>
             <IntroGate />
-            <div className="page-fade">
-              {children}
-            </div>
+            <ErrorBoundary>
+              <div className="page-fade">
+                {children}
+              </div>
+            </ErrorBoundary>
             <CookieBanner />
+            <NetworkToast />
             <Analytics domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN ?? null} />
           </CountryProvider>
         </PricingProvider>
