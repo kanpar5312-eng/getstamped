@@ -9,6 +9,7 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { deleteThread as deleteThreadAction, setMessageHelpful, setMessageSaved } from "@/app/actions/ai-threads";
 import { TypingSpeedControl, useTypingSpeed, cpsFor } from "@/components/ask/TypingSpeedControl";
 import { PaywallOverlay } from "@/components/paywall/PaywallOverlay";
+import { notifyNetworkError } from "@/components/NetworkToast";
 
 type Plan = "free" | "solo" | "family";
 
@@ -276,6 +277,9 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
       if (aborterRef.current !== ac) return;
       const aborted =
         err instanceof DOMException && err.name === "AbortError";
+      // User-initiated stops aren't network errors; only ring the toast
+      // for actual transport/network failures.
+      if (!aborted) notifyNetworkError();
       const targetThreadId = optimisticThreadId ?? threadId;
       if (!targetThreadId) return;
       const aiMsg: Message = {

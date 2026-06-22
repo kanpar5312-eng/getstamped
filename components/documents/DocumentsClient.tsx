@@ -6,6 +6,7 @@ import { CHECKLIST, PHASES, PHASE_TITLES, getChecklistItem } from "@/lib/documen
 import { CountUp } from "@/components/dashboard/CountUp";
 import { ExampleModal } from "@/components/documents/ExampleModal";
 import { getDocumentExample } from "@/components/documents/examples";
+import { notifyNetworkError } from "@/components/NetworkToast";
 
 type Plan = "free" | "solo" | "family";
 
@@ -159,6 +160,7 @@ export function DocumentsClient({ plan, initialRows }: Props) {
           });
         }
       } catch {
+        notifyNetworkError();
         updateRow(slug, {
           status: "attention",
           aiFeedback: {

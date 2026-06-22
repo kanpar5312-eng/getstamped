@@ -6,6 +6,7 @@ import { SetupScreen, type Difficulty, type Interviewer, type Length } from "./S
 import { InterviewRoom, type RoomState } from "./InterviewRoom";
 import { FeedbackScreen, type Scores, type TurnSummary } from "./FeedbackScreen";
 import { PaywallOverlay } from "@/components/paywall/PaywallOverlay";
+import { notifyNetworkError } from "@/components/NetworkToast";
 
 // Three.js (~600KB gz) only needs to load when the user actually starts an
 // interview. Keeping it out of the dashboard's shared chunk shaves a huge
@@ -205,7 +206,20 @@ export function MockInterviewClient({ plan, consulate }: Props) {
       }
       // Server-authoritative quota check. logUsage runs inside the
       // route on success, so failing here never burns the user's slot.
-      const r = await fetch("/api/mock-interview/start", { method: "POST" });
+      let r: Response;
+      try {
+        r = await fetch("/api/mock-interview/start", { method: "POST" });
+      } catch {
+        // Transport-level failure (offline, DNS, etc.). Toast + fall
+        // through so the user can still attempt the local session.
+        notifyNetworkError();
+        if (plan === "free" && hasUsedFreeMock()) {
+          setPaywallHit(true);
+          return;
+        }
+        setPhase("cinematic");
+        return;
+      }
       if (r.status === 429) {
         const data = await r.json().catch(() => ({}));
         setLimitResetAt(typeof data.reset_at === "string" ? data.reset_at : null);
