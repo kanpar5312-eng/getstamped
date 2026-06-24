@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "motion/react";
 import Lightfall from "@/components/ui/Lightfall";
+import TextType from "@/components/ui/TextType";
 
 /* ════════════════════════════════════════════════════════════════════════
    Hero — full-bleed Ink panel with a Lightfall WebGL backdrop. The old
@@ -120,7 +121,8 @@ export function Hero() {
           F-1 Student Visa · End-to-End
         </motion.p>
 
-        {/* 2. Headline */}
+        {/* 2. Headline — typewriter cycling through three brand lines.
+            All other Hero copy/structure is unchanged. */}
         <motion.h1
           variants={fadeUp}
           initial="initial"
@@ -135,11 +137,29 @@ export function Hero() {
             lineHeight: 1.0,
             letterSpacing: "-0.03em",
             margin: 0,
+            textAlign: "center",
             textWrap: "balance" as "balance",
+            minHeight: "1.05em",
           }}
         >
-          The visa is small. The journey{" "}
-          <span style={{ color: "#E8622A", fontStyle: "italic" }}>isn&rsquo;t.</span>
+          <TextType
+            text={["The only visa tool", "you will ever need.", "Get Stamped."]}
+            typingSpeed={75}
+            pauseDuration={1500}
+            showCursor
+            cursorCharacter="_"
+            texts={[
+              "The only visa tool you will ever need.",
+              "47 steps. Nothing skipped.",
+              "Built for your stamp.",
+            ]}
+            deletingSpeed={50}
+            variableSpeedEnabled={false}
+            variableSpeedMin={60}
+            variableSpeedMax={120}
+            cursorBlinkDuration={0.5}
+            cursorStyle={{ color: "#E8622A" }}
+          />
         </motion.h1>
 
         {/* 3. Subhead */}
@@ -321,7 +341,7 @@ export function Hero() {
         /* Mobile tuning per spec */
         @media (max-width: 767px) {
           .gs-hero-root { height: 100svh !important; }
-          .gs-hero-headline { font-size: clamp(36px, 10vw, 56px) !important; }
+          .gs-hero-headline { font-size: clamp(36px, 10vw, 52px) !important; }
           .gs-hero-sub { font-size: 15px !important; max-width: 100% !important; }
           .gs-hero-ctas { flex-direction: column !important; gap: 12px !important; width: 100%; }
           .gs-hero-ctas .gs-hero-primary,
