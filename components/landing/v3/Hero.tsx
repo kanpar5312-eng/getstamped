@@ -47,25 +47,27 @@ export function Hero() {
       }}
       className="gs-hero-root"
     >
-      {/* Layer 1 — WebGL light streaks (graceful no-op if WebGL fails) */}
+      {/* Layer 1 — WebGL light streaks. Animation params match the
+          reference Lightfall demo exactly; only colours are swapped to
+          the GetStamped Ink + Persimmon + Paper palette. */}
       <Lightfall
         backgroundColor="#1C1917"
-        speed={0.4}
-        streakCount={3}
+        speed={0.5}
+        streakCount={2}
         streakWidth={1}
-        streakLength={1.2}
-        glow={0.8}
-        density={0.5}
-        twinkle={0.6}
+        streakLength={1}
+        glow={1}
+        density={0.6}
+        twinkle={1}
         zoom={3}
-        backgroundGlow={0.3}
-        opacity={0.65}
+        backgroundGlow={0.5}
+        opacity={1}
         mouseInteraction
-        mouseStrength={0.4}
+        mouseStrength={0.5}
         mouseRadius={1}
         color1="#E8622A"
-        color2="#1C1917"
-        color3="rgba(250,248,244,0.3)"
+        color2="#FAF8F4"
+        color3="#FF9F70"
       />
 
       {/* Layer 2 — subtle ink gradient overlay so headline stays readable */}
