@@ -28,10 +28,7 @@ import { Footer } from "@/components/landing/Footer";
 import type { Currency } from "@/lib/pricing";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
-import { Playbook } from "./Playbook";
-import { DocumentVault } from "./DocumentVault";
-import { MockInterview } from "./MockInterview";
-import { ParentShare } from "./ParentShare";
+import { FeaturesShowcase } from "./FeaturesShowcase";
 import { Pricing } from "./Pricing";
 import { Reviews } from "./Reviews";
 import { FAQ } from "./FAQ";
@@ -62,10 +59,7 @@ export function MarketingLanding({ currency }: Props) {
             DOCUMENT RECEIVED divider + TrustStrip + FORM I-20 divider +
             FeatureCycle sequence with a Lenis-smoothed 4-card stack. */}
         <StackedFeatureCards />
-        <Playbook />
-        <DocumentVault />
-        <MockInterview />
-        <ParentShare />
+        <FeaturesShowcase />
         <SectionDivider label="REVIEW COMPLETE" bg="ink" />
         <ProblemSlam />
         <Pricing currency={currency} />
