@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
-import Lenis from "lenis";
+import { type ReactNode } from "react";
 
 /* ════════════════════════════════════════════════════════════════════════
    ScrollStack — wraps a sequence of <ScrollStackItem> cards so each one
@@ -26,44 +25,16 @@ type Props = {
 };
 
 export function ScrollStack({ children, className }: Props) {
-  // We attach Lenis to the body's scroll, not a custom container. That
-  // keeps existing anchor/scroll behaviour on the rest of the landing
-  // page working unchanged.
-  const lenisRef = useRef<Lenis | null>(null);
-
-  useEffect(() => {
-    // prefers-reduced-motion users get native scroll — Lenis honours
-    // this automatically via its `autoRaf` option, but we double-check
-    // here so we never start the rAF loop unnecessarily.
-    const reduced =
-      typeof window !== "undefined" &&
-      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) return;
-
-    const lenis = new Lenis({
-      // Apple-feel curve: deliberate but never floaty.
-      duration: 1.05,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      // Touch scrolls keep native momentum — Lenis only smooths wheel.
-      smoothWheel: true,
-      wheelMultiplier: 1,
-      touchMultiplier: 1,
-    });
-    lenisRef.current = lenis;
-
-    let raf = 0;
-    const tick = (time: number) => {
-      lenis.raf(time);
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      lenis.destroy();
-      lenisRef.current = null;
-    };
-  }, []);
+  // Lenis was previously mounted here to globally smooth wheel scroll,
+  // but on long landing pages with multiple sticky stack items it
+  // interfered with native scroll past the stack on macOS Safari/Chrome
+  // (the page felt "stuck" near the Pricing section because Lenis's
+  // computed end-of-page lagged behind the real one).
+  //
+  // The pin-and-tuck visual is pure CSS sticky + Framer Motion useScroll
+  // inside <ScrollStackItem/>, so removing Lenis costs nothing visually
+  // and restores native trackpad/wheel momentum across the whole page.
+  // Re-introduce Lenis later as an opt-in `smooth` prop if needed.
 
   return (
     <section
