@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Renderer, Program, Mesh, Triangle } from "ogl";
+import "./Lightfall.css";
 
 /* ════════════════════════════════════════════════════════════════════════
    Lightfall — TS port of the React Bits Lightfall component, palette
@@ -411,14 +412,9 @@ export default function Lightfall({
     <div
       ref={containerRef}
       className={`lightfall-container ${className ?? ""}`}
-      style={{
-        position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
-        pointerEvents: mouseInteraction ? "auto" : "none",
-        ...(mixBlendMode && { mixBlendMode }),
-      }}
+      // Positioning is owned by .lightfall-container in Lightfall.css.
+      // Only mixBlendMode (optional, passed through) is set inline.
+      style={mixBlendMode ? { mixBlendMode } : undefined}
     />
   );
 }

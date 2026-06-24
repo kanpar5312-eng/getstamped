@@ -48,28 +48,38 @@ export function Hero() {
       }}
       className="gs-hero-root"
     >
-      {/* Layer 1 — WebGL light streaks. Animation params match the
-          reference Lightfall demo exactly; only colours are swapped to
-          the GetStamped Ink + Persimmon + Paper palette. */}
-      <Lightfall
-        backgroundColor="#1C1917"
-        speed={0.5}
-        streakCount={2}
-        streakWidth={1}
-        streakLength={1}
-        glow={1}
-        density={0.6}
-        twinkle={1}
-        zoom={3}
-        backgroundGlow={0.5}
-        opacity={1}
-        mouseInteraction
-        mouseStrength={0.5}
-        mouseRadius={1}
-        color1="#E8622A"
-        color2="#FAF8F4"
-        color3="#FF9F70"
-      />
+      {/* Layer 1 — WebGL light streaks. Lightfall fills the 100%×100%
+          of this wrapper via .lightfall-container CSS; the wrapper
+          handles the absolute positioning behind the Hero content. */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          zIndex: 0,
+          pointerEvents: "none",
+        }}
+      >
+        <Lightfall
+          colors={["#E8622A", "#FF9F70", "#FAF8F4"]}
+          backgroundColor="#1C1917"
+          speed={0.5}
+          streakCount={2}
+          streakWidth={1}
+          streakLength={1}
+          glow={1}
+          density={0.6}
+          twinkle={1}
+          zoom={3}
+          backgroundGlow={0.5}
+          opacity={1}
+          mouseInteraction
+          mouseStrength={0.5}
+          mouseRadius={1}
+        />
+      </div>
 
       {/* Layer 2 — subtle ink gradient overlay so headline stays readable */}
       <div
