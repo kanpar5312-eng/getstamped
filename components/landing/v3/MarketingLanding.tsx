@@ -38,10 +38,9 @@ import { FAQ } from "./FAQ";
 import { StampedCloser } from "./StampedCloser";
 import { ScrollTransitions } from "./ScrollTransitions";
 import { SectionDivider } from "./SectionDivider";
-import { TrustStrip } from "./TrustStrip";
-import { FeatureCycle } from "./FeatureCycle";
 import { ProblemSlam } from "./ProblemSlam";
 import { Styles } from "./Styles";
+import { StackedFeatureCards } from "./StackedFeatureCards";
 
 type Props = {
   currency: Currency;
@@ -55,10 +54,10 @@ export function MarketingLanding({ currency }: Props) {
       <Header />
       <main>
         <Hero />
-        <SectionDivider label="DOCUMENT RECEIVED" bg="paper" />
-        <TrustStrip />
-        <SectionDivider label="FORM I-20 VERIFIED" bg="ink" />
-        <FeatureCycle />
+        {/* Pinned, stacking feature cards. Replaces the prior
+            DOCUMENT RECEIVED divider + TrustStrip + FORM I-20 divider +
+            FeatureCycle sequence with a Lenis-smoothed 4-card stack. */}
+        <StackedFeatureCards />
         <Playbook />
         <DocumentVault />
         <MockInterview />
