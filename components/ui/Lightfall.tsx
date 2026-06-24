@@ -110,39 +110,63 @@ uniform vec3  uC2;
 uniform vec3  uC3;
 
 float hash(float n) { return fract(sin(n) * 43758.5453); }
+float hash2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 
-// One layer of falling streaks. Layer index seeds RNG.
+/*
+   One layer of vertical rain streaks. Each streak is a tall, thin
+   vertical bar with a bright head that scrolls top→bottom. Streaks
+   are arranged in a dense grid of vertical columns; each column
+   holds a single "drop" whose Y position is driven by uTime.
+   The vertical-only direction is what gives the reference its
+   "let the light rain down" feeling rather than wide pillars.
+*/
 vec3 layer(vec2 uv, float layerIdx, vec3 tint) {
-  float cells = floor(8.0 + uDensity * 24.0);
-  vec2 grid = vec2(cells, 1.0);
-  vec2 g = uv * grid;
-  float col = floor(g.x);
+  // Dense columns — many thin streaks across the width.
+  // density 0..1 maps to roughly 40 → 140 columns.
+  float cols = floor(mix(40.0, 140.0, clamp(uDensity, 0.0, 1.0)));
+  float colF = uv.x * cols;
+  float col  = floor(colF);
+  float fx   = fract(colF);
 
-  float seed = hash(col * 13.37 + layerIdx * 7.91);
-  float speedJitter = mix(0.55, 1.45, hash(seed + 1.0));
-  float xJitter = hash(seed + 3.0) * 0.6 - 0.3;
+  // Per-column RNG so each streak has its own speed, length, brightness.
+  float seed       = hash2(vec2(col, layerIdx * 91.7));
+  float speedJit   = mix(0.6, 1.6, hash(seed + 1.0));
+  float lenJit     = mix(0.4, 1.0, hash(seed + 2.0));
+  float brightJit  = mix(0.5, 1.0, hash(seed + 3.0));
+  float widthJit   = mix(0.7, 1.3, hash(seed + 4.0));
 
-  // Streak head Y (wraps top→bottom over time)
-  float headY = fract(uTime * uSpeed * 0.18 * speedJitter + seed);
-  float tail = uStreakLength * mix(0.5, 1.4, hash(seed + 5.0));
+  // Streak head Y position — falls from y=1 (top) to y=0 (bottom).
+  // The phase offset (seed) spreads streaks out so they don't all
+  // start at the top of the screen at t=0.
+  float t        = uTime * uSpeed * 0.45 * speedJit + seed;
+  float headY    = 1.0 - fract(t);
+  float tailLen  = uStreakLength * lenJit * 0.55;
 
-  // Local cell coords
-  float cellCenter = (col + 0.5) / cells + xJitter / cells;
-  float dx = (uv.x - cellCenter);
-  float w  = uStreakWidth * 0.0035 * mix(0.6, 1.4, hash(seed + 7.0));
+  // Horizontal distance from the streak's center within its column,
+  // in column-fractions (0..0.5 means inside the column).
+  // Streak width is independent of column count — keeps streaks thin
+  // regardless of density.
+  float dx = fx - 0.5;
+  float w  = uStreakWidth * 0.16 * widthJit;
+  float horiz = exp(-(dx * dx) / (w * w));                  // sharp core
+  float bloom = exp(-(dx * dx) / (w * w * (3.0 + uGlow * 8.0)));
 
-  // Vertical position within the trail (0 = head, 1 = far past tail)
-  float dy = (headY - uv.y) / tail;
-  float visible = step(0.0, dy) * step(dy, 1.0);
+  // Vertical position within the streak's trail (0 at head, 1 past tail).
+  // Trail extends DOWN-ward from the head (head leads, tail follows above
+  // in y-up). We invert because uv.y goes 0 at bottom → 1 at top.
+  float dy = (uv.y - headY) / tailLen;       // 0 at head, +1 = up past tail
+  float inTrail = step(0.0, dy) * step(dy, 1.0);
+  float vert = pow(1.0 - dy, 2.4);            // bright at head, fades up
 
-  // Falloffs
-  float horiz = exp(-(dx * dx) / (w * w));                 // sharp core
-  float vert  = pow(1.0 - dy, 2.0);                         // fade along tail
-  float bloom = exp(-(dx * dx) / (w * w * (4.0 + uGlow * 14.0))); // soft glow
+  // A small bright disc at the head itself
+  float headGlow = exp(-(dy * dy) / 0.0009) * exp(-(dx * dx) / (w * w * 4.0));
 
-  float twink = 1.0 + uTwinkle * (sin(uTime * 2.0 + seed * 30.0) * 0.5);
+  float twink = 1.0 + uTwinkle * (sin(uTime * 3.0 + seed * 40.0) * 0.35);
 
-  float intensity = visible * twink * (horiz * vert + bloom * vert * 0.55 * uGlow);
+  float intensity =
+      inTrail * vert * (horiz * 1.0 + bloom * 0.6 * uGlow)
+    + headGlow * 1.4 * uGlow;
+  intensity *= brightJit * twink;
 
   return tint * intensity;
 }
@@ -150,22 +174,25 @@ vec3 layer(vec2 uv, float layerIdx, vec3 tint) {
 void main() {
   vec2 uv = vUv;
 
-  // Mouse warp — small, organic.
+  // Mouse warp — small lateral pull toward / away from cursor so the
+  // rain feels alive without changing the global direction.
   float md = distance(uv, uMouse);
   vec2 dir = normalize(uv - uMouse + 0.0001);
   float pull = smoothstep(uMouseRadius, 0.0, md);
-  uv += dir * pull * uMouseStrength * 0.05;
+  uv.x += dir.x * pull * uMouseStrength * 0.04;
 
-  // Apply zoom around screen center
-  vec2 c = (uv - 0.5) / (uZoom * 0.5) + 0.5;
+  // Zoom centred horizontally only — keep the rain falling top→bottom
+  // across the full viewport regardless of zoom prop.
+  float zx = (uv.x - 0.5) / (uZoom * 0.5) + 0.5;
+  vec2 c = vec2(zx, uv.y);
 
   vec3 col = uBg;
 
-  // Background haze (very subtle persimmon vignette toward center)
-  float vign = exp(-distance(uv, vec2(0.5, 0.55)) * 2.0);
-  col += uC1 * vign * uBackgroundGlow * 0.4;
+  // Background haze — a soft glow band low-center where streaks pool.
+  float vign = exp(-distance(uv, vec2(0.5, 0.35)) * 2.2);
+  col += uC1 * vign * uBackgroundGlow * 0.45;
 
-  // Stacked streak layers
+  // Stacked streak layers — each shifted horizontally for parallax.
   float layers = floor(max(1.0, uStreakCount));
   for (float i = 0.0; i < 6.0; i += 1.0) {
     if (i >= layers) break;
@@ -175,10 +202,10 @@ void main() {
     col += layer(luv, i, tint);
   }
 
-  // Soft top/bottom fade so streaks bleed into the section edges
-  float edgeTop = smoothstep(0.0, 0.05, uv.y);
+  // Only the bottom edge fades; the top stays bright so streaks feel
+  // like they're raining IN from above (matches the reference look).
   float edgeBot = smoothstep(0.0, 0.05, 1.0 - uv.y);
-  col *= edgeTop * edgeBot * 0.85 + 0.15;
+  col *= edgeBot * 0.92 + 0.08;
 
   gl_FragColor = vec4(col, 1.0);
 }
