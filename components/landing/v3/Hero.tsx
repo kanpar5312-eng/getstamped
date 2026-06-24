@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import { motion } from "motion/react";
-import Lightfall from "@/components/ui/Lightfall";
+import Hyperspeed from "@/components/ui/Hyperspeed";
 import TextType from "@/components/ui/TextType";
 
 /* ════════════════════════════════════════════════════════════════════════
@@ -35,6 +36,47 @@ function PlayTriangle() {
 }
 
 export function Hero() {
+  const hyperspeedOptions = useMemo(
+    () => ({
+      onSpeedUp: () => {},
+      onSlowDown: () => {},
+      distortion: "turbulentDistortion",
+      length: 400,
+      roadWidth: 10,
+      islandWidth: 2,
+      lanesPerRoad: 4,
+      fov: 90,
+      fovSpeedUp: 150,
+      speedUp: 2,
+      carLightsFade: 0.4,
+      totalSideLightSticks: 20,
+      lightPairsPerRoadWay: 40,
+      shoulderLinesWidthPercentage: 0.05,
+      brokenLinesWidthPercentage: 0.1,
+      brokenLinesLengthPercentage: 0.5,
+      lightStickWidth: [0.12, 0.5],
+      lightStickHeight: [1.3, 1.7],
+      movingAwaySpeed: [60, 80],
+      movingCloserSpeed: [-120, -160],
+      carLightsLength: [400 * 0.03, 400 * 0.2],
+      carLightsRadius: [0.05, 0.14],
+      carWidthPercentage: [0.3, 0.5],
+      carShiftX: [-0.8, 0.8],
+      carFloorSeparation: [0, 5],
+      colors: {
+        roadColor: 0x080808,
+        islandColor: 0x0a0a0a,
+        background: 0x000000,
+        shoulderLines: 0xffffff,
+        brokenLines: 0xffffff,
+        leftCars: [0xd856bf, 0x6750a2, 0xc247ac],
+        rightCars: [0x03b3c3, 0x0e5ea5, 0x324555],
+        sticks: 0x03b3c3,
+      },
+    }),
+    []
+  );
+
   return (
     <section
       aria-label="Hero"
@@ -62,23 +104,7 @@ export function Hero() {
           pointerEvents: "none",
         }}
       >
-        <Lightfall
-          colors={["#E8622A", "#FF9F70", "#FAF8F4"]}
-          backgroundColor="#1C1917"
-          speed={0.5}
-          streakCount={2}
-          streakWidth={1}
-          streakLength={1}
-          glow={1}
-          density={0.6}
-          twinkle={1}
-          zoom={3}
-          backgroundGlow={0.5}
-          opacity={1}
-          mouseInteraction
-          mouseStrength={0.5}
-          mouseRadius={1}
-        />
+        <Hyperspeed effectOptions={hyperspeedOptions} />
       </div>
 
       {/* Layer 2 — subtle ink gradient overlay so headline stays readable */}
