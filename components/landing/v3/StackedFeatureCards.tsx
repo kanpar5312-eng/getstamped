@@ -462,7 +462,7 @@ function ParentViewMock() {
 export function StackedFeatureCards() {
   return (
     <>
-      <ScrollStack>
+      <ScrollStack useWindowScroll>
         <ScrollStackItem>
           <CardShell bg={INK} ink={PAPER}>
             <Chip dark>01 / PLAYBOOK</Chip>
