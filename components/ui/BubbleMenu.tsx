@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, type ReactNode, type CSSProperties } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, type ReactNode, type CSSProperties } from "react";
 import { gsap } from "gsap";
 import "./BubbleMenu.css";
 
@@ -109,6 +109,22 @@ export default function BubbleMenu({
     onMenuClick?.(nextState);
   };
 
+  // Hide the pills BEFORE the browser paints — otherwise on first open
+  // they flash at full size for one frame before GSAP shrinks them to
+  // scale 0 to animate up. Switching to useLayoutEffect makes the
+  // initial state apply synchronously after DOM mutation, before paint.
+  useLayoutEffect(() => {
+    if (!showOverlay) return;
+    const bubbles = bubblesRef.current.filter(Boolean);
+    const labels = labelRefs.current.filter(Boolean);
+    if (bubbles.length) {
+      gsap.set(bubbles, { scale: 0, transformOrigin: "50% 50%", autoAlpha: 1 });
+    }
+    if (labels.length) {
+      gsap.set(labels, { y: 24, autoAlpha: 0 });
+    }
+  }, [showOverlay]);
+
   useEffect(() => {
     const overlay = overlayRef.current;
     const bubbles = bubblesRef.current.filter(Boolean);
@@ -158,6 +174,10 @@ export default function BubbleMenu({
         ease: "power3.in",
         onComplete: () => {
           gsap.set(overlay, { display: "none" });
+          // Drop stale refs so the next open populates fresh elements
+          // instead of animating against detached DOM nodes.
+          bubblesRef.current = [];
+          labelRefs.current = [];
           setShowOverlay(false);
         },
       });
