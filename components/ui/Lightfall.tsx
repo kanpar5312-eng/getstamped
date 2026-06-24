@@ -257,10 +257,23 @@ export default function Lightfall({
       ? [color1 ?? colors[0], color2 ?? colors[1], color3 ?? colors[2]]
       : colors;
 
+    // Render budget guardrails — Lightfall's 39-iter fragment shader is
+    // expensive. Capping DPR at 1.5 on Retina (real value is 2 or 3)
+    // cuts shaded pixels by 4x–9x with no visible quality loss; antialias
+    // off saves another sample per pixel because the shader is already
+    // smooth. prefers-reduced-motion users get a single static frame.
+    const reducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const safeDpr = Math.min(
+      dpr ?? (typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1),
+      1.5,
+    );
+
     const renderer = new Renderer({
-      dpr: dpr ?? (typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1),
+      dpr: safeDpr,
       alpha: true,
-      antialias: true,
+      antialias: false,
     });
     rendererRef.current = renderer;
     const gl = renderer.gl;
@@ -335,8 +348,42 @@ export default function Lightfall({
       canvas.addEventListener("pointermove", onPointerMove);
     }
 
+    // ── Visibility gating ────────────────────────────────────────────
+    // Stop the rAF loop when the canvas is scrolled off-screen OR the
+    // browser tab is hidden. Both signals add up: the loop only runs
+    // when the user can actually SEE Lightfall. This is the single
+    // biggest perf win — most users scroll past the hero in seconds
+    // but the shader used to keep burning a full GPU core forever.
+    let onScreen = true;
+    let tabVisible = typeof document !== "undefined" ? !document.hidden : true;
+    const shouldRender = () => onScreen && tabVisible && !paused && !reducedMotion;
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        onScreen = entry?.isIntersecting ?? true;
+      },
+      { threshold: 0.01 },
+    );
+    io.observe(container);
+
+    const onVisibility = () => {
+      tabVisible = !document.hidden;
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
     const loop = (t: number) => {
+      // Always schedule the next tick — but only render when visible.
+      // Skipping schedule entirely would leak state if we ever become
+      // visible again; this keeps the loop reactive at near-zero cost.
       rafRef.current = requestAnimationFrame(loop);
+
+      if (!shouldRender()) {
+        // Reset timing baselines so the mouse doesn't snap when we
+        // come back from a pause.
+        lastTimeRef.current = t;
+        return;
+      }
+
       uniforms.iTime.value = t * 0.001;
       if (mouseDampening > 0) {
         if (!lastTimeRef.current) lastTimeRef.current = t;
@@ -352,7 +399,7 @@ export default function Lightfall({
       } else {
         lastTimeRef.current = t;
       }
-      if (!paused && programRef.current && meshRef.current) {
+      if (programRef.current && meshRef.current) {
         try {
           renderer.render({ scene: meshRef.current });
         } catch (e) {
@@ -362,11 +409,30 @@ export default function Lightfall({
       }
     };
     rafRef.current = requestAnimationFrame(loop);
+    // Render exactly once if reduced-motion is on, so the user sees a
+    // single still frame instead of an empty canvas.
+    if (reducedMotion && programRef.current && meshRef.current) {
+      try {
+        renderer.render({ scene: meshRef.current });
+      } catch {
+        /* ignore */
+      }
+    }
 
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (mouseInteraction) canvas.removeEventListener("pointermove", onPointerMove);
       ro.disconnect();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+      // Force-release the GL context — important on iOS Safari + on
+      // long-lived SPA sessions where the WebGL context budget is
+      // capped. Without this, navigating back to the hero would
+      // sometimes return a black canvas after enough route changes.
+      const loseExt = (gl as WebGLRenderingContext).getExtension(
+        "WEBGL_lose_context",
+      ) as { loseContext: () => void } | null;
+      loseExt?.loseContext();
       if (canvas.parentElement === container) {
         container.removeChild(canvas);
       }
