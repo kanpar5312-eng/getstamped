@@ -4,370 +4,420 @@ import { useEffect, useRef } from "react";
 import { Renderer, Program, Mesh, Triangle } from "ogl";
 
 /* ════════════════════════════════════════════════════════════════════════
-   Lightfall — a fullscreen WebGL canvas of slow-falling light streaks,
-   gently warped by the user's cursor. Rendered with OGL on a single
-   fullscreen triangle; the streaks are math, not textures.
+   Lightfall — TS port of the React Bits Lightfall component, palette
+   swapped to the GetStamped Ink + Persimmon + Paper brand. The fish-eye
+   projection shader (`sceneC`) is what gives the streaks their iconic
+   tapered top + bottom curve as they "rain in" toward the viewer.
 
-   Designed as a Hero background: subtle, dark, on-brand persimmon
-   accents. If WebGL is unavailable (rare; some iOS Lockdown setups,
-   ancient browsers) the canvas mounts but renders nothing — the parent
-   should set its own backgroundColor so the page stays on-brand.
-
-   Mobile down-tunes streak count + density automatically.
+   Mouse moves illuminate the field through a soft warm glow. Colors
+   are sampled from up to 8 palette slots; the average drives the
+   mouse-light tint.
    ═════════════════════════════════════════════════════════════════════════ */
 
-type Props = {
-  /** Base background color the shader uses when no streak is present. */
-  backgroundColor?: string;
-  /** Vertical fall speed multiplier. */
-  speed?: number;
-  /** How many streak layers to render. */
-  streakCount?: number;
-  /** Streak thickness (0–2 reasonable). */
-  streakWidth?: number;
-  /** Streak length in screen units. */
-  streakLength?: number;
-  /** Bloom around each streak (0–1.2). */
-  glow?: number;
-  /** How many streaks per layer. */
-  density?: number;
-  /** Twinkle modulation depth (0–1). */
-  twinkle?: number;
-  /** Camera zoom — bigger = denser streaks visible. */
-  zoom?: number;
-  /** Soft persimmon haze behind the streaks. */
-  backgroundGlow?: number;
-  /** Master canvas opacity (CSS-level). */
-  opacity?: number;
-  mouseInteraction?: boolean;
-  mouseStrength?: number;
-  mouseRadius?: number;
-  color1?: string;
-  color2?: string;
-  color3?: string;
+const MAX_COLORS = 8;
+
+type RGB = [number, number, number];
+
+const hexToRGB = (hex: string): RGB => {
+  const c = hex.replace("#", "").padEnd(6, "0");
+  return [
+    parseInt(c.slice(0, 2), 16) / 255,
+    parseInt(c.slice(2, 4), 16) / 255,
+    parseInt(c.slice(4, 6), 16) / 255,
+  ];
 };
 
-function hexToRgb(input: string): [number, number, number] {
-  // Accepts "#RRGGBB" and "rgba(r,g,b,a)" — we ignore alpha, that's
-  // handled by the master opacity prop on the canvas.
-  if (input.startsWith("#")) {
-    const h = input.slice(1);
-    const n = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16);
-    return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+const prepColors = (input: string[] | undefined) => {
+  const base = (input && input.length ? input : ["#E8622A", "#FF9F70", "#FAF8F4"]).slice(
+    0,
+    MAX_COLORS,
+  );
+  const count = base.length;
+  const arr: RGB[] = [];
+  for (let i = 0; i < MAX_COLORS; i++) {
+    arr.push(hexToRGB(base[Math.min(i, base.length - 1)]));
   }
-  const m = input.match(/rgba?\(([^)]+)\)/);
-  if (m) {
-    const parts = m[1].split(",").map((v) => parseFloat(v.trim()));
-    return [(parts[0] ?? 0) / 255, (parts[1] ?? 0) / 255, (parts[2] ?? 0) / 255];
+  const avg: RGB = [0, 0, 0];
+  for (let i = 0; i < count; i++) {
+    avg[0] += arr[i][0];
+    avg[1] += arr[i][1];
+    avg[2] += arr[i][2];
   }
-  return [0, 0, 0];
-}
-
-function isWebGLSupported(): boolean {
-  if (typeof document === "undefined") return false;
-  try {
-    const canvas = document.createElement("canvas");
-    return !!(
-      canvas.getContext("webgl2") ||
-      canvas.getContext("webgl") ||
-      (canvas.getContext as (id: string) => unknown)("experimental-webgl")
-    );
-  } catch {
-    return false;
-  }
-}
+  avg[0] /= count;
+  avg[1] /= count;
+  avg[2] /= count;
+  return { arr, count, avg };
+};
 
 const vertex = /* glsl */ `
 attribute vec2 position;
+attribute vec2 uv;
 varying vec2 vUv;
 void main() {
-  vUv = position * 0.5 + 0.5;
+  vUv = uv;
   gl_Position = vec4(position, 0.0, 1.0);
 }
 `;
 
 const fragment = /* glsl */ `
 precision highp float;
-varying vec2 vUv;
 
-uniform float uTime;
-uniform vec2  uResolution;
-uniform vec2  uMouse;            // 0..1 in screen space, smoothed
-uniform float uMouseStrength;
-uniform float uMouseRadius;
+uniform vec3  iResolution;
+uniform vec2  iMouse;
+uniform float iTime;
+
+uniform vec3  uColor0;
+uniform vec3  uColor1;
+uniform vec3  uColor2;
+uniform vec3  uColor3;
+uniform vec3  uColor4;
+uniform vec3  uColor5;
+uniform vec3  uColor6;
+uniform vec3  uColor7;
+uniform int   uColorCount;
+
+uniform vec3  uBgColor;
+uniform vec3  uMouseColor;
 uniform float uSpeed;
-uniform float uStreakCount;      // layers
+uniform int   uStreakCount;
 uniform float uStreakWidth;
 uniform float uStreakLength;
 uniform float uGlow;
-uniform float uDensity;          // streaks per layer
+uniform float uDensity;
 uniform float uTwinkle;
 uniform float uZoom;
-uniform float uBackgroundGlow;
-uniform vec3  uBg;
-uniform vec3  uC1;
-uniform vec3  uC2;
-uniform vec3  uC3;
+uniform float uBgGlow;
+uniform float uOpacity;
+uniform float uMouseEnabled;
+uniform float uMouseStrength;
+uniform float uMouseRadius;
 
-float hash(float n) { return fract(sin(n) * 43758.5453); }
-float hash2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+varying vec2 vUv;
 
-/*
-   Streak field — each "drop" is a thin vertical line with a bright
-   head and a soft tail above it. The streak width is in absolute
-   uv units (0..1 across the screen), independent of column count,
-   so increasing density adds MORE streaks without making any of
-   them thicker.
-*/
-vec3 layer(vec2 uv, float layerIdx, vec3 tint) {
-  // Density 0..1 maps to 32 → 96 streaks across the layer.
-  float cols = floor(mix(32.0, 96.0, clamp(uDensity, 0.0, 1.0)));
+vec3 palette(float h) {
+  int count = uColorCount;
+  if (count < 1) count = 1;
+  int idx = int(floor(clamp(h, 0.0, 0.999999) * float(count)));
+  if (idx <= 0) return uColor0;
+  if (idx == 1) return uColor1;
+  if (idx == 2) return uColor2;
+  if (idx == 3) return uColor3;
+  if (idx == 4) return uColor4;
+  if (idx == 5) return uColor5;
+  if (idx == 6) return uColor6;
+  return uColor7;
+}
 
-  // Walk neighbouring columns and accumulate, so streaks with bloom
-  // halos near a column boundary don't get clipped.
-  float accum = 0.0;
-  float headAccum = 0.0;
-  for (int n = -1; n <= 1; n++) {
-    float col = floor(uv.x * cols) + float(n);
-    float seed       = hash2(vec2(col, layerIdx * 91.7));
-    float speedJit   = mix(0.55, 1.7, hash(seed + 1.0));
-    float lenJit     = mix(0.45, 1.0, hash(seed + 2.0));
-    float brightJit  = mix(0.45, 1.0, hash(seed + 3.0));
-    float xJitter    = (hash(seed + 4.0) - 0.5) * 0.7; // wander inside cell
+vec3 tanhv(vec3 x) {
+  vec3 e = exp(-2.0 * x);
+  return (1.0 - e) / (1.0 + e);
+}
 
-    // Streak head Y: 1 → 0 over time. seed offsets the start phase.
-    float t        = uTime * uSpeed * 0.55 * speedJit + seed;
-    float headY    = 1.0 - fract(t);
-    float tailLen  = uStreakLength * lenJit * 0.5;
+vec2 sceneC(vec2 frag, vec2 r) {
+  vec2 P = (frag + frag - r) / r.x;
+  float z = 0.0;
+  float d = 1e3;
+  vec4 O = vec4(0.0);
+  for (int k = 0; k < 39; k++) {
+    if (d <= 1e-4) break;
+    O = z * normalize(vec4(P, uZoom, 0.0)) - vec4(0.0, 4.0, 1.0, 0.0) / 4.5;
+    d = 1.0 - sqrt(length(O * O));
+    z += d;
+  }
+  return vec2(O.x, atan(O.z, O.y));
+}
 
-    // Absolute screen-x of the streak (0..1 across viewport).
-    float centerX = (col + 0.5 + xJitter) / cols;
-    float dx = uv.x - centerX;
+void mainImage(out vec4 o, vec2 C) {
+  vec2 r = iResolution.xy;
+  vec2 uv0 = (C + C - r) / r.x;
+  float T = 0.1 * iTime * uSpeed + 9.0;
+  float angRings = max(1.0, floor(6.28318530718 * max(uDensity, 0.05) + 0.5));
+  vec2 Y = vec2(5e-3, 6.28318530718 / angRings);
 
-    // Thin streak width — kept in absolute uv. 0.0009 is roughly a
-    // 1-px line at 1080p; uStreakWidth scales linearly.
-    float halfW = uStreakWidth * 0.0009;
-    // Sharp 1/x falloff for the core; gives a crisp "needle" edge.
-    float core = halfW / (abs(dx) + halfW * 0.6);
-    core *= core;
+  vec2 c0 = sceneC(C, r);
+  vec2 cdx = sceneC(C + vec2(1.0, 0.0), r);
+  vec2 cdy = sceneC(C + vec2(0.0, 1.0), r);
+  vec2 dCx = cdx - c0;
+  vec2 dCy = cdy - c0;
+  dCx.y -= 6.28318530718 * floor(dCx.y / 6.28318530718 + 0.5);
+  dCy.y -= 6.28318530718 * floor(dCy.y / 6.28318530718 + 0.5);
+  vec2 fw = abs(dCx) + abs(dCy);
+  C = c0;
 
-    // Trail position (0 at head → 1 past tail above)
-    float dy = (uv.y - headY) / tailLen;
-    float inTrail = step(0.0, dy) * step(dy, 1.0);
-    float vert    = pow(1.0 - dy, 3.0);   // bright head, soft up-fade
+  vec2 P = vec2(2.0, 1.0) * uv0 - (r / r.x) * vec2(0.0, 1.0);
+  vec4 O = vec4(uBgColor * 90.0 * uBgGlow / (1e3 * dot(P, P) + 6.0), 0.0);
 
-    // Soft halo around head
-    float head = exp(-(dy * dy) / (0.0025 + 0.004 * (1.0 - uGlow))) *
-                 exp(-(dx * dx) / (halfW * halfW * 24.0));
-
-    float twink = 1.0 + uTwinkle * (sin(uTime * 2.5 + seed * 40.0) * 0.25);
-    float bright = brightJit * twink;
-
-    accum     += core * inTrail * vert * bright;
-    headAccum += head * bright * uGlow;
+  float mGlow = 0.0;
+  if (uMouseEnabled > 0.5) {
+    vec2 mN = (iMouse + iMouse - r) / r.x;
+    float md = length(uv0 - mN);
+    mGlow = exp(-md * md / max(uMouseRadius * uMouseRadius, 1e-4)) * uMouseStrength;
+    O.rgb += uMouseColor * mGlow * 0.25;
   }
 
-  // Cap so densely-packed streaks don't blow out to pure white.
-  float intensity = min(1.6, accum * 0.65 + headAccum * 0.9);
-  return tint * intensity;
+  float zr = 5e-4 * uStreakWidth;
+  vec2 rr = vec2(max(length(fw), 1e-5));
+  float tail = 19.0 / max(uStreakLength, 0.05);
+
+  for (int m = 0; m < 16; m++) {
+    if (m >= uStreakCount) break;
+    float jf = float(m) + 1.0;
+    float ic = fract(sin(dot(vec2(jf, floor(C.x / Y.x + 0.5)), vec2(7.0, 11.0)) * 73.0));
+    vec2 Pp = C - (T + T * ic) * vec2(0.0, 1.0);
+    Pp -= floor(Pp / Y + 0.5) * Y;
+    float h = fract(8663.0 * ic);
+    vec3 col = palette(h);
+    float weight = mix(1.5, 1.0 + sin(T + 7.0 * h + 4.0), uTwinkle);
+    weight *= (1.0 + mGlow * 2.0);
+    vec2 inner = vec2(length(max(Pp, vec2(-1.0, 0.0))), length(Pp) - zr) - zr;
+    vec2 sm = vec2(1.0) - smoothstep(-rr, rr, inner);
+    O.rgb += dot(sm, vec2(exp(tail * Pp.y), 3.0)) * col * weight;
+    C.x += Y.x / 8.0;
+  }
+
+  vec3 colr = sqrt(tanhv(max(O.rgb * uGlow - vec3(0.04, 0.08, 0.02), 0.0)));
+  o = vec4(colr, uOpacity);
 }
 
 void main() {
-  vec2 uv = vUv;
-
-  // Mouse warp — small lateral pull toward / away from cursor so the
-  // rain feels alive without changing the global direction.
-  float md = distance(uv, uMouse);
-  vec2 dir = normalize(uv - uMouse + 0.0001);
-  float pull = smoothstep(uMouseRadius, 0.0, md);
-  uv.x += dir.x * pull * uMouseStrength * 0.04;
-
-  // Zoom centred horizontally only — keep the rain falling top→bottom
-  // across the full viewport regardless of zoom prop.
-  float zx = (uv.x - 0.5) / (uZoom * 0.5) + 0.5;
-  vec2 c = vec2(zx, uv.y);
-
-  vec3 col = uBg;
-
-  // Background haze — a soft glow band low-center where streaks pool.
-  float vign = exp(-distance(uv, vec2(0.5, 0.35)) * 2.2);
-  col += uC1 * vign * uBackgroundGlow * 0.45;
-
-  // Stacked streak layers — each shifted horizontally for parallax.
-  float layers = floor(max(1.0, uStreakCount));
-  for (float i = 0.0; i < 6.0; i += 1.0) {
-    if (i >= layers) break;
-    vec3 tint = i < 1.0 ? uC1 : (i < 2.0 ? uC2 : uC3);
-    // Shift each layer horizontally for parallax feel
-    vec2 luv = c + vec2(hash(i * 11.0) * 0.13, 0.0);
-    col += layer(luv, i, tint);
-  }
-
-  // Only the bottom edge fades; the top stays bright so streaks feel
-  // like they're raining IN from above (matches the reference look).
-  float edgeBot = smoothstep(0.0, 0.05, 1.0 - uv.y);
-  col *= edgeBot * 0.92 + 0.08;
-
-  gl_FragColor = vec4(col, 1.0);
+  vec4 color;
+  mainImage(color, vUv * iResolution.xy);
+  gl_FragColor = color;
 }
 `;
 
+type Props = {
+  className?: string;
+  dpr?: number;
+  paused?: boolean;
+  colors?: string[];
+  backgroundColor?: string;
+  speed?: number;
+  streakCount?: number;
+  streakWidth?: number;
+  streakLength?: number;
+  glow?: number;
+  density?: number;
+  twinkle?: number;
+  zoom?: number;
+  backgroundGlow?: number;
+  opacity?: number;
+  mouseInteraction?: boolean;
+  mouseStrength?: number;
+  mouseRadius?: number;
+  mouseDampening?: number;
+  mixBlendMode?: React.CSSProperties["mixBlendMode"];
+  /* legacy single-color props kept for back-compat with the existing
+     Hero call site; if provided they override the colors[] entries. */
+  color1?: string;
+  color2?: string;
+  color3?: string;
+};
+
 export default function Lightfall({
+  className,
+  dpr,
+  paused = false,
+  colors = ["#E8622A", "#FF9F70", "#FAF8F4"],
   backgroundColor = "#1C1917",
-  speed = 0.4,
-  streakCount = 3,
+  speed = 0.5,
+  streakCount = 2,
   streakWidth = 1,
-  streakLength = 1.2,
-  glow = 0.8,
-  density = 0.5,
-  twinkle = 0.6,
+  streakLength = 1,
+  glow = 1,
+  density = 0.6,
+  twinkle = 1,
   zoom = 3,
-  backgroundGlow = 0.3,
-  opacity = 0.65,
+  backgroundGlow = 0.5,
+  opacity = 1,
   mouseInteraction = true,
-  mouseStrength = 0.4,
+  mouseStrength = 0.5,
   mouseRadius = 1,
-  color1 = "#E8622A",
-  color2 = "#1C1917",
-  color3 = "rgba(250,248,244,0.3)",
+  mouseDampening = 0.15,
+  mixBlendMode,
+  color1,
+  color2,
+  color3,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const programRef = useRef<Program | null>(null);
+  const meshRef = useRef<Mesh | null>(null);
+  const geometryRef = useRef<Triangle | null>(null);
+  const rendererRef = useRef<Renderer | null>(null);
+  const mouseTargetRef = useRef<[number, number]>([0, 0]);
+  const lastTimeRef = useRef<number>(0);
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    if (!isWebGLSupported()) return; // graceful fallback: nothing renders
+    const container = containerRef.current;
+    if (!container) return;
 
-    // Reduced-motion users get a static frame so we don't burn battery.
-    const reduced =
-      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-
-    const isMobile = window.innerWidth < 768;
-    const mStreakCount = isMobile ? 2 : streakCount;
-    const mDensity = isMobile ? 0.3 : density;
+    const effectiveColors = color1 || color2 || color3
+      ? [color1 ?? colors[0], color2 ?? colors[1], color3 ?? colors[2]]
+      : colors;
 
     const renderer = new Renderer({
+      dpr: dpr ?? (typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1),
       alpha: true,
-      antialias: false,
-      dpr: Math.min(window.devicePixelRatio, isMobile ? 1.25 : 1.75),
+      antialias: true,
     });
+    rendererRef.current = renderer;
     const gl = renderer.gl;
-    gl.clearColor(0, 0, 0, 0);
-
     const canvas = gl.canvas as HTMLCanvasElement;
-    canvas.style.position = "absolute";
-    canvas.style.inset = "0";
+
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     canvas.style.display = "block";
-    el.appendChild(canvas);
+    container.appendChild(canvas);
+
+    const { arr, count, avg } = prepColors(effectiveColors);
+
+    const uniforms = {
+      iResolution: { value: [gl.drawingBufferWidth, gl.drawingBufferHeight, 1] },
+      iMouse: { value: [0, 0] },
+      iTime: { value: 0 },
+      uColor0: { value: arr[0] },
+      uColor1: { value: arr[1] },
+      uColor2: { value: arr[2] },
+      uColor3: { value: arr[3] },
+      uColor4: { value: arr[4] },
+      uColor5: { value: arr[5] },
+      uColor6: { value: arr[6] },
+      uColor7: { value: arr[7] },
+      uColorCount: { value: count },
+      uBgColor: { value: hexToRGB(backgroundColor) },
+      uMouseColor: { value: avg },
+      uSpeed: { value: speed },
+      uStreakCount: { value: Math.max(1, Math.min(16, Math.round(streakCount))) },
+      uStreakWidth: { value: streakWidth },
+      uStreakLength: { value: streakLength },
+      uGlow: { value: glow },
+      uDensity: { value: density },
+      uTwinkle: { value: twinkle },
+      uZoom: { value: zoom },
+      uBgGlow: { value: backgroundGlow },
+      uOpacity: { value: opacity },
+      uMouseEnabled: { value: mouseInteraction ? 1 : 0 },
+      uMouseStrength: { value: mouseStrength },
+      uMouseRadius: { value: mouseRadius },
+    };
+
+    const program = new Program(gl, { vertex, fragment, uniforms });
+    programRef.current = program;
 
     const geometry = new Triangle(gl);
-
-    const [c1r, c1g, c1b] = hexToRgb(color1);
-    const [c2r, c2g, c2b] = hexToRgb(color2);
-    const [c3r, c3g, c3b] = hexToRgb(color3);
-    const [bgr, bgg, bgb] = hexToRgb(backgroundColor);
-
-    const program = new Program(gl, {
-      vertex,
-      fragment,
-      uniforms: {
-        uTime:            { value: 0 },
-        uResolution:      { value: [el.clientWidth, el.clientHeight] },
-        uMouse:           { value: [0.5, 0.5] },
-        uMouseStrength:   { value: mouseInteraction ? mouseStrength : 0 },
-        uMouseRadius:     { value: mouseRadius },
-        uSpeed:           { value: speed },
-        uStreakCount:     { value: mStreakCount },
-        uStreakWidth:     { value: streakWidth },
-        uStreakLength:    { value: streakLength },
-        uGlow:            { value: glow },
-        uDensity:         { value: mDensity },
-        uTwinkle:         { value: twinkle },
-        uZoom:            { value: zoom },
-        uBackgroundGlow:  { value: backgroundGlow },
-        uBg:              { value: [bgr, bgg, bgb] },
-        uC1:              { value: [c1r, c1g, c1b] },
-        uC2:              { value: [c2r, c2g, c2b] },
-        uC3:              { value: [c3r, c3g, c3b] },
-      },
-    });
-
+    geometryRef.current = geometry;
     const mesh = new Mesh(gl, { geometry, program });
+    meshRef.current = mesh;
 
     const resize = () => {
-      const w = el.clientWidth;
-      const h = el.clientHeight;
-      renderer.setSize(w, h);
-      program.uniforms.uResolution.value = [w, h];
+      const rect = container.getBoundingClientRect();
+      renderer.setSize(rect.width, rect.height);
+      uniforms.iResolution.value = [gl.drawingBufferWidth, gl.drawingBufferHeight, 1];
     };
+
     resize();
     const ro = new ResizeObserver(resize);
-    ro.observe(el);
-    window.addEventListener("resize", resize);
+    ro.observe(container);
 
-    // Smoothed mouse position — keeps the warp fluid even on jittery
-    // input events.
-    const targetMouse = [0.5, 0.5];
-    const currentMouse = [0.5, 0.5];
-    const onMouseMove = (e: MouseEvent) => {
-      if (!mouseInteraction) return;
-      const r = el.getBoundingClientRect();
-      targetMouse[0] = (e.clientX - r.left) / r.width;
-      targetMouse[1] = 1 - (e.clientY - r.top) / r.height;
+    const onPointerMove = (e: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const scale = renderer.dpr || 1;
+      const x = (e.clientX - rect.left) * scale;
+      const y = (rect.height - (e.clientY - rect.top)) * scale;
+      mouseTargetRef.current = [x, y];
+      if (mouseDampening <= 0) {
+        uniforms.iMouse.value = [x, y];
+      }
     };
-    window.addEventListener("mousemove", onMouseMove);
+    if (mouseInteraction) {
+      canvas.addEventListener("pointermove", onPointerMove);
+    }
 
-    const start = performance.now();
-    let raf = 0;
-    const tick = () => {
-      // Lerp mouse toward target
-      currentMouse[0] += (targetMouse[0] - currentMouse[0]) * 0.06;
-      currentMouse[1] += (targetMouse[1] - currentMouse[1]) * 0.06;
-      program.uniforms.uMouse.value = currentMouse;
-
-      const t = reduced ? 0 : (performance.now() - start) / 1000;
-      program.uniforms.uTime.value = t;
-      renderer.render({ scene: mesh });
-      raf = requestAnimationFrame(tick);
+    const loop = (t: number) => {
+      rafRef.current = requestAnimationFrame(loop);
+      uniforms.iTime.value = t * 0.001;
+      if (mouseDampening > 0) {
+        if (!lastTimeRef.current) lastTimeRef.current = t;
+        const dt = (t - lastTimeRef.current) / 1000;
+        lastTimeRef.current = t;
+        const tau = Math.max(1e-4, mouseDampening);
+        let factor = 1 - Math.exp(-dt / tau);
+        if (factor > 1) factor = 1;
+        const target = mouseTargetRef.current;
+        const cur = uniforms.iMouse.value;
+        cur[0] += (target[0] - cur[0]) * factor;
+        cur[1] += (target[1] - cur[1]) * factor;
+      } else {
+        lastTimeRef.current = t;
+      }
+      if (!paused && programRef.current && meshRef.current) {
+        try {
+          renderer.render({ scene: meshRef.current });
+        } catch (e) {
+          // Don't bring the page down on a transient WebGL hiccup.
+          console.error(e);
+        }
+      }
     };
-    raf = requestAnimationFrame(tick);
+    rafRef.current = requestAnimationFrame(loop);
 
     return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
-      window.removeEventListener("mousemove", onMouseMove);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (mouseInteraction) canvas.removeEventListener("pointermove", onPointerMove);
       ro.disconnect();
-      // Release GL context — important on iOS Safari where the WebGL
-      // context limit is low and unmount-on-route-change can leak.
-      const loseCtx = gl.getExtension("WEBGL_lose_context");
-      loseCtx?.loseContext();
-      if (canvas.parentElement === el) el.removeChild(canvas);
+      if (canvas.parentElement === container) {
+        container.removeChild(canvas);
+      }
+      const callIfFn = (obj: unknown, key: string) => {
+        if (obj && typeof (obj as Record<string, unknown>)[key] === "function") {
+          ((obj as Record<string, () => void>)[key]).call(obj);
+        }
+      };
+      callIfFn(programRef.current, "remove");
+      callIfFn(geometryRef.current, "remove");
+      callIfFn(meshRef.current, "remove");
+      callIfFn(rendererRef.current, "destroy");
+      programRef.current = null;
+      geometryRef.current = null;
+      meshRef.current = null;
+      rendererRef.current = null;
     };
   }, [
-    backgroundColor, speed, streakCount, streakWidth, streakLength, glow,
-    density, twinkle, zoom, backgroundGlow, mouseInteraction, mouseStrength,
-    mouseRadius, color1, color2, color3,
+    dpr,
+    paused,
+    colors,
+    backgroundColor,
+    speed,
+    streakCount,
+    streakWidth,
+    streakLength,
+    glow,
+    density,
+    twinkle,
+    zoom,
+    backgroundGlow,
+    opacity,
+    mouseInteraction,
+    mouseStrength,
+    mouseRadius,
+    mouseDampening,
+    color1,
+    color2,
+    color3,
   ]);
-
-  // Mobile master opacity step-down
-  const effectiveOpacity =
-    typeof window !== "undefined" && window.innerWidth < 768
-      ? Math.min(opacity, 0.5)
-      : opacity;
 
   return (
     <div
       ref={containerRef}
-      aria-hidden
+      className={`lightfall-container ${className ?? ""}`}
       style={{
         position: "absolute",
         inset: 0,
         width: "100%",
         height: "100%",
-        opacity: effectiveOpacity,
-        pointerEvents: "none",
+        pointerEvents: mouseInteraction ? "auto" : "none",
+        ...(mixBlendMode && { mixBlendMode }),
       }}
     />
   );
