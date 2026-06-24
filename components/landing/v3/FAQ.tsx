@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { motion, useInView } from "motion/react";
 import { Eyebrow } from "./primitives/Eyebrow";
 
 type Item = { cat: string; q: string; a: string };
@@ -40,8 +41,21 @@ export function FAQ() {
 function Row({ index, item }: { index: number; item: Item }) {
   const [open, setOpen] = useState(false);
   const num = index.toString().padStart(2, "0");
+
+  // Scroll-in animation borrowed from AnimatedList: each row scales
+  // 0.7 → 1 and fades in once half the row is in view. `once: false`
+  // replays it if the user scrolls back up past the FAQ.
+  const ref = useRef<HTMLLIElement>(null);
+  const inView = useInView(ref, { amount: 0.5, once: false });
+
   return (
-    <li className={`v3-faq-item${open ? " is-open" : ""}`}>
+    <motion.li
+      ref={ref}
+      className={`v3-faq-item${open ? " is-open" : ""}`}
+      initial={{ scale: 0.7, opacity: 0 }}
+      animate={inView ? { scale: 1, opacity: 1 } : { scale: 0.7, opacity: 0 }}
+      transition={{ duration: 0.25, delay: 0.05 }}
+    >
       <button
         type="button"
         className="v3-faq-btn"
@@ -64,6 +78,6 @@ function Row({ index, item }: { index: number; item: Item }) {
           <p>{item.a}</p>
         </div>
       </div>
-    </li>
+    </motion.li>
   );
 }
