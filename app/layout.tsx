@@ -10,7 +10,6 @@ import { Suspense } from "react";
 import { CookieBanner } from "@/components/ui/CookieBanner";
 import { Analytics } from "@/components/ui/Analytics";
 import { NavigationProgress } from "@/components/ui/NavigationProgress";
-import { IntroGate } from "@/components/intro/IntroGate";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { NetworkToast } from "@/components/NetworkToast";
 import type { Currency } from "@/lib/pricing";
@@ -62,23 +61,12 @@ export default async function RootLayout({
         "h-full",
       ].join(" ")}
     >
-      <head>
-        {/* Pre-hydration: hide landing if intro will play, so it doesn't flash
-            before OpeningSequence mounts. IntroGate clears this class once
-            it decides (either after intro finishes or if already seen). */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{if(location.pathname==='/'&&sessionStorage.getItem('gs_intro_seen')!=='1'){document.documentElement.classList.add('gs-intro-pending');}}catch(e){document.documentElement.classList.add('gs-intro-pending');}})();`,
-          }}
-        />
-      </head>
       <body className="min-h-full flex flex-col bg-[var(--color-paper)] text-[var(--color-ink)] overflow-x-hidden">
         <PricingProvider initial={initialCurrency}>
           <CountryProvider>
             <Suspense fallback={null}>
               <NavigationProgress />
             </Suspense>
-            <IntroGate />
             <ErrorBoundary>
               <div className="page-fade">
                 {children}

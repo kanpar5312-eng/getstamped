@@ -1201,15 +1201,6 @@ body {
   animation: page-fade-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Pre-intro flash guard. Inline script in app/layout.tsx adds this class to
-   <html> before paint when the OpeningSequence is about to play, so the
-   landing isn't visible for the brief moment between hydration and intro
-   mount. IntroGate removes the class once the intro finishes (or immediately
-   if the visitor has already seen it this session). */
-html.gs-intro-pending .page-fade {
-  visibility: hidden;
-}
-
 /* Native View Transitions API — if the browser supports it and Next 16's
    experimental viewTransition flag fires document.startViewTransition, the
    default cross-fade gets these branded easing curves. No-op in Safari. */
