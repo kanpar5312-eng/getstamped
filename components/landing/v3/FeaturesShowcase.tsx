@@ -14,7 +14,7 @@ const muted = "rgba(28,25,23,0.62)";
 const cardOuter = {
   width: "100%",
   height: "100%",
-  padding: "28px 28px 24px 28px",
+  padding: "36px 36px 32px 36px",
   display: "flex",
   flexDirection: "column" as const,
   justifyContent: "space-between",
@@ -84,7 +84,7 @@ export function FeaturesShowcase() {
           gridTemplateColumns: "1.05fr 1fr",
           gap: 48,
           alignItems: "center",
-          minHeight: 600,
+          minHeight: 720,
         }}
       >
         {/* Left — editorial copy */}
@@ -171,11 +171,18 @@ export function FeaturesShowcase() {
           className="gs-features-cards"
           style={{
             position: "relative",
-            height: 600,
-            minHeight: 600,
+            height: 720,
+            minHeight: 720,
           }}
         >
-          <CardSwap cardDistance={60} verticalDistance={70} delay={5000} pauseOnHover={false}>
+          <CardSwap
+            width={620}
+            height={520}
+            cardDistance={70}
+            verticalDistance={80}
+            delay={2000}
+            pauseOnHover={false}
+          >
             {/* 1. Playbook */}
             <Card>
               <div style={cardOuter}>
@@ -412,14 +419,14 @@ export function FeaturesShowcase() {
             gap: 32px !important;
           }
           .gs-features-cards {
-            height: 520px !important;
-            min-height: 520px !important;
+            height: 600px !important;
+            min-height: 600px !important;
           }
         }
         @media (max-width: 480px) {
           .gs-features-cards {
-            height: 460px !important;
-            min-height: 460px !important;
+            height: 520px !important;
+            min-height: 520px !important;
           }
         }
       `}</style>
