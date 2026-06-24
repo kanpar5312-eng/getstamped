@@ -41,6 +41,7 @@ import { SectionDivider } from "./SectionDivider";
 import { ProblemSlam } from "./ProblemSlam";
 import { Styles } from "./Styles";
 import { StackedFeatureCards } from "./StackedFeatureCards";
+import { WhatsInside } from "./WhatsInside";
 
 type Props = {
   currency: Currency;
@@ -54,6 +55,9 @@ export function MarketingLanding({ currency }: Props) {
       <Header />
       <main>
         <Hero />
+        {/* Typographic "what's inside" menu — sets up the four pillars
+            with marquee-on-hover rows before the deeper stacked cards. */}
+        <WhatsInside />
         {/* Pinned, stacking feature cards. Replaces the prior
             DOCUMENT RECEIVED divider + TrustStrip + FORM I-20 divider +
             FeatureCycle sequence with a Lenis-smoothed 4-card stack. */}
