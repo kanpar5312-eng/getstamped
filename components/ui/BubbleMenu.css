@@ -129,10 +129,14 @@
   justify-content: center;
   pointer-events: none;
   z-index: 98;
-  background: rgba(250, 248, 244, 0.96);
+  background: rgba(250, 248, 244, 0.97);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   overflow-y: auto;
+  /* iOS Safari: 100% of dynamic viewport so the URL bar doesn't crop
+     the menu when it auto-hides. svh fallback for older browsers. */
+  min-height: 100svh;
+  min-height: 100dvh;
 }
 
 .bubble-menu-items.fixed {

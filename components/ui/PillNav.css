@@ -1,3 +1,8 @@
+/* All selectors are scoped under .pill-nav-container or
+   .pill-nav-logo-anchor so generic class names like .pill, .pill-list,
+   .pill-label can't leak into other components that happen to reuse
+   those words (notably BubbleMenu's mobile overlay). */
+
 .pill-nav-container {
   position: fixed;
   top: 1.25em;
@@ -13,11 +18,15 @@
   z-index: 100;
 }
 
-.pill-nav {
+.pill-nav-container .pill-nav,
+.pill-nav-logo-anchor {
   --nav-h: 46px;
   --logo: 36px;
   --pill-pad-x: 20px;
   --pill-gap: 3px;
+}
+
+.pill-nav-container .pill-nav {
   width: max-content;
   display: flex;
   align-items: center;
@@ -25,7 +34,7 @@
   box-sizing: border-box;
 }
 
-.pill-nav-items {
+.pill-nav-container .pill-nav-items {
   position: relative;
   display: flex;
   align-items: center;
@@ -34,7 +43,8 @@
   border-radius: 9999px;
 }
 
-.pill-logo {
+.pill-nav-logo-anchor .pill-logo,
+.pill-nav-container .pill-logo {
   height: var(--nav-h);
   border-radius: 9999px;
   background: var(--logo-bg, #FAF8F4);
@@ -49,14 +59,15 @@
   flex-shrink: 0;
 }
 
-.pill-logo .pill-logo-content {
+.pill-nav-logo-anchor .pill-logo-content,
+.pill-nav-container .pill-logo-content {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   white-space: nowrap;
 }
 
-.pill-list {
+.pill-nav-container .pill-list {
   list-style: none;
   display: flex;
   align-items: stretch;
@@ -66,12 +77,12 @@
   height: 100%;
 }
 
-.pill-list > li {
+.pill-nav-container .pill-list > li {
   display: flex;
   height: 100%;
 }
 
-.pill {
+.pill-nav-container .pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -94,7 +105,7 @@
   overflow: hidden;
 }
 
-.pill .hover-circle {
+.pill-nav-container .pill .hover-circle {
   position: absolute;
   left: 50%;
   bottom: 0;
@@ -106,14 +117,14 @@
   will-change: transform;
 }
 
-.pill .label-stack {
+.pill-nav-container .pill .label-stack {
   position: relative;
   display: inline-block;
   line-height: 1;
   z-index: 2;
 }
 
-.pill .pill-label {
+.pill-nav-container .pill .pill-label {
   position: relative;
   z-index: 2;
   display: inline-block;
@@ -121,7 +132,7 @@
   will-change: transform;
 }
 
-.pill .pill-label-hover {
+.pill-nav-container .pill .pill-label-hover {
   position: absolute;
   left: 0;
   top: 0;
@@ -131,7 +142,7 @@
   will-change: transform, opacity;
 }
 
-.pill.is-active::after {
+.pill-nav-container .pill.is-active::after {
   content: '';
   position: absolute;
   bottom: -6px;
@@ -145,7 +156,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pill .hover-circle,
-  .pill .pill-label,
-  .pill .pill-label-hover { transition: none !important; }
+  .pill-nav-container .pill .hover-circle,
+  .pill-nav-container .pill .pill-label,
+  .pill-nav-container .pill .pill-label-hover { transition: none !important; }
 }
