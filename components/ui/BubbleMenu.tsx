@@ -138,12 +138,15 @@ export default function BubbleMenu({
       gsap.set(bubbles, { scale: 0, transformOrigin: "50% 50%" });
       gsap.set(labels, { y: 24, autoAlpha: 0 });
 
+      const isDesktop = typeof window !== "undefined" && window.innerWidth >= 900;
       bubbles.forEach((bubble, i) => {
         const delay = i * staggerDelay + gsap.utils.random(-0.05, 0.05);
         const tl = gsap.timeline({ delay });
+        const targetRotation = isDesktop ? menuItems[i]?.rotation ?? 0 : 0;
 
         tl.to(bubble, {
           scale: 1,
+          rotation: targetRotation,
           duration: animationDuration,
           ease: animationEase,
         });

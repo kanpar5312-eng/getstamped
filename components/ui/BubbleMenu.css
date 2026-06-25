@@ -129,6 +129,10 @@
   justify-content: center;
   pointer-events: none;
   z-index: 98;
+  background: rgba(250, 248, 244, 0.96);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  overflow-y: auto;
 }
 
 .bubble-menu-items.fixed {
@@ -182,13 +186,13 @@
   --pill-color: #111;
   --pill-border: rgba(0, 0, 0, 0.12);
   --item-rot: 0deg;
-  --pill-min-h: 160px;
+  --pill-min-h: 88px;
   --hover-bg: #f3f4f6;
   --hover-color: #111;
   width: 100%;
   min-height: var(--pill-min-h);
-  padding: clamp(1.5rem, 3vw, 8rem) 0;
-  font-size: clamp(1.5rem, 4vw, 4rem);
+  padding: clamp(1rem, 1.6vw, 1.75rem) 0;
+  font-size: clamp(1.25rem, 2.4vw, 2.5rem);
   font-weight: 400;
   line-height: 1;
   border-radius: 999px;
@@ -210,18 +214,12 @@
 }
 
 @media (min-width: 900px) {
-  .bubble-menu-items .pill-link {
-    transform: rotate(var(--item-rot));
-  }
-
+  /* Rotation is applied via GSAP after the scale-in animation completes
+     (see resize handler) — applying it via CSS here fights GSAP's
+     inline transform and leaves pills stuck at scale 0. */
   .bubble-menu-items .pill-link:hover {
-    transform: rotate(var(--item-rot)) scale(1.06);
     background: var(--hover-bg);
     color: var(--hover-color);
-  }
-
-  .bubble-menu-items .pill-link:active {
-    transform: rotate(var(--item-rot)) scale(0.94);
   }
 }
 
