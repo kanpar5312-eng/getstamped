@@ -72,9 +72,12 @@ export function InterviewRoom({
     };
   }, []);
 
-  // Animate caption word-by-word while officer is speaking
+  // Animate caption word-by-word when a NEW question arrives. We
+  // deliberately exclude `state` from the deps so the captions don't
+  // re-animate the previous question's text when the room flips back
+  // to "officer-speaking" for transition lines / strict-mode probes.
   useEffect(() => {
-    if (state !== "officer-speaking") return;
+    if (!question) return;
     captionStartedRef.current = performance.now();
     const words = question.split(/\s+/);
     let idx = 0;
@@ -85,7 +88,7 @@ export function InterviewRoom({
       if (idx >= words.length) window.clearInterval(id);
     }, Math.max(120, 1900 / Math.max(1, words.length)));
     return () => window.clearInterval(id);
-  }, [state, question]);
+  }, [question]);
 
   const mins = Math.floor(elapsedSec / 60);
   const secs = elapsedSec % 60;

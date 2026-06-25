@@ -216,16 +216,71 @@ export function MockInterviewClient({ plan, consulate }: Props) {
         return;
       }
 
+      // Use a single, persistent <audio> element that was created once
+      // on mount (see the effect below). Browsers' autoplay policy
+      // associates user-gesture activation with the element, so reusing
+      // the same instance plays reliably across `await` boundaries —
+      // creating a fresh `new Audio()` here after a network round-trip
+      // routinely gets blocked silently on Safari/iOS and on Chrome
+      // when the activation context has lapsed.
+      const audio = audioElRef.current;
+      if (!audio) {
+        await new Promise((r) => setTimeout(r, readDelay));
+        return;
+      }
+
       await new Promise<void>((resolve) => {
-        const audio = new Audio(url);
-        audioElRef.current = audio;
-        audio.onended = () => resolve();
-        audio.onerror = () => resolve();
-        audio.play().catch(() => resolve());
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          audio.onended = null;
+          audio.onerror = null;
+          resolve();
+        };
+        audio.onended = finish;
+        audio.onerror = finish;
+        try {
+          audio.pause();
+          audio.currentTime = 0;
+        } catch {
+          /* ignore — Safari sometimes throws on currentTime reset */
+        }
+        audio.src = url;
+        audio.muted = false;
+        audio.volume = 1;
+        audio
+          .play()
+          .then(() => {
+            // playback started cleanly — wait for onended
+          })
+          .catch((err) => {
+            // play() rejecting is almost always autoplay policy. Log so
+            // the cause is visible in DevTools; resolve so the session
+            // keeps moving instead of stalling forever.
+            console.warn("[mock-interview] audio.play() rejected:", err);
+            finish();
+          });
       });
     },
     [fetchTtsUrl, ttsAvail],
   );
+
+  // Prime a single persistent Audio element on mount. The very first
+  // `audio.play()` (triggered from the Start-session user gesture path)
+  // unlocks the element for the lifetime of the session, so subsequent
+  // calls after `await` boundaries play reliably.
+  useEffect(() => {
+    if (audioElRef.current) return;
+    const audio = new Audio();
+    audio.preload = "auto";
+    audioElRef.current = audio;
+    return () => {
+      audio.pause();
+      audio.src = "";
+      audioElRef.current = null;
+    };
+  }, []);
 
   // On unmount: pause any playing audio + revoke prefetched object URLs.
   useEffect(() => () => {
@@ -261,6 +316,21 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   const startSession = async () => {
     if (starting) return;
     setStarting(true);
+    // Unlock the persistent audio element on the original user gesture
+    // so all subsequent speak() calls (which happen after awaits) are
+    // allowed by the browser's autoplay policy. Calling play() on an
+    // empty Audio is harmless: it rejects immediately with no sound.
+    try {
+      const a = audioElRef.current;
+      if (a) {
+        a.muted = true;
+        await a.play().catch(() => {});
+        a.pause();
+        a.muted = false;
+      }
+    } catch {
+      /* ignore — the regular play path below will surface real failures */
+    }
     try {
       // Mic gate runs BEFORE the quota check so a denied permission
       // doesn't burn the user's weekly slot.
