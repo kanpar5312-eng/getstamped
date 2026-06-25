@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Eyebrow } from "./primitives/Eyebrow";
 
@@ -16,13 +15,18 @@ export function StampedCloser() {
         Phase 2.
       </p>
       <div className="v3-closer-image">
-        <Image
-          src="/pass.png"
-          alt="Navy passport with GetStamped emblem and glowing persimmon F-1 stamp"
+        <video
+          src="/pass.mp4"
+          poster="/pass.png"
           width={980}
           height={620}
-          loading="lazy"
-          sizes="(max-width: 1024px) 92vw, 980px"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          aria-label="Navy passport with GetStamped emblem and glowing persimmon F-1 stamp"
+          style={{ width: "100%", height: "auto", display: "block" }}
         />
       </div>
       <div className="v3-closer-ctas">
