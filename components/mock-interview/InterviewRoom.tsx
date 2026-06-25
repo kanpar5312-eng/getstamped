@@ -32,6 +32,15 @@ type Props = {
   onEnd: () => void;
   muted?: boolean;
   onToggleMute?: () => void;
+  /** Fired when the user taps "Done answering". The parent decides
+   *  whether the call actually advances the turn (it enforces the
+   *  4s minimum window). */
+  onDoneAnswering?: () => void;
+  /** 3 | 2 | 1 while the silence countdown is visible, null otherwise. */
+  silenceCountdown?: number | null;
+  /** True when SpeechRecognition isn't supported — surface a warning so
+   *  the user knows we're falling back to a fixed 8s window. */
+  noMic?: boolean;
 };
 
 export function InterviewRoom({
@@ -46,6 +55,9 @@ export function InterviewRoom({
   onEnd,
   muted,
   onToggleMute,
+  onDoneAnswering,
+  silenceCountdown,
+  noMic,
 }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [caption, setCaption] = useState("");
@@ -87,6 +99,19 @@ export function InterviewRoom({
           Question {questionIdx + 1} of {totalQuestions}
         </span>
       </div>
+      {noMic && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="mx-auto -mt-1 mb-1 inline-flex items-center gap-2 self-center rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.14em]"
+          style={{
+            background: "rgba(232,96,44,0.16)",
+            color: "rgba(255,200,120,0.95)",
+          }}
+        >
+          No mic detected — answering on an 8s timer
+        </div>
+      )}
 
       {/* Stage */}
       <div className="flex-1 flex flex-col items-center justify-center px-6">
@@ -207,6 +232,41 @@ export function InterviewRoom({
                 {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
               </div>
             </div>
+          </div>
+
+          {/* Center: silence countdown + Done button — only meaningful
+              while the user's turn is open. */}
+          <div className="flex items-center gap-3">
+            {state === "listening" && silenceCountdown != null && (
+              <span
+                role="status"
+                aria-live="polite"
+                className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.14em]"
+                style={{ color: "rgba(232,96,44,0.95)" }}
+              >
+                Ending in
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono-stack, var(--font-sans-stack))",
+                    fontSize: 22,
+                    lineHeight: 1,
+                    color: "#fff",
+                  }}
+                >
+                  {silenceCountdown}
+                </span>
+              </span>
+            )}
+            {state === "listening" && onDoneAnswering && (
+              <button
+                type="button"
+                onClick={onDoneAnswering}
+                className="btn-ember rounded-full px-4 py-[8px] text-[12px] font-semibold"
+                style={{ background: "var(--ember)", color: "#fff" }}
+              >
+                Done answering
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-1">

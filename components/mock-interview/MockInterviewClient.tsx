@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+/* (useCallback already in the imports above; no extra import needed.) */
 import dynamic from "next/dynamic";
 import { SetupScreen, type Difficulty, type Interviewer, type Length } from "./SetupScreen";
 import { InterviewRoom, type RoomState } from "./InterviewRoom";
@@ -17,9 +18,29 @@ const FirstPersonEntry = dynamic(() => import("./FirstPersonEntry"), {
 });
 
 type Plan = "free" | "solo" | "family";
-type Phase = "setup" | "cinematic" | "room" | "feedback";
+type Phase = "setup" | "cinematic" | "room" | "finishing" | "feedback";
 
 type Props = { plan: Plan; consulate?: string | null };
+
+// Speech-recognition pacing for a turn.
+//   MIN_ANSWER_MS  — turn cannot end before this regardless of silence.
+//   SILENCE_MAX_MS — auto-end after this much silence past the min window.
+//   COUNTDOWN_MS   — visible "3…2…1" before auto-end.
+const MIN_ANSWER_MS = 4000;
+const SILENCE_MAX_MS = 8000;
+const COUNTDOWN_MS = 3000;
+
+// What /api/mock-interview/finish returns on the success path. Mirrors
+// the shape declared inside that route.
+type GroqFinishResult = {
+  clarity: number;
+  confidence: number;
+  redFlag: number;
+  overall: number;
+  summary: string;
+  topStrength: string;
+  topWeakness: string;
+};
 
 // Short interstitial lines the officer says after a turn finishes, before
 // the next question fires. Kept conversational + brief — most of the
@@ -57,6 +78,8 @@ type SpeechRecognitionLike = {
   onresult: (e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void;
   onerror: (e: unknown) => void;
   onend: () => void;
+  onspeechstart?: () => void;
+  onspeechend?: () => void;
   start: () => void;
   stop: () => void;
 };
@@ -81,6 +104,18 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   const [elapsedSec, setElapsedSec] = useState(0);
   const [liveLevel, setLiveLevel] = useState(0);
   const [transcripts, setTranscripts] = useState<string[]>([]);
+  // 3 | 2 | 1 during the visible silence countdown; null otherwise.
+  const [silenceCountdown, setSilenceCountdown] = useState<number | null>(null);
+  // True when SpeechRecognition isn't available in this browser.
+  const [noMic, setNoMic] = useState(false);
+  // Set when /finish responds; FeedbackScreen renders from this.
+  const [finalFeedback, setFinalFeedback] = useState<{
+    verdict: string;
+    scores: Scores;
+    turns: TurnSummary[];
+    durationSec: number;
+    summary: string;
+  } | null>(null);
 
   const totalQuestions = Math.min(QUESTIONS.length, length);
   const audioCleanupRef = useRef<(() => void) | null>(null);
@@ -89,6 +124,16 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   const advanceTimerRef = useRef<number | null>(null);
   const startTsRef = useRef<number>(0);
   const lastTranscriptRef = useRef<string>("");
+  // Per-turn pacing state.
+  const turnStartTsRef = useRef<number>(0);
+  const lastSpeechAtRef = useRef<number>(0);
+  const silenceTickRef = useRef<number | null>(null);
+  // Guards against finishTurn() running twice for the same turn (e.g. the
+  // Done button + recog.onend racing).
+  const turnFinishedRef = useRef<boolean>(false);
+  // Mirror of silenceCountdown state to compare inside the interval
+  // without rebinding it every tick.
+  const silenceCountdownRef = useRef<number | null>(null);
 
   // ─── ElevenLabs TTS state ────────────────────────────────────────────
   // ttsAvail flips false the first time /api/mock-interview/tts errors,
@@ -274,32 +319,128 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     startRecognition(idx);
   };
 
+  const clearTurnPacing = useCallback(() => {
+    if (silenceTickRef.current) {
+      window.clearInterval(silenceTickRef.current);
+      silenceTickRef.current = null;
+    }
+    if (advanceTimerRef.current) {
+      window.clearTimeout(advanceTimerRef.current);
+      advanceTimerRef.current = null;
+    }
+    setSilenceCountdown(null);
+  }, []);
+
+  /** Finishes the current turn at most once, even if the Done button and
+   *  the silence auto-end race. Used by the Done button, the silence
+   *  watcher, and the no-mic fallback. */
+  const finishCurrentTurn = useCallback(
+    (idx: number) => {
+      if (turnFinishedRef.current) return;
+      turnFinishedRef.current = true;
+      clearTurnPacing();
+      try {
+        recogRef.current?.stop();
+      } catch {
+        /* ignore */
+      }
+      void finishTurn(idx, lastTranscriptRef.current);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [clearTurnPacing],
+  );
+
   const startRecognition = (idx: number) => {
+    // Reset per-turn state.
+    turnFinishedRef.current = false;
+    turnStartTsRef.current = performance.now();
+    lastSpeechAtRef.current = performance.now();
+    lastTranscriptRef.current = "";
+    setSilenceCountdown(null);
+
     type SR = { new (): SpeechRecognitionLike };
     const w = window as unknown as Record<string, SR | undefined>;
     const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition;
     if (!Ctor) {
-      // No recognition support — give the user 8s, then advance.
-      advanceTimerRef.current = window.setTimeout(() => finishTurn(idx, ""), 8000);
+      // No recognition support — surface a "no mic detected" warning and
+      // fall back to the 8s timer the user can read along with.
+      setNoMic(true);
+      advanceTimerRef.current = window.setTimeout(
+        () => finishCurrentTurn(idx),
+        SILENCE_MAX_MS,
+      );
       return;
     }
+    setNoMic(false);
+
     const recog = new Ctor();
     recog.lang = "en-US";
-    recog.continuous = false;
+    recog.continuous = true; // stays open across pauses
     recog.interimResults = true;
-    lastTranscriptRef.current = "";
     recog.onresult = (e) => {
       let text = "";
       for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
       lastTranscriptRef.current = text;
+      lastSpeechAtRef.current = performance.now();
     };
-    recog.onerror = () => finishTurn(idx, lastTranscriptRef.current);
-    recog.onend = () => finishTurn(idx, lastTranscriptRef.current);
+    if ("onspeechstart" in recog) {
+      recog.onspeechstart = () => {
+        lastSpeechAtRef.current = performance.now();
+      };
+    }
+    if ("onspeechend" in recog) {
+      recog.onspeechend = () => {
+        // Counted as activity boundary, not a turn end.
+        lastSpeechAtRef.current = performance.now();
+      };
+    }
+    recog.onerror = () => finishCurrentTurn(idx);
+    // onend fires when continuous recog is stopped externally OR when
+    // the engine itself decides to stop (some browsers do this after
+    // ~minute of silence). Treat it as a finish either way.
+    recog.onend = () => finishCurrentTurn(idx);
     recogRef.current = recog;
-    recog.start();
+    try {
+      recog.start();
+    } catch {
+      // Some browsers throw if recog is already running. Fall through.
+    }
+
+    // Silence watcher: only decides to end after the 4s minimum window.
+    silenceTickRef.current = window.setInterval(() => {
+      const now = performance.now();
+      const elapsed = now - turnStartTsRef.current;
+      const silentFor = now - lastSpeechAtRef.current;
+
+      if (elapsed < MIN_ANSWER_MS) {
+        if (silenceCountdownRef.current !== null) setSilenceCountdown(null);
+        silenceCountdownRef.current = null;
+        return;
+      }
+
+      if (silentFor >= SILENCE_MAX_MS) {
+        finishCurrentTurn(idx);
+        return;
+      }
+
+      // Show the visible 3 / 2 / 1 countdown for the last COUNTDOWN_MS
+      // of the silence window.
+      const remaining = SILENCE_MAX_MS - silentFor;
+      if (remaining <= COUNTDOWN_MS) {
+        const next = Math.max(1, Math.ceil(remaining / 1000));
+        if (next !== silenceCountdownRef.current) {
+          silenceCountdownRef.current = next;
+          setSilenceCountdown(next);
+        }
+      } else if (silenceCountdownRef.current !== null) {
+        silenceCountdownRef.current = null;
+        setSilenceCountdown(null);
+      }
+    }, 200);
   };
 
   const finishTurn = async (idx: number, answer: string) => {
+    clearTurnPacing();
     setTranscripts((arr) => {
       const next = [...arr];
       next[idx] = answer;
@@ -333,19 +474,73 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     }
   };
 
-  const endSession = () => {
-    recogRef.current?.stop();
+  const endSession = async () => {
+    try {
+      recogRef.current?.stop();
+    } catch {
+      /* ignore */
+    }
+    clearTurnPacing();
     audioCleanupRef.current?.();
     if (tickRef.current) window.clearInterval(tickRef.current);
     if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
     // Snap the final duration from the session start timestamp so very
     // short runs don't show "0 min" — the 1s interval can lag by up to
     // a second otherwise, which rounded down to zero for quick sessions.
+    let durationSec = elapsedSec;
     if (startTsRef.current > 0) {
-      const finalSec = Math.max(0, Math.round((Date.now() - startTsRef.current) / 1000));
-      setElapsedSec(finalSec);
+      durationSec = Math.max(0, Math.round((Date.now() - startTsRef.current) / 1000));
+      setElapsedSec(durationSec);
     }
     if (plan === "free") markFreeMockUsed();
+
+    // Switch into the loading state immediately so the user isn't
+    // staring at a frozen room while we wait on Groq.
+    setPhase("finishing");
+
+    // Build the turns payload for /finish from the same transcripts +
+    // QUESTIONS the room ran with. We keep one final read of transcripts
+    // via the closure here since setTranscripts above already flushed.
+    const turnsPayload: { question: string; answer: string }[] = Array.from({
+      length: totalQuestions,
+    }).map((_, i) => ({
+      question: QUESTIONS[i] ?? "",
+      answer: (transcripts[i] ?? "").trim(),
+    }));
+
+    const officerStyle: "friendly" | "skeptical" | "rushed" =
+      difficulty === "strict" ? "skeptical" : "friendly";
+    const finishDifficulty: "standard" | "tough" =
+      difficulty === "strict" ? "tough" : "standard";
+
+    let groqResult: GroqFinishResult | null = null;
+    try {
+      const r = await fetch("/api/mock-interview/finish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          turns: turnsPayload,
+          difficulty: finishDifficulty,
+          officerStyle,
+          scenario: consulate ?? undefined,
+        }),
+      });
+      if (r.ok) {
+        const data = (await r.json()) as { ok: boolean; scores?: GroqFinishResult };
+        if (data.ok && data.scores) groqResult = data.scores;
+      } else {
+        notifyNetworkError();
+      }
+    } catch (err) {
+      console.error("[mock-interview] /finish failed:", err);
+      notifyNetworkError();
+    }
+
+    // Build the FeedbackScreen payload from the Groq result if we got
+    // one, otherwise fall back to the existing heuristic so a failed
+    // /finish doesn't block the user from seeing their session.
+    const built = buildFeedback(durationSec, groqResult);
+    setFinalFeedback(built);
     setPhase("feedback");
   };
 
@@ -385,7 +580,13 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   };
 
   // -------- feedback synthesis --------
-  const buildFeedback = (): {
+  // `groq` is the result of /api/mock-interview/finish when it succeeded;
+  // when it's null we fall back to the prior heuristic so a failed
+  // network call doesn't strand the user without any feedback.
+  const buildFeedback = (
+    durationSecArg: number,
+    groq: GroqFinishResult | null,
+  ): {
     verdict: string;
     scores: Scores;
     turns: TurnSummary[];
@@ -396,13 +597,25 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     const ratio = totalQuestions ? answered / totalQuestions : 0;
     const base = Math.round(48 + ratio * 38);
 
-    const scores: Scores = {
-      clarity: clamp(base + 6),
-      confidence: clamp(base - 2),
-      consistency: clamp(base + 2),
-      financial: clamp(base - 6),
-      overall: clamp(base + 2),
-    };
+    const scores: Scores = groq
+      ? {
+          clarity: clamp(groq.clarity),
+          confidence: clamp(groq.confidence),
+          // Map Groq's red-flag axis onto FeedbackScreen's "consistency"
+          // slot (both measure cross-answer credibility).
+          consistency: clamp(groq.redFlag),
+          // No direct financial axis from Groq; average clarity + red-flag
+          // as a proxy until /finish gains per-category scoring.
+          financial: clamp(Math.round((groq.clarity + groq.redFlag) / 2)),
+          overall: clamp(groq.overall),
+        }
+      : {
+          clarity: clamp(base + 6),
+          confidence: clamp(base - 2),
+          consistency: clamp(base + 2),
+          financial: clamp(base - 6),
+          overall: clamp(base + 2),
+        };
 
     const verdict =
       scores.overall >= 78
@@ -424,7 +637,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
 
     const turns: TurnSummary[] = Array.from({ length: totalQuestions }).map((_, i) => {
       const ans = (transcripts[i] ?? "").trim();
-      const t = Math.min(elapsedSec, Math.round((i + 1) * (elapsedSec / Math.max(1, totalQuestions))));
+      const t = Math.min(durationSecArg, Math.round((i + 1) * (durationSecArg / Math.max(1, totalQuestions))));
       const isWeakest = i === weakestIdx;
       const noAudio = ans.length === 0;
       const question = QUESTIONS[i] ?? "—";
@@ -452,9 +665,11 @@ export function MockInterviewClient({ plan, consulate }: Props) {
       };
     });
 
-    const summary = buildSummary(scores.overall, turns);
+    // Prefer Groq's one-sentence verdict summary when available; fall
+    // back to the local heuristic so we never render an empty summary.
+    const summary = groq?.summary?.trim() || buildSummary(scores.overall, turns);
 
-    return { verdict, scores, turns, durationSec: elapsedSec, summary };
+    return { verdict, scores, turns, durationSec: durationSecArg, summary };
   };
 
   // Per-question hints used when the user answered but the answer was
@@ -614,21 +829,68 @@ export function MockInterviewClient({ plan, consulate }: Props) {
           if (!muted) audioElRef.current?.pause();
           setMuted((m) => !m);
         }}
+        onDoneAnswering={() => {
+          if (roomState !== "listening") return;
+          // The Done button must respect the 4s minimum window so users
+          // can't accidentally tap immediately after the question ends.
+          const elapsed = performance.now() - turnStartTsRef.current;
+          if (elapsed < MIN_ANSWER_MS) return;
+          finishCurrentTurn(questionIdx);
+        }}
+        silenceCountdown={silenceCountdown}
+        noMic={noMic}
       />
     );
   }
 
-  const fb = buildFeedback();
+  if (phase === "finishing") {
+    return <FinishingScreen />;
+  }
+
+  // phase === "feedback"
+  if (!finalFeedback) {
+    // Shouldn't happen — endSession sets finalFeedback before flipping
+    // to "feedback" — but render the loading state defensively.
+    return <FinishingScreen />;
+  }
   return (
     <FeedbackScreen
-      verdict={fb.verdict}
-      scores={fb.scores}
-      turns={fb.turns}
-      durationSec={fb.durationSec}
-      summary={fb.summary}
+      verdict={finalFeedback.verdict}
+      scores={finalFeedback.scores}
+      turns={finalFeedback.turns}
+      durationSec={finalFeedback.durationSec}
+      summary={finalFeedback.summary}
       blurredPaywall={plan === "free"}
       onRetryWeak={onRetryWeak}
     />
+  );
+}
+
+/** Loading screen shown while /api/mock-interview/finish is grading
+ *  the session with Groq. Replaces the instant fake-feedback flash. */
+function FinishingScreen() {
+  return (
+    <div className="mx-auto max-w-md py-24 px-4 text-center">
+      <div
+        aria-hidden
+        className="mx-auto h-10 w-10 rounded-full"
+        style={{
+          border: "3px solid rgba(28,25,23,0.15)",
+          borderTopColor: "var(--color-persimmon)",
+          animation: "gs-spin 0.9s linear infinite",
+        }}
+      />
+      <h2
+        className="mt-6 text-[20px] leading-snug text-[var(--color-ink)]"
+        style={{ fontFamily: "var(--font-display-stack)" }}
+      >
+        The officer is reviewing your answers.
+      </h2>
+      <p className="mt-3 text-[13px] leading-relaxed text-[var(--color-ink-soft)]">
+        Scoring clarity, confidence, and your financial story. Usually 10–20 seconds.
+      </p>
+      <style>{`@keyframes gs-spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
   );
 }
 
