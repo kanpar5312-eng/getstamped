@@ -896,61 +896,140 @@ export function Styles() {
         position: relative;
         background: var(--color-paper-soft);
         border: 1px solid var(--color-border);
-        border-radius: 16px; overflow: hidden;
-        transition: border-color 240ms var(--ease-soft);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 1px 0 rgba(28,25,23,0.02);
+        transition: transform 280ms var(--ease-soft),
+          box-shadow 280ms var(--ease-soft),
+          border-color 240ms var(--ease-soft);
       }
-      .v3-faq-item.is-open { border-color: color-mix(in srgb, var(--color-persimmon) 30%, var(--color-border)); }
+      /* Left persimmon rail — thickens on hover/open. Pseudo-element so it
+         layers under content but above the card background. */
+      .v3-faq-item::before {
+        content: "";
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 3px;
+        background: var(--color-persimmon);
+        transition: width 240ms var(--ease-out),
+          background-color 240ms var(--ease-soft);
+        z-index: 1;
+        pointer-events: none;
+      }
+      @media (hover: hover) and (pointer: fine) {
+        .v3-faq-item:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 32px -16px rgba(28,25,23,0.18),
+            0 2px 6px rgba(28,25,23,0.06);
+          border-color: color-mix(in srgb, var(--color-persimmon) 22%, var(--color-border));
+        }
+        .v3-faq-item:hover::before { width: 6px; }
+      }
+      .v3-faq-item.is-open {
+        border-color: color-mix(in srgb, var(--color-persimmon) 30%, var(--color-border));
+      }
+      .v3-faq-item.is-open::before { width: 6px; }
+
       .v3-faq-btn {
         all: unset; cursor: pointer; width: 100%; box-sizing: border-box;
-        display: grid; grid-template-columns: auto 1fr;
-        gap: 22px; align-items: start; padding: 22px 70px 22px 26px;
+        display: grid; grid-template-columns: 1fr;
+        gap: 12px;
+        padding: 26px 72px 26px 34px;
+        position: relative;
       }
-      .v3-faq-num { color: var(--color-muted); font-size: 12.5px; align-self: start; padding-top: 6px;
-        transition: color 240ms var(--ease-soft); }
-      .v3-faq-item.is-open .v3-faq-num { color: var(--color-persimmon); }
-      .v3-faq-body { display: flex; flex-direction: column; gap: 8px; }
+      /* Number as a faded watermark behind the body copy. Big, bold,
+         low-contrast ink — sets the editorial register without competing
+         with the question. */
+      .v3-faq-num {
+        position: absolute;
+        top: 18px;
+        right: 76px;
+        font-family: var(--font-display-stack);
+        font-size: 56px;
+        font-weight: 500;
+        line-height: 1;
+        letter-spacing: -0.04em;
+        color: rgba(28,25,23,0.06);
+        padding: 0;
+        pointer-events: none;
+        transition: color 240ms var(--ease-soft);
+      }
+      .v3-faq-item.is-open .v3-faq-num {
+        color: color-mix(in srgb, var(--color-persimmon) 18%, transparent);
+      }
+
+      .v3-faq-body { display: flex; flex-direction: column; gap: 14px; }
+      /* Category tag — solid persimmon pill, white text, larger. */
       .v3-faq-cat {
         align-self: flex-start;
         font-family: var(--font-mono-stack);
-        font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
         text-transform: uppercase;
-        background: var(--color-persimmon-tint); color: var(--color-persimmon-deep);
-        padding: 4px 8px; border-radius: 999px;
+        background: var(--color-persimmon);
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 999px;
+        box-shadow: 0 2px 6px rgba(232,98,42,0.18);
       }
       .v3-faq-q {
         font-family: var(--font-display-stack);
-        font-size: 24px; line-height: 1.25; color: var(--color-ink);
+        font-size: 26px;
+        font-weight: 500;
+        line-height: 1.2;
+        letter-spacing: -0.01em;
+        color: var(--color-ink);
       }
       .v3-faq-toggle {
-        position: absolute; top: 22px; right: 22px;
-        width: 32px; height: 32px; border-radius: 999px;
+        position: absolute; top: 24px; right: 24px;
+        width: 34px; height: 34px; border-radius: 999px;
         background: var(--color-paper-deep); color: var(--color-ink-soft);
         display: inline-flex; align-items: center; justify-content: center;
-        transition: transform 360ms var(--ease-out),
-          background-color 360ms var(--ease-out),
-          color 360ms var(--ease-out);
-        pointer-events: none; /* button is the click target, not the chevron */
+        transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
+          background-color 280ms var(--ease-out),
+          color 280ms var(--ease-out);
+        pointer-events: none;
       }
       .v3-faq-item.is-open .v3-faq-toggle {
         transform: rotate(180deg); background: var(--color-persimmon); color: #fff;
       }
       .v3-faq-panel {
         display: grid; grid-template-rows: 0fr;
-        transition: grid-template-rows 360ms var(--ease-out);
+        transition: grid-template-rows 380ms var(--ease-out);
       }
       .v3-faq-item.is-open .v3-faq-panel { grid-template-rows: 1fr; }
-      .v3-faq-panel-inner { overflow: hidden; }
+      .v3-faq-panel-inner {
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(-4px);
+        transition: opacity 360ms var(--ease-out) 60ms,
+          transform 360ms var(--ease-out) 60ms;
+      }
+      .v3-faq-item.is-open .v3-faq-panel-inner {
+        opacity: 1;
+        transform: translateY(0);
+      }
       .v3-faq-panel-inner p {
-        padding: 0 26px 24px 86px;
-        font-size: 17px; line-height: 1.6;
-        color: var(--color-ink-soft); max-width: 64ch;
+        padding: 0 34px 26px 34px;
+        font-size: 17px;
+        line-height: 1.7;
+        color: color-mix(in srgb, var(--color-ink-soft) 82%, transparent);
+        max-width: 64ch;
       }
       @media (max-width: 640px) {
-        .v3-faq-btn { grid-template-columns: 1fr; gap: 14px; padding: 18px 64px 18px 18px; }
-        .v3-faq-num { display: none; }
-        .v3-faq-q { font-size: 18px; }
-        .v3-faq-toggle { top: 18px; right: 18px; width: 28px; height: 28px; }
-        .v3-faq-panel-inner p { padding: 0 18px 18px 18px; font-size: 15.5px; }
+        .v3-faq-btn { padding: 22px 60px 22px 22px; }
+        .v3-faq-num { font-size: 38px; top: 14px; right: 64px; }
+        .v3-faq-q { font-size: 19px; }
+        .v3-faq-cat { font-size: 10.5px; padding: 5px 10px; }
+        .v3-faq-toggle { top: 18px; right: 18px; width: 30px; height: 30px; }
+        .v3-faq-panel-inner p { padding: 0 22px 20px 22px; font-size: 15.5px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .v3-faq-item,
+        .v3-faq-item::before,
+        .v3-faq-toggle,
+        .v3-faq-panel-inner { transition: none !important; }
       }
 
       /* ── Scroll-transition support layers ───────────────────────────── */
