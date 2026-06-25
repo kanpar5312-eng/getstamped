@@ -647,7 +647,7 @@ export function Styles() {
         pointer-events: none;
       }
       .v3-price-solo {
-        background: rgba(28, 25, 23, 0.96);
+        background: var(--color-nocturnal);
         border: 0.5px solid rgba(255,255,255,0.10);
         box-shadow: var(--gs-shadow-lg), 0 0 0 1px rgba(232,98,42,0.3);
         color: var(--color-paper);
@@ -681,11 +681,11 @@ export function Styles() {
       }
       .v3-price-chip {
         position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
-        background: var(--color-persimmon); color: var(--color-paper);
+        background: var(--color-forsytha); color: var(--color-ink);
         font-family: var(--font-sans-stack);
-        font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+        font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
         text-transform: uppercase; padding: 5px 14px; border-radius: 999px;
-        box-shadow: 0 4px 12px rgba(232, 98, 42, 0.4);
+        box-shadow: 0 4px 12px rgba(255, 200, 1, 0.35);
         white-space: nowrap;
       }
       .v3-price-name {

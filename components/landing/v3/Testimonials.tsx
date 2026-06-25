@@ -15,6 +15,10 @@ import Carousel, { type CarouselItem } from "@/components/ui/Carousel";
 const INK = "#1C1917";
 const PAPER = "#FAF8F4";
 const PERSIMMON = "#E8622A";
+const NOCTURNAL = "#114C5A";
+const FORSYTHA = "#FFC801";
+// Kept for any consumer that imports the constants; not all are used.
+void INK;
 
 type Testimonial = {
   name: string;
@@ -140,7 +144,7 @@ function QuoteMark() {
 
 function Stars() {
   return (
-    <span aria-hidden style={{ display: "inline-flex", gap: 3, color: PERSIMMON }}>
+    <span aria-hidden style={{ display: "inline-flex", gap: 3, color: FORSYTHA }}>
       {Array.from({ length: 5 }).map((_, i) => (
         <svg key={i} width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77 5.82 21l1.18-6.88-5-4.87 6.91-1.01L12 2z" />
@@ -255,7 +259,7 @@ export function Testimonials() {
       aria-label="Student testimonials"
       style={{
         position: "relative",
-        background: INK,
+        background: NOCTURNAL,
         color: PAPER,
         padding: "clamp(80px, 12vw, 160px) 24px",
         overflow: "hidden",

@@ -20,6 +20,10 @@ const WARM_PAPER = "#FAF5EE";
 const PERSIMMON = "#E8622A";
 const GREEN = "#3FB37F";
 const RED = "#E5484D";
+const NOCTURNAL = "#114C5A";
+const FORSYTHA = "#FFC801";
+void INK;
+void FORSYTHA;
 
 /* ────────────────────────────────────────────── shared primitives ── */
 
@@ -1016,7 +1020,7 @@ export function StackedFeatureCards() {
     <>
       <ScrollStack>
         <ScrollStackItem>
-          <CardShell bg={INK} ink={PAPER} demo={<PlaybookMock />}>
+          <CardShell bg={NOCTURNAL} ink={PAPER} demo={<PlaybookMock />}>
             <Chip dark>01 / PLAYBOOK</Chip>
             <Headline ink={PAPER}>
               47 steps. In the exact order the consulate expects them.
@@ -1042,7 +1046,7 @@ export function StackedFeatureCards() {
         </ScrollStackItem>
 
         <ScrollStackItem>
-          <CardShell bg={INK} ink={PAPER} demo={<InterviewMock />}>
+          <CardShell bg={NOCTURNAL} ink={PAPER} demo={<InterviewMock />}>
             <Chip dark>03 / MOCK INTERVIEW</Chip>
             <Headline ink={PAPER}>
               Answer until you stop freezing.

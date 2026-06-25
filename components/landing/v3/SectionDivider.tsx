@@ -20,7 +20,7 @@ export function SectionDivider({ label, bg = "paper" }: Props) {
 
   const bgClass =
     bg === "ink"
-      ? "bg-[var(--color-ink)] text-[var(--color-paper)]"
+      ? "bg-[var(--color-nocturnal)] text-[var(--color-paper)]"
       : "bg-[var(--color-paper)] text-[var(--color-ink)]";
 
   /* If reduced motion: render the final state without transitions. */

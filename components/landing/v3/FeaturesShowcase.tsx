@@ -10,6 +10,8 @@ const ink = "#1C1917";
 const persimmon = "#E8622A";
 const paper = "#FAF8F4";
 const muted = "rgba(28,25,23,0.62)";
+const nocturnal = "#114C5A";
+void ink;
 
 const cardOuter = {
   width: "100%",
@@ -18,7 +20,7 @@ const cardOuter = {
   display: "flex",
   flexDirection: "column" as const,
   justifyContent: "space-between",
-  background: ink,
+  background: nocturnal,
   borderRadius: 12,
   color: paper,
   fontFamily: "var(--font-sans-stack)",

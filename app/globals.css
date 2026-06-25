@@ -30,6 +30,32 @@
   --color-border-soft:  #ECE6D8;
   --color-muted:        #8B8784;
 
+  /* ────────────────────────────────────────────────────────────────────
+     Extended palette — added 2026-06-25.
+     Used for dark sections (Nocturnal / Oceanic Noir), warm accents
+     (Forsytha / Deep Saffron), and soft breathing-room backgrounds
+     (Mystic Mint / Arctic Powder). Persimmon / Ink / Paper are the
+     primary brand identity and stay where they are.
+
+     Rule of thumb:
+       • Structure  → Nocturnal, Oceanic Noir
+       • Energy     → Forsytha (badges, stars, never as body text),
+                      Deep Saffron (gradient bridge, secondary icons)
+       • Breathing  → Arctic Powder, Mystic Mint
+     ──────────────────────────────────────────────────────────────────── */
+  --color-arctic-powder: #F1F6F4;
+  --color-mystic-mint:   #D9E8E2;
+  --color-forsytha:      #FFC801;
+  --color-deep-saffron:  #FF9932;
+  --color-nocturnal:     #114C5A;
+  --color-oceanic-noir:  #172B36;
+
+  /* Soft tints derived from the palette, for borders and surfaces. */
+  --color-mystic-mint-soft:  rgba(217, 232, 226, 0.45);
+  --color-forsytha-tint:     rgba(255, 200, 1, 0.18);
+  --color-deep-saffron-tint: rgba(255, 153, 50, 0.16);
+  --color-nocturnal-soft:    rgba(17, 76, 90, 0.12);
+
   /* ---------- LEGACY ALIASES (kept so existing files keep rendering
      while the codebase is being swept; do not add new uses) ---------- */
   --color-cream:        var(--color-paper);
