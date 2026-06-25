@@ -51,7 +51,7 @@ export function buildWelcomeEmail(opts: {
   const subject = `You're #${position} on the GetStamped waitlist`;
   const priceLine = isEarlyBird
     ? "Your ₹799 / $9 early-bird price is locked in."
-    : "First 100 spots claimed — you'll get launch pricing at ₹1,499 / $19.";
+    : "First 100 spots claimed — you'll get launch pricing at ₹2,999 / $39.";
   const text = `Hi,
 
 You're #${position} on the waitlist.

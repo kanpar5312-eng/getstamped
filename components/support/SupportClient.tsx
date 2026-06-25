@@ -18,7 +18,7 @@ const CATEGORIES: Category[] = [
     items: [
       { q: "What exactly is GetStamped?", a: "GetStamped is a step-by-step guide for the entire F-1 US student visa process. All 47 steps — from choosing universities to landing in the US — organized into one timeline with instructions, document checklists, AI Q&A, and voice mock interviews." },
       { q: "Is GetStamped free?", a: "Phase 1 (the first 6 steps) is free forever — no card required. You also get 3 AI questions and 1 mock interview free. The remaining 41 steps, unlimited AI, and unlimited voice mock interviews unlock with a one-time payment." },
-      { q: "How much does it cost?", a: "Solo is ₹1,499 / $19 one-time for one student. Family is ₹2,499 / $29 for up to 3 students. No subscription, no recurring charges. Lifetime access until your visa is stamped. The first 100 users get Solo at ₹799 / $9." },
+      { q: "How much does it cost?", a: "Solo is ₹2,999 / $39 one-time for one student. Family is ₹4,999 / $69 for up to 2 students. No subscription, no recurring charges. Lifetime access until your visa is stamped. The first 100 users get Solo at ₹799 / $9." },
       { q: "Do I need to download anything?", a: "No. GetStamped runs entirely in your browser on phone, tablet, or laptop. Your progress syncs across all devices automatically." },
       { q: "Which countries is GetStamped for?", a: "Any country. GetStamped is built for international students worldwide applying for the F-1 visa — India, China, Vietnam, Nigeria, Brazil, South Korea, Bangladesh, Mexico, and 50+ others. Consulate-specific details adjust based on your location." },
       { q: "I haven't received my I-20 yet. Is it too early to start?", a: "Not at all — Phase 1 covers everything before your I-20, including university selection, tests, and applications. Starting early is the single best thing you can do." },
@@ -33,7 +33,7 @@ const CATEGORIES: Category[] = [
       { q: "Is this a subscription?", a: "No. One payment, lifetime access until your visa is stamped. We never auto-charge you again." },
       { q: "What payment methods do you accept?", a: "Cards, UPI (India), net banking, and most major international payment methods. Pricing automatically shows in ₹ for India and $ elsewhere — you can switch manually in the footer." },
       { q: "What's your refund policy?", a: "Full refund within 14 days, no questions asked. Email us from your account email and we process it within 3-5 business days." },
-      { q: "What does the Family plan include?", a: "Up to 3 students, each with their own separate account, timeline, documents, and progress. The buyer gets a family overview showing all 3. Ideal for siblings, cousins, or friends applying together." },
+      { q: "What does the Family plan include?", a: "Up to 2 students, each with their own separate account, timeline, documents, and progress. The buyer gets a family overview showing both. Ideal for siblings, cousins, or friends applying together." },
       { q: "Can I upgrade from Solo to Family later?", a: "Yes — pay only the difference. Go to Settings → Plan → Upgrade." },
       { q: "I paid but my account still shows Free.", a: "Refresh the page first. If it persists, log out and back in. Still stuck? Email us with your payment reference and we'll fix it within hours." },
     ],

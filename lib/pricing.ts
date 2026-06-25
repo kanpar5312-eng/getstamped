@@ -24,7 +24,7 @@ export function currencyForCountry(code: string | null | undefined): Currency {
 }
 
 export type PriceDisplay = {
-  amount: string; // formatted current price, e.g. "1,499"
+  amount: string; // formatted current price, e.g. "2,999"
   /** Pre-discount sticker price; render struck-through when present. */
   originalAmount?: string;
   /** Whole-number discount percent, e.g. 30 (30% off). */
@@ -50,9 +50,9 @@ export const PRICES: Record<
   },
   solo: {
     INR: {
-      amount: "1,499",
-      originalAmount: "2,142",
-      discountPct: 30,
+      amount: "2,999",
+      originalAmount: "4,999",
+      discountPct: 40,
       symbol: "₹",
       per: "one-time · lifetime",
     },
@@ -71,24 +71,24 @@ export const PRICES: Record<
   },
   family: {
     INR: {
-      amount: "2,499",
-      originalAmount: "4,998",
-      discountPct: 50,
+      amount: "4,999",
+      originalAmount: "7,999",
+      discountPct: 37,
       symbol: "₹",
-      per: "one-time · 3 students",
+      per: "one-time · 2 students",
     },
     USD: {
       amount: "69",
       originalAmount: "138",
       discountPct: 50,
       symbol: "$",
-      per: "one-time · 3 students",
+      per: "one-time · 2 students",
     },
     // TODO(verify-before-launch: 2026-06-17): set local-anchor Family price.
-    GBP: { amount: "58",  originalAmount: "112", discountPct: 48, symbol: "£",  per: "one-time · 3 students" },
-    CAD: { amount: "92",  originalAmount: "182", discountPct: 49, symbol: "C$", per: "one-time · 3 students" },
-    AUD: { amount: "98",  originalAmount: "198", discountPct: 50, symbol: "A$", per: "one-time · 3 students" },
-    EUR: { amount: "64",  originalAmount: "128", discountPct: 50, symbol: "€",  per: "one-time · 3 students" },
+    GBP: { amount: "58",  originalAmount: "112", discountPct: 48, symbol: "£",  per: "one-time · 2 students" },
+    CAD: { amount: "92",  originalAmount: "182", discountPct: 49, symbol: "C$", per: "one-time · 2 students" },
+    AUD: { amount: "98",  originalAmount: "198", discountPct: 50, symbol: "A$", per: "one-time · 2 students" },
+    EUR: { amount: "64",  originalAmount: "128", discountPct: 50, symbol: "€",  per: "one-time · 2 students" },
   },
   earlyBird: {
     INR: { amount: "799", symbol: "₹" },

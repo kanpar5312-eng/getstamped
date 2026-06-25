@@ -291,8 +291,8 @@ export default async function ParentPublicView({ params }: { params: Params }) {
                   current={formatPrice(familyP)}
                   original={familyP.originalAmount ? `${familyP.symbol}${familyP.originalAmount}` : null}
                   discountPct={familyP.discountPct ?? null}
-                  perks={["Everything in Solo", "3 student seats", "Shared parent overview", "Best for siblings"]}
-                  ctaHref={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Pay for ${firstName}'s Family plan`)}&body=${encodeURIComponent(`Hi GetStamped team,\n\nI'd like to pay for ${firstName}'s Family plan ($29, one-time, up to 3 students).\n\nStudent's account email: \n\nThanks.`)}`}
+                  perks={["Everything in Solo", "2 student seats", "Shared parent overview", "Best for siblings"]}
+                  ctaHref={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Pay for ${firstName}'s Family plan`)}&body=${encodeURIComponent(`Hi GetStamped team,\n\nI'd like to pay for ${firstName}'s Family plan ($69, one-time, up to 2 students).\n\nStudent's account email: \n\nThanks.`)}`}
                   ctaLabel={`Pay ${formatPrice(familyP)} for Family`}
                 />
               </div>

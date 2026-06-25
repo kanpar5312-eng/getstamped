@@ -25,7 +25,7 @@ const FAQS = [
   },
   {
     q: "Can I share my account with my sibling?",
-    a: "No — visa applications are personal and the data conflicts. Get the Family plan (₹2,499 / $29) for up to 3 students, each with their own dashboard.",
+    a: "No — visa applications are personal and the data conflicts. Get the Family plan (₹4,999 / $69) for up to 2 students, each with their own dashboard.",
   },
   {
     q: "What if it doesn’t help me?",
