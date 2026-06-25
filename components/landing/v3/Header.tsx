@@ -71,8 +71,25 @@ export function Header() {
 
   return (
     <PillNav
-      logo="/logo.svg"
+      logo={
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            color: "#1C1917",
+            fontFamily: "var(--font-display-stack)",
+            fontSize: 18,
+            fontWeight: 500,
+            letterSpacing: "-0.01em",
+          }}
+        >
+          <BrandMark size={20} />
+          GetStamped
+        </span>
+      }
       logoAlt="GetStamped"
+      logoBg="#FAF8F4"
       items={NAV_ITEMS}
       baseColor="#1C1917"
       pillColor="#FAF8F4"

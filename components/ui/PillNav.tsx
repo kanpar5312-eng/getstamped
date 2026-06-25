@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { gsap } from "gsap";
 import "./PillNav.css";
@@ -21,8 +21,13 @@ export type PillNavItem = {
 };
 
 type Props = {
-  logo: string;
+  /** Either an image URL (legacy) or any ReactNode to render inside the
+      logo bubble. When a ReactNode is passed we skip the <img> entirely. */
+  logo: string | ReactNode;
   logoAlt?: string;
+  /** Tint for the logo bubble — defaults to Paper so the bubble matches
+      the previous BubbleMenu look. */
+  logoBg?: string;
   items: PillNavItem[];
   activeHref?: string;
   className?: string;
@@ -46,6 +51,7 @@ const isExternalLink = (href: string) =>
 export default function PillNav({
   logo,
   logoAlt = "Logo",
+  logoBg = "#FAF8F4",
   items,
   activeHref,
   className = "",
@@ -62,7 +68,7 @@ export default function PillNav({
   const circleRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const tlRefs = useRef<Array<gsap.core.Timeline | null>>([]);
   const activeTweenRefs = useRef<Array<gsap.core.Tween | null>>([]);
-  const logoImgRef = useRef<HTMLImageElement | null>(null);
+  const logoImgRef = useRef<HTMLElement | null>(null);
   const logoTweenRef = useRef<gsap.core.Tween | null>(null);
   const navItemsRef = useRef<HTMLDivElement | null>(null);
   const logoRef = useRef<HTMLAnchorElement | null>(null);
@@ -201,7 +207,28 @@ export default function PillNav({
     ["--pill-text"]: resolvedPillTextColor,
     ["--hover-bg"]: accentColor,
     ["--accent"]: accentColor,
+    ["--logo-bg"]: logoBg,
   } as CSSProperties;
+
+  const renderLogoInner =
+    typeof logo === "string" ? (
+      <img
+        src={logo}
+        alt={logoAlt}
+        ref={(el) => {
+          logoImgRef.current = el;
+        }}
+      />
+    ) : (
+      <span
+        className="pill-logo-content"
+        ref={(el) => {
+          logoImgRef.current = el;
+        }}
+      >
+        {logo}
+      </span>
+    );
 
   const homeHref = items?.[0]?.href ?? "#";
 
@@ -236,7 +263,7 @@ export default function PillNav({
             onMouseEnter={handleLogoEnter}
             ref={logoRef}
           >
-            <img src={logo} alt={logoAlt} ref={logoImgRef} />
+            {renderLogoInner}
           </a>
         ) : (
           <Link
@@ -246,7 +273,7 @@ export default function PillNav({
             onMouseEnter={handleLogoEnter}
             ref={logoRef as React.Ref<HTMLAnchorElement>}
           >
-            <img src={logo} alt={logoAlt} ref={logoImgRef} />
+            {renderLogoInner}
           </Link>
         )}
       </div>
