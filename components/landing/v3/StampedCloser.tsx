@@ -16,7 +16,7 @@ export function StampedCloser() {
       </p>
       <div className="v3-closer-image">
         <video
-          src="/pass.mp4"
+          src="/new.mp4"
           poster="/pass.png"
           width={980}
           height={620}
