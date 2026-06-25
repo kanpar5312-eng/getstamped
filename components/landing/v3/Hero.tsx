@@ -64,8 +64,8 @@ export function Hero() {
       carShiftX: [-0.8, 0.8],
       carFloorSeparation: [0, 5],
       colors: {
-        roadColor: 0x080808,
-        islandColor: 0x0a0a0a,
+        roadColor: 0x000000,
+        islandColor: 0x000000,
         background: 0x000000,
         shoulderLines: 0xffffff,
         brokenLines: 0xffffff,
@@ -86,7 +86,7 @@ export function Hero() {
         height: "100vh",
         minHeight: 640,
         overflow: "hidden",
-        background: "#1C1917",
+        background: "#000000",
       }}
       className="gs-hero-root"
     >
@@ -116,7 +116,7 @@ export function Hero() {
           zIndex: 1,
           pointerEvents: "none",
           background:
-            "linear-gradient(to bottom, rgba(28,25,23,0.15) 0%, rgba(28,25,23,0.05) 40%, rgba(28,25,23,0.35) 100%)",
+            "linear-gradient(to bottom, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.45) 100%)",
         }}
       />
 
