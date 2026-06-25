@@ -6,6 +6,13 @@
   z-index: 99;
 }
 
+.pill-nav-logo-anchor {
+  position: fixed;
+  top: 1.25em;
+  left: 2em;
+  z-index: 100;
+}
+
 .pill-nav {
   --nav-h: 46px;
   --logo: 36px;

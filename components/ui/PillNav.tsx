@@ -224,8 +224,10 @@ export default function PillNav({
   );
 
   return (
-    <div className="pill-nav-container">
-      <nav className={`pill-nav ${className}`} aria-label="Primary" style={cssVars}>
+    <>
+      {/* Logo lives in its own fixed bubble in the top-left so the pill
+          nav can stay centered without the logo cramping it. */}
+      <div className="pill-nav-logo-anchor" style={cssVars}>
         {isExternalLink(homeHref) ? (
           <a
             className="pill-logo"
@@ -247,8 +249,11 @@ export default function PillNav({
             <img src={logo} alt={logoAlt} ref={logoImgRef} />
           </Link>
         )}
+      </div>
 
-        <div className="pill-nav-items" ref={navItemsRef}>
+      <div className="pill-nav-container">
+        <nav className={`pill-nav ${className}`} aria-label="Primary" style={cssVars}>
+          <div className="pill-nav-items" ref={navItemsRef}>
           <ul className="pill-list" role="menubar">
             {items.map((item, i) => {
               const active = activeHref === item.href;
@@ -284,7 +289,8 @@ export default function PillNav({
             })}
           </ul>
         </div>
-      </nav>
-    </div>
+        </nav>
+      </div>
+    </>
   );
 }
