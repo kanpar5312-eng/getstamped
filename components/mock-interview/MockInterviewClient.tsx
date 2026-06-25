@@ -8,6 +8,7 @@ import { InterviewRoom, type RoomState } from "./InterviewRoom";
 import { FeedbackScreen, type Scores, type TurnSummary } from "./FeedbackScreen";
 import { PaywallOverlay } from "@/components/paywall/PaywallOverlay";
 import { notifyNetworkError } from "@/components/NetworkToast";
+import { selectQuestions } from "@/lib/mock-interview/questions";
 
 // Three.js (~600KB gz) only needs to load when the user actually starts an
 // interview. Keeping it out of the dashboard's shared chunk shaves a huge
@@ -53,23 +54,10 @@ const TRANSITION_LINES = [
   "Thank you. One more thing.",
 ];
 
-const QUESTIONS = [
-  "Why this university over others that admitted you?",
-  "Who is funding your education?",
-  "What's your major and why?",
-  "What ties you to your home country?",
-  "What do you plan to do after graduation?",
-  "Walk me through your funding plan for the full duration.",
-  "Why study in the United States instead of your home country?",
-  "How will your degree help your career back home?",
-  "Tell me about your high school grades.",
-  "What's your post-graduation backup if the visa is denied?",
-  "Have you been to the United States before?",
-  "Who else in your family has studied abroad?",
-  "How did you choose your major specifically?",
-  "What's your monthly tuition cost and how is it covered?",
-  "Describe your campus's strengths in one sentence.",
-];
+/* Question pool now lives in lib/mock-interview/questions.ts so it can
+   be shuffled, weighted by difficulty + consulate, and grown without
+   editing this file. The selection runs once per session in
+   startSession() and is stored in the `questions` state below. */
 
 type SpeechRecognitionLike = {
   lang: string;
@@ -99,6 +87,11 @@ export function MockInterviewClient({ plan, consulate }: Props) {
      instructions) instead of silently producing a no-audio session. */
   const [micDenied, setMicDenied] = useState(false);
 
+  // The shuffled, weighted question list for THIS session. Filled in
+  // by selectQuestions() at the moment startSession() succeeds, before
+  // the cinematic intro renders.
+  const [questions, setQuestions] = useState<string[]>([]);
+
   const [questionIdx, setQuestionIdx] = useState(0);
   const [roomState, setRoomState] = useState<RoomState>("officer-speaking");
   const [elapsedSec, setElapsedSec] = useState(0);
@@ -117,7 +110,10 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     summary: string;
   } | null>(null);
 
-  const totalQuestions = Math.min(QUESTIONS.length, length);
+  // After selectQuestions runs, totalQuestions tracks the actual
+  // dynamic list length — strict mode injects financial follow-ups
+  // so this can exceed `length`.
+  const totalQuestions = questions.length || length;
   const audioCleanupRef = useRef<(() => void) | null>(null);
   const recogRef = useRef<SpeechRecognitionLike | null>(null);
   const tickRef = useRef<number | null>(null);
@@ -262,6 +258,12 @@ export function MockInterviewClient({ plan, consulate }: Props) {
           setPaywallHit(true);
           return;
         }
+        const picked = selectQuestions({
+          count: length,
+          difficulty,
+          consulate,
+        });
+        setQuestions(picked);
         setPhase("cinematic");
         return;
       }
@@ -279,6 +281,12 @@ export function MockInterviewClient({ plan, consulate }: Props) {
           return;
         }
       }
+      const picked = selectQuestions({
+        count: length,
+        difficulty,
+        consulate,
+      });
+      setQuestions(picked);
       setPhase("cinematic");
     } finally {
       setStarting(false);
@@ -301,7 +309,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   const runQuestion = async (idx: number) => {
     setQuestionIdx(idx);
     setRoomState("officer-speaking");
-    const q = QUESTIONS[idx] ?? "";
+    const q = questions[idx] ?? "";
 
     // Speak the question, then start listening for the answer. If TTS is
     // available, this waits on the actual audio's `ended` event; if it
@@ -312,7 +320,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     // Prefetch the NEXT question's audio while the user is answering this
     // one — by the time they finish, the next mp3 blob is already in the
     // cache and playback starts instantly.
-    const nextQ = QUESTIONS[idx + 1];
+    const nextQ = questions[idx + 1];
     if (nextQ) void fetchTtsUrl(nextQ);
 
     setRoomState("listening");
@@ -504,7 +512,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     const turnsPayload: { question: string; answer: string }[] = Array.from({
       length: totalQuestions,
     }).map((_, i) => ({
-      question: QUESTIONS[i] ?? "",
+      question: questions[i] ?? "",
       answer: (transcripts[i] ?? "").trim(),
     }));
 
@@ -640,7 +648,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
       const t = Math.min(durationSecArg, Math.round((i + 1) * (durationSecArg / Math.max(1, totalQuestions))));
       const isWeakest = i === weakestIdx;
       const noAudio = ans.length === 0;
-      const question = QUESTIONS[i] ?? "—";
+      const question = questions[i] ?? "—";
       // Per-question notes: each picks an angle that matches what the
       // question is actually probing. The blanket "silence reads as
       // unprepared" repetition is gone — no-audio turns have a
@@ -816,7 +824,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
         difficulty={difficulty}
         totalQuestions={totalQuestions}
         questionIdx={questionIdx}
-        question={QUESTIONS[questionIdx] ?? ""}
+        question={questions[questionIdx] ?? ""}
         state={roomState}
         liveLevel={liveLevel}
         elapsedSec={elapsedSec}
