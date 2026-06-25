@@ -23,14 +23,23 @@
   -webkit-backface-visibility: hidden;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .card-swap-container {
-    transform: scale(0.75) translate(25%, 25%);
+    /* Center horizontally inside the parent column instead of anchoring
+       to the bottom-right. Parent column on mobile is full-width, so
+       left:50% + translateX(-50%) puts the stack in the middle of the
+       viewport regardless of card width. */
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    right: auto;
+    transform-origin: center bottom;
+    transform: translate(-50%, 0) scale(0.75);
   }
 }
 
 @media (max-width: 480px) {
   .card-swap-container {
-    transform: scale(0.55) translate(25%, 25%);
+    transform: translate(-50%, 0) scale(0.55);
   }
 }
