@@ -29,6 +29,7 @@ import type { Currency } from "@/lib/pricing";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
 import { FeaturesShowcase } from "./FeaturesShowcase";
+import { Testimonials } from "./Testimonials";
 import { Pricing } from "./Pricing";
 import { Reviews } from "./Reviews";
 import { FAQ } from "./FAQ";
@@ -64,6 +65,7 @@ export function MarketingLanding({ currency }: Props) {
         <ProblemSlam />
         <Pricing currency={currency} />
         <SectionDivider label="APPROVED FOR ENTRY" bg="paper" />
+        <Testimonials />
         {/* Reviews hidden for MVP — fictional testimonials replaced when
             we have ≥3 real student quotes from beta. Re-add <Reviews />
             here when ready. */}
