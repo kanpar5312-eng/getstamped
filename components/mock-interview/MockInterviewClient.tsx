@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-/* (useCallback already in the imports above; no extra import needed.) */
 import dynamic from "next/dynamic";
 import { SetupScreen, type Difficulty, type Interviewer, type Length } from "./SetupScreen";
 import { InterviewRoom, type RoomState } from "./InterviewRoom";
@@ -146,6 +145,12 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   // Mirror of silenceCountdown state to compare inside the interval
   // without rebinding it every tick.
   const silenceCountdownRef = useRef<number | null>(null);
+  // Strict-mode probe state. When a probe is running, probeFinishRef
+  // holds its early-finish trigger so the Done button / endSession can
+  // stop the probe cleanly; probeStartTsRef is used to gate the same
+  // 4s minimum window enforced for main turns.
+  const probeFinishRef = useRef<(() => void) | null>(null);
+  const probeStartTsRef = useRef<number>(0);
 
   // ─── ElevenLabs TTS state ────────────────────────────────────────────
   // ttsAvail flips false the first time /api/mock-interview/tts errors,
@@ -233,6 +238,9 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     audioCleanupRef.current?.();
     if (tickRef.current) window.clearInterval(tickRef.current);
     if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
+    // If the user navigates away mid-probe, end the probe so its recog
+    // + silence interval don't leak past unmount.
+    probeFinishRef.current?.();
     recogRef.current?.stop();
   }, []);
 
@@ -474,6 +482,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     return new Promise((resolve) => {
       const silenceMax = silenceMaxFor(difficulty);
       const probeStartTs = performance.now();
+      probeStartTsRef.current = probeStartTs;
       let probeLastSpeechAt = performance.now();
       let probeTranscript = "";
       let probeDone = false;
@@ -502,6 +511,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
       const finishProbe = () => {
         if (probeDone) return;
         probeDone = true;
+        probeFinishRef.current = null;
         cleanup();
         const extra = probeTranscript.trim();
         if (extra) {
@@ -519,6 +529,8 @@ export function MockInterviewClient({ plan, consulate }: Props) {
       type SR = { new (): SpeechRecognitionLike };
       const w = window as unknown as Record<string, SR | undefined>;
       const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition;
+
+      probeFinishRef.current = finishProbe;
 
       if (!Ctor) {
         probeTimeoutId = window.setTimeout(finishProbe, silenceMax);
@@ -632,6 +644,9 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   };
 
   const endSession = async () => {
+    // If a strict-mode probe is mid-flight, end it cleanly so its recog
+    // and silence interval don't leak past the session boundary.
+    probeFinishRef.current?.();
     try {
       recogRef.current?.stop();
     } catch {
@@ -988,6 +1003,14 @@ export function MockInterviewClient({ plan, consulate }: Props) {
         }}
         onDoneAnswering={() => {
           if (roomState !== "listening") return;
+          // Probe path: a strict-mode follow-up probe is currently
+          // listening — early-finish that instead of the main turn.
+          if (probeFinishRef.current) {
+            const elapsed = performance.now() - probeStartTsRef.current;
+            if (elapsed < MIN_ANSWER_MS) return;
+            probeFinishRef.current();
+            return;
+          }
           // The Done button must respect the 4s minimum window so users
           // can't accidentally tap immediately after the question ends.
           const elapsed = performance.now() - turnStartTsRef.current;
