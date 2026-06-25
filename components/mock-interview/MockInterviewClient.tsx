@@ -8,7 +8,7 @@ import { InterviewRoom, type RoomState } from "./InterviewRoom";
 import { FeedbackScreen, type Scores, type TurnSummary } from "./FeedbackScreen";
 import { PaywallOverlay } from "@/components/paywall/PaywallOverlay";
 import { notifyNetworkError } from "@/components/NetworkToast";
-import { selectQuestions } from "@/lib/mock-interview/questions";
+import { selectQuestions, FOLLOWUP_PROBES } from "@/lib/mock-interview/questions";
 
 // Three.js (~600KB gz) only needs to load when the user actually starts an
 // interview. Keeping it out of the dashboard's shared chunk shaves a huge
@@ -28,8 +28,17 @@ type Props = { plan: Plan; consulate?: string | null };
 //   SILENCE_MAX_MS — auto-end after this much silence past the min window.
 //   COUNTDOWN_MS   — visible "3…2…1" before auto-end.
 const MIN_ANSWER_MS = 4000;
-const SILENCE_MAX_MS = 8000;
+// Strict officers cut you off faster. Standard keeps the 8s budget.
+const SILENCE_MAX_STANDARD_MS = 8000;
+const SILENCE_MAX_STRICT_MS = 5000;
 const COUNTDOWN_MS = 3000;
+
+const silenceMaxFor = (d: "standard" | "strict") =>
+  d === "strict" ? SILENCE_MAX_STRICT_MS : SILENCE_MAX_STANDARD_MS;
+
+// Strict mode: probability that the officer fires a short follow-up
+// probe after the user finishes an answer, before the next question.
+const STRICT_PROBE_CHANCE = 0.3;
 
 // What /api/mock-interview/finish returns on the success path. Mirrors
 // the shape declared inside that route.
@@ -44,14 +53,21 @@ type GroqFinishResult = {
 };
 
 // Short interstitial lines the officer says after a turn finishes, before
-// the next question fires. Kept conversational + brief — most of the
-// monthly char budget should go to the questions themselves, not filler.
-const TRANSITION_LINES = [
-  "Okay. Good. Let's head to the next question.",
-  "Got it. Let's continue.",
-  "Alright, next question.",
-  "Mm-hmm. Moving on.",
+// the next question fires. Two pools — the strict pool reads clipped and
+// cold, the standard pool reads warm and neutral. Pick by `difficulty`.
+const STANDARD_TRANSITIONS = [
+  "Thank you. Next question.",
+  "I see. Let's continue.",
+  "Alright, moving on.",
+  "Good. Let's head to the next question.",
   "Thank you. One more thing.",
+];
+const STRICT_TRANSITIONS = [
+  "Mm. Next.",
+  "I see. Moving on.",
+  "Noted.",
+  "We'll move forward.",
+  "Hm. Continue.",
 ];
 
 /* Question pool now lives in lib/mock-interview/questions.ts so it can
@@ -366,16 +382,18 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     lastTranscriptRef.current = "";
     setSilenceCountdown(null);
 
+    const silenceMax = silenceMaxFor(difficulty);
+
     type SR = { new (): SpeechRecognitionLike };
     const w = window as unknown as Record<string, SR | undefined>;
     const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition;
     if (!Ctor) {
       // No recognition support — surface a "no mic detected" warning and
-      // fall back to the 8s timer the user can read along with.
+      // fall back to the silence ceiling for the current difficulty.
       setNoMic(true);
       advanceTimerRef.current = window.setTimeout(
         () => finishCurrentTurn(idx),
-        SILENCE_MAX_MS,
+        silenceMax,
       );
       return;
     }
@@ -426,14 +444,14 @@ export function MockInterviewClient({ plan, consulate }: Props) {
         return;
       }
 
-      if (silentFor >= SILENCE_MAX_MS) {
+      if (silentFor >= silenceMax) {
         finishCurrentTurn(idx);
         return;
       }
 
       // Show the visible 3 / 2 / 1 countdown for the last COUNTDOWN_MS
       // of the silence window.
-      const remaining = SILENCE_MAX_MS - silentFor;
+      const remaining = silenceMax - silentFor;
       if (remaining <= COUNTDOWN_MS) {
         const next = Math.max(1, Math.ceil(remaining / 1000));
         if (next !== silenceCountdownRef.current) {
@@ -445,6 +463,124 @@ export function MockInterviewClient({ plan, consulate }: Props) {
         setSilenceCountdown(null);
       }
     }, 200);
+  };
+
+  /** Listen for the user's reply to a strict-mode probe. Reuses the
+   *  same continuous-recognition + silence-watcher pattern as the main
+   *  turn, but resolves when the user is done so the caller can keep
+   *  going. The captured probe answer is appended to the current turn's
+   *  transcript so /finish grades it as part of that question. */
+  const runProbeListen = (idx: number): Promise<void> => {
+    return new Promise((resolve) => {
+      const silenceMax = silenceMaxFor(difficulty);
+      const probeStartTs = performance.now();
+      let probeLastSpeechAt = performance.now();
+      let probeTranscript = "";
+      let probeDone = false;
+      let probeRecog: SpeechRecognitionLike | null = null;
+      let probeTickId: number | null = null;
+      let probeTimeoutId: number | null = null;
+
+      const cleanup = () => {
+        if (probeTickId != null) {
+          window.clearInterval(probeTickId);
+          probeTickId = null;
+        }
+        if (probeTimeoutId != null) {
+          window.clearTimeout(probeTimeoutId);
+          probeTimeoutId = null;
+        }
+        setSilenceCountdown(null);
+        silenceCountdownRef.current = null;
+        try {
+          probeRecog?.stop();
+        } catch {
+          /* ignore */
+        }
+      };
+
+      const finishProbe = () => {
+        if (probeDone) return;
+        probeDone = true;
+        cleanup();
+        const extra = probeTranscript.trim();
+        if (extra) {
+          setTranscripts((arr) => {
+            const next = [...arr];
+            const prev = (next[idx] ?? "").trim();
+            next[idx] = prev ? `${prev} — ${extra}` : extra;
+            return next;
+          });
+          lastTranscriptRef.current = `${(lastTranscriptRef.current || "").trim()} — ${extra}`.trim();
+        }
+        resolve();
+      };
+
+      type SR = { new (): SpeechRecognitionLike };
+      const w = window as unknown as Record<string, SR | undefined>;
+      const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition;
+
+      if (!Ctor) {
+        probeTimeoutId = window.setTimeout(finishProbe, silenceMax);
+        return;
+      }
+
+      const recog = new Ctor();
+      recog.lang = "en-US";
+      recog.continuous = true;
+      recog.interimResults = true;
+      recog.onresult = (e) => {
+        let text = "";
+        for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+        probeTranscript = text;
+        probeLastSpeechAt = performance.now();
+      };
+      if ("onspeechstart" in recog) {
+        recog.onspeechstart = () => {
+          probeLastSpeechAt = performance.now();
+        };
+      }
+      if ("onspeechend" in recog) {
+        recog.onspeechend = () => {
+          probeLastSpeechAt = performance.now();
+        };
+      }
+      recog.onerror = () => finishProbe();
+      recog.onend = () => finishProbe();
+      probeRecog = recog;
+      try {
+        recog.start();
+      } catch {
+        /* ignore */
+      }
+
+      probeTickId = window.setInterval(() => {
+        const now = performance.now();
+        const elapsed = now - probeStartTs;
+        const silentFor = now - probeLastSpeechAt;
+
+        if (elapsed < MIN_ANSWER_MS) {
+          if (silenceCountdownRef.current !== null) setSilenceCountdown(null);
+          silenceCountdownRef.current = null;
+          return;
+        }
+        if (silentFor >= silenceMax) {
+          finishProbe();
+          return;
+        }
+        const remaining = silenceMax - silentFor;
+        if (remaining <= COUNTDOWN_MS) {
+          const next = Math.max(1, Math.ceil(remaining / 1000));
+          if (next !== silenceCountdownRef.current) {
+            silenceCountdownRef.current = next;
+            setSilenceCountdown(next);
+          }
+        } else if (silenceCountdownRef.current !== null) {
+          silenceCountdownRef.current = null;
+          setSilenceCountdown(null);
+        }
+      }, 200);
+    });
   };
 
   const finishTurn = async (idx: number, answer: string) => {
@@ -459,12 +595,25 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     const nextIdx = idx + 1;
     const isLast = nextIdx >= totalQuestions;
 
+    // Strict mode only: ~30% chance of an additional follow-up probe
+    // before we move on. The probe answer is appended to the current
+    // turn's transcript so it grades as part of that question.
+    if (!isLast && difficulty === "strict" && Math.random() < STRICT_PROBE_CHANCE) {
+      await new Promise((r) => setTimeout(r, 600));
+      const probe = FOLLOWUP_PROBES[Math.floor(Math.random() * FOLLOWUP_PROBES.length)];
+      setRoomState("officer-speaking");
+      await speak(probe);
+      setRoomState("listening");
+      await runProbeListen(idx);
+      setRoomState("considering");
+    }
+
     // Speak a short transition line — only between questions, not after
-    // the very last answer (that ends with a closing line or the
-    // feedback screen). Picked deterministically by idx so a session
-    // doesn't repeat the same line twice.
+    // the very last answer. Pool depends on difficulty: strict reads
+    // clipped and cold, standard reads warm and neutral.
     if (!isLast) {
-      const line = TRANSITION_LINES[idx % TRANSITION_LINES.length];
+      const pool = difficulty === "strict" ? STRICT_TRANSITIONS : STANDARD_TRANSITIONS;
+      const line = pool[idx % pool.length];
       // Brief beat before the officer responds so it doesn't feel
       // robot-quick on the heels of the user's last word.
       await new Promise((r) => setTimeout(r, 700));

@@ -50,7 +50,15 @@ export async function POST(req: Request) {
     }
   }
 
-  const scores = await computeOverall(turns, body.officerStyle, body.difficulty);
+  const rawScores = await computeOverall(turns, body.officerStyle, body.difficulty);
+  // Strict-mode penalty: vague answers on financial / ties questions
+  // take a measurable hit before the scores reach the client. Applied
+  // here (not in Groq) so the deduction is deterministic and visible
+  // in the DB row too.
+  const scores =
+    body.difficulty === "tough"
+      ? applyStrictPenalty(rawScores, turns)
+      : rawScores;
 
   if (userId && plan !== "free") {
     const sb = await getServerSupabase();
@@ -148,6 +156,11 @@ async function computeOverall(
     .map((t, i) => `Q${i + 1}: ${t.question}\nA${i + 1}: ${t.answer}`)
     .join("\n\n");
 
+  const toneInstruction =
+    difficulty === "tough"
+      ? "You are a STRICT consular officer. Be direct and critical. Do not soften wording. Penalize vague answers on FINANCIAL story and TIES-TO-HOME especially heavily — lower the redFlag axis sharply when the user cannot name specific numbers, sponsors, or anchors."
+      : "You are reviewing a mock interview constructively. Be encouraging where it's warranted, honest where it isn't.";
+
   const system = `You are a US F-1 visa officer reviewing a full mock interview.
 Return STRICT JSON only:
 {
@@ -159,6 +172,7 @@ Return STRICT JSON only:
   "topStrength": "1 sentence, max 18 words",
   "topWeakness": "1 sentence, max 18 words"
 }
+${toneInstruction}
 Officer style: ${officerStyle ?? "friendly"}. Difficulty: ${difficulty ?? "standard"}.
 Scoring guidance:
 - Clarity: how directly each answer addressed the question, first-sentence anchoring.
@@ -205,6 +219,47 @@ Scoring guidance:
 
 function clamp(n: number): number {
   return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+/* Strict-mode score adjustment.
+   Walks the turns, finds financial- and ties-to-home-shaped questions
+   whose answer reads vague (< 50 chars), and deducts a 10–15 pt penalty
+   from the redFlag axis (which the client maps onto the "consistency" /
+   "financial" surfaces) plus a smaller hit to overall. Caps each axis
+   at one penalty event so a single vague turn can't tank the whole
+   scorecard. */
+function applyStrictPenalty<
+  T extends {
+    clarity: number;
+    confidence: number;
+    redFlag: number;
+    overall: number;
+    summary: string;
+    topStrength: string;
+    topWeakness: string;
+  }
+>(scores: T, turns: Turn[]): T {
+  let financialHit = 0;
+  let tiesHit = 0;
+  for (const t of turns) {
+    const q = (t.question ?? "").toLowerCase();
+    const len = (t.answer ?? "").trim().length;
+    if (len >= 50) continue;
+    if (/fund|financ|sponsor|tuition|bank|loan|money|cost|salary/.test(q)) {
+      financialHit = Math.max(financialHit, 13);
+    }
+    if (/\bties?\b|home country|return|parents|propert|family|relativ/.test(q)) {
+      tiesHit = Math.max(tiesHit, 12);
+    }
+  }
+  if (financialHit === 0 && tiesHit === 0) return scores;
+  const flagPenalty = Math.max(financialHit, tiesHit);
+  const overallPenalty = Math.round((financialHit + tiesHit) / 2);
+  return {
+    ...scores,
+    redFlag: clamp(scores.redFlag - flagPenalty),
+    overall: clamp(scores.overall - overallPenalty),
+  };
 }
 
 function heuristicOverall(turns: Turn[]) {

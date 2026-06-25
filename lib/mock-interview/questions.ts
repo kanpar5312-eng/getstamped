@@ -125,6 +125,23 @@ export const QUESTION_POOL: Question[] = [
   { id: "fu-10", category: "follow_up", difficulty: "strict", text: "Convince me in one sentence that you'll come back." },
 ];
 
+/* ─── short follow-up probes spoken after an answer in strict mode ───
+   The client picks one at random with ~30% probability and asks it
+   before moving on. Kept short so they read as a real officer pressing
+   for specifics, not a second long-form question. */
+export const FOLLOWUP_PROBES: string[] = [
+  "Can you be more specific about that?",
+  "What exactly do you mean by that?",
+  "Give me one concrete example.",
+  "Name a number, a date, or a person.",
+  "Why is that important?",
+  "How does that prove what you just said?",
+  "Walk me through that one more time.",
+  "What's the strongest evidence behind that answer?",
+  "Be honest — is that the full picture?",
+  "Why should I believe you?",
+];
+
 /* ─── financial follow-ups injected after each financial Q in strict ─── */
 const FINANCIAL_FOLLOWUPS: Question[] = [
   { id: "fn-fu-1", category: "follow_up", difficulty: "strict", text: "Walk me through that funding number again — annually, who pays which part?" },
