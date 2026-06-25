@@ -19,22 +19,6 @@ const fadeUp = {
 };
 const ease = [0.22, 1, 0.36, 1] as const;
 
-function PlayTriangle() {
-  return (
-    <span
-      aria-hidden
-      style={{
-        display: "inline-block",
-        width: 0,
-        height: 0,
-        borderTop: "5px solid transparent",
-        borderBottom: "5px solid transparent",
-        borderLeft: "8px solid #E8622A",
-      }}
-    />
-  );
-}
-
 export function Hero() {
   const hyperspeedOptions = useMemo(
     () => ({
@@ -238,17 +222,6 @@ export function Hero() {
           <Link href="/sign-up" className="gs-hero-primary">
             Start free — Phase 1 forever
           </Link>
-          <button
-            type="button"
-            className="gs-hero-secondary"
-            onClick={() => {
-              const el = document.getElementById("playbook");
-              el?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
-          >
-            <PlayTriangle />
-            Watch a 60-second tour
-          </button>
         </motion.div>
 
         {/* 5. Stats row */}
