@@ -111,32 +111,47 @@ export default function BubbleMenu({
 
   /** Tapping a pill should close the menu so the user isn't left
    *  staring at the overlay after they've made their choice. For
-   *  in-page hash links (#pricing, #faq…) we also smooth-scroll
-   *  ourselves since the overlay close animation otherwise eats the
-   *  default jump. */
+   *  in-page hash links (#pricing, #faq…) we close FIRST, wait for
+   *  the close animation to release the fixed overlay, then run a
+   *  smooth scroll. Doing the scroll while the overlay is still
+   *  animating closed lets iOS Safari interrupt it. */
   const handlePillClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
     href: string,
   ) => {
-    if (href.startsWith("#")) {
+    const isHash = href.startsWith("#");
+    if (isHash) {
       e.preventDefault();
-      const id = href.slice(1);
-      if (typeof window !== "undefined") {
-        const target = document.getElementById(id);
-        if (target) {
-          target.scrollIntoView({ behavior: "smooth", block: "start" });
-        } else {
-          // Fallback: change the hash so the browser handles it once
-          // the overlay closes.
-          window.location.hash = id;
-        }
-      }
+      e.stopPropagation();
     }
-    // Close the overlay either way.
+
+    // Always close the menu — for both hash links and real navigations.
     if (isMenuOpen) {
       setIsMenuOpen(false);
       onMenuClick?.(false);
     }
+
+    if (!isHash || typeof window === "undefined") return;
+    const id = href.slice(1);
+
+    // Wait for the GSAP close animation (~250ms) so the overlay is
+    // fully out of the way before we ask the browser to smooth-scroll.
+    window.setTimeout(() => {
+      const target = document.getElementById(id);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        // Update the URL hash without re-jumping, so refresh + back
+        // button behave correctly afterwards.
+        try {
+          window.history.replaceState(null, "", `#${id}`);
+        } catch {
+          /* ignore */
+        }
+      } else {
+        // Last-resort fallback if the section isn't in the DOM yet.
+        window.location.hash = id;
+      }
+    }, 320);
   };
 
   // Hide the pills BEFORE the browser paints — otherwise on first open
