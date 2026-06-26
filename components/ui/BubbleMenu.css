@@ -129,9 +129,9 @@
   justify-content: center;
   pointer-events: none;
   z-index: 98;
-  background: rgba(250, 248, 244, 0.97);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  /* No backdrop — the page sits behind the menu and the pills carry
+     their own background. Avoids the washed-out paper plate on mobile. */
+  background: transparent;
   overflow-y: auto;
   /* iOS Safari: 100% of dynamic viewport so the URL bar doesn't crop
      the menu when it auto-hides. svh fallback for older browsers. */

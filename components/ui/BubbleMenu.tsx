@@ -109,6 +109,36 @@ export default function BubbleMenu({
     onMenuClick?.(nextState);
   };
 
+  /** Tapping a pill should close the menu so the user isn't left
+   *  staring at the overlay after they've made their choice. For
+   *  in-page hash links (#pricing, #faq…) we also smooth-scroll
+   *  ourselves since the overlay close animation otherwise eats the
+   *  default jump. */
+  const handlePillClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) => {
+    if (href.startsWith("#")) {
+      e.preventDefault();
+      const id = href.slice(1);
+      if (typeof window !== "undefined") {
+        const target = document.getElementById(id);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        } else {
+          // Fallback: change the hash so the browser handles it once
+          // the overlay closes.
+          window.location.hash = id;
+        }
+      }
+    }
+    // Close the overlay either way.
+    if (isMenuOpen) {
+      setIsMenuOpen(false);
+      onMenuClick?.(false);
+    }
+  };
+
   // Hide the pills BEFORE the browser paints — otherwise on first open
   // they flash at full size for one frame before GSAP shrinks them to
   // scale 0 to animate up. Switching to useLayoutEffect makes the
@@ -250,6 +280,7 @@ export default function BubbleMenu({
                   href={item.href}
                   aria-label={item.ariaLabel || item.label}
                   className="pill-link"
+                  onClick={(e) => handlePillClick(e, item.href)}
                   style={{
                     ["--item-rot" as string]: `${item.rotation ?? 0}deg`,
                     ["--pill-bg" as string]: menuBg,
