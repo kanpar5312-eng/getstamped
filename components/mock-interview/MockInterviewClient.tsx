@@ -316,75 +316,64 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   const startSession = async () => {
     if (starting) return;
     setStarting(true);
-    // Unlock the persistent audio element on the original user gesture
-    // so all subsequent speak() calls (which happen after awaits) are
-    // allowed by the browser's autoplay policy. Calling play() on an
-    // empty Audio is harmless: it rejects immediately with no sound.
+
+    // Fire the audio-unlock + mic + quota work in the background. Don't
+    // block the UI on any of them: the very first failure path was
+    // hanging here because a network stall or autoplay rejection could
+    // wedge the await chain and leave the button stuck.
+
+    // 1) Audio unlock — fire and forget. The first user gesture is
+    //    enough to unlock the persistent <audio> for the session.
     try {
       const a = audioElRef.current;
       if (a) {
         a.muted = true;
-        await a.play().catch(() => {});
-        a.pause();
-        a.muted = false;
-      }
-    } catch {
-      /* ignore — the regular play path below will surface real failures */
-    }
-    try {
-      // Mic gate runs BEFORE the quota check so a denied permission
-      // doesn't burn the user's weekly slot.
-      const granted = await requestMic();
-      if (!granted) {
-        setMicDenied(true);
-        return;
-      }
-      // Server-authoritative quota check. logUsage runs inside the
-      // route on success, so failing here never burns the user's slot.
-      let r: Response;
-      try {
-        r = await fetch("/api/mock-interview/start", { method: "POST" });
-      } catch {
-        // Transport-level failure (offline, DNS, etc.). Toast + fall
-        // through so the user can still attempt the local session.
-        notifyNetworkError();
-        if (plan === "free" && hasUsedFreeMock()) {
-          setPaywallHit(true);
-          return;
-        }
-        const picked = selectQuestions({
-          count: length,
-          difficulty,
-          consulate,
+        void a.play().then(() => {
+          a.pause();
+          a.muted = false;
+        }).catch(() => {
+          a.muted = false;
         });
-        setQuestions(picked);
-        setPhase("cinematic");
-        return;
       }
-      if (r.status === 429) {
+    } catch { /* ignore */ }
+
+    // 2) Mic permission — request but don't block. If the user previously
+    //    denied, the room itself surfaces the standard "mic denied" state.
+    void requestMic();
+
+    // 3) Server quota check with a 4-second timeout, so a slow API never
+    //    wedges the button.
+    let paywall = false;
+    try {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 4000);
+      const r = await fetch("/api/mock-interview/start", {
+        method: "POST",
+        signal: ctrl.signal,
+      }).catch(() => null);
+      clearTimeout(to);
+
+      if (r && r.status === 429) {
         const data = await r.json().catch(() => ({}));
         setLimitResetAt(typeof data.reset_at === "string" ? data.reset_at : null);
-        setPaywallHit(true);
-        return;
+        paywall = true;
+      } else if ((!r || !r.ok) && plan === "free" && hasUsedFreeMock()) {
+        paywall = true;
       }
-      if (!r.ok) {
-        // Unauthenticated or transient — fall back to the legacy local
-        // session flag so a flaky network never bricks the page.
-        if (plan === "free" && hasUsedFreeMock()) {
-          setPaywallHit(true);
-          return;
-        }
-      }
-      const picked = selectQuestions({
-        count: length,
-        difficulty,
-        consulate,
-      });
-      setQuestions(picked);
-      setPhase("cinematic");
-    } finally {
-      setStarting(false);
+    } catch {
+      if (plan === "free" && hasUsedFreeMock()) paywall = true;
     }
+
+    if (paywall) {
+      setPaywallHit(true);
+      setStarting(false);
+      return;
+    }
+
+    const picked = selectQuestions({ count: length, difficulty, consulate });
+    setQuestions(picked);
+    setPhase("cinematic");
+    setStarting(false);
   };
 
   const enterRoom = () => {
