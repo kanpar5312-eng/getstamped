@@ -4,6 +4,7 @@ import { useCallback, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signUp, resendVerification } from "@/app/actions/auth";
+import { getBrowserSupabase } from "@/lib/supabase/client";
 import { TurnstileWidget } from "@/components/auth/TurnstileWidget";
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null;
@@ -158,9 +159,22 @@ export function SignUpForm() {
     }
   };
 
-  const oauthSoon = (provider: string) => {
-    setError(`${provider} sign-in is on the roadmap. Use email + password for now.`);
-    setTimeout(() => setError(null), 3500);
+  const signUpWithGoogle = async () => {
+    setError(null);
+    const sb = getBrowserSupabase();
+    if (!sb) {
+      setError("Sign-in is temporarily unavailable. Try email + password.");
+      return;
+    }
+    const origin = window.location.origin;
+    const { error: oauthErr } = await sb.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${origin}/auth/callback`,
+        queryParams: { prompt: "select_account" },
+      },
+    });
+    if (oauthErr) setError(oauthErr.message);
   };
 
   /* ------------------------- Success state ------------------------- */
@@ -367,7 +381,7 @@ export function SignUpForm() {
       <div className="field-rise field-rise-7">
         <button
           type="button"
-          onClick={() => oauthSoon("Google")}
+          onClick={signUpWithGoogle}
           className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-[13px] font-medium text-[var(--color-ink)] hover:border-[var(--color-tg)] transition-colors"
         >
           <GoogleMark /> Continue with Google
