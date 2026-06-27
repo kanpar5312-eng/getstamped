@@ -85,11 +85,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Supabase admin unavailable" }, { status: 500 });
   }
 
-  // ---- Pull every profile with a known interview date ----
+  // ---- Pull every profile with a known interview date AND who hasn't
+  //      muted deadline reminders in Settings → Notifications. The
+  //      `reminders` boolean is set by the Settings UI; default true. ----
   const { data: profiles, error: profErr } = await sb
     .from("profiles")
-    .select("id, first_name, interview_date, country_code, country")
-    .not("interview_date", "is", null);
+    .select("id, first_name, interview_date, country_code, country, reminders")
+    .not("interview_date", "is", null)
+    .or("reminders.is.null,reminders.eq.true");
 
   if (profErr) {
     return NextResponse.json({ ok: false, error: profErr.message }, { status: 500 });
