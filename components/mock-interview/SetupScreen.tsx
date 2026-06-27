@@ -270,7 +270,7 @@ export function SetupScreen({
         <button
           type="button"
           onClick={onStart}
-          disabled={micState !== "passed" || paywallHit}
+          disabled={paywallHit}
           className="btn-ember inline-flex items-center gap-2 rounded-lg px-6 py-3 text-[14px] font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Enter the interview room →
