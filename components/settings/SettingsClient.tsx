@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Modal } from "@/components/ui/Modal";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { getBrowserSupabase } from "@/lib/supabase/client";
+import { useEffect } from "react";
 import { updateProfile, type ProfileUpdate } from "@/app/actions/profile";
 import {
   exportUserData,
@@ -103,6 +105,117 @@ export function SettingsClient({ initial, referral }: Props) {
   const [pending, setPending] = useState(false);
   const [refundModal, setRefundModal] = useState(false);
   const [refundReason, setRefundReason] = useState("");
+
+  /* ─── two-factor auth (TOTP) ─── */
+  const [twoFAModal, setTwoFAModal] = useState(false);
+  const [twoFAEnabled, setTwoFAEnabled] = useState(false);
+  const [twoFAEnrollment, setTwoFAEnrollment] = useState<{
+    factorId: string;
+    qr: string;
+    secret: string;
+  } | null>(null);
+  const [twoFACode, setTwoFACode] = useState("");
+  const [twoFAError, setTwoFAError] = useState<string | null>(null);
+  const [twoFAVerifiedFactorId, setTwoFAVerifiedFactorId] = useState<string | null>(null);
+  const [twoFABusy, setTwoFABusy] = useState(false);
+
+  // On mount: poll current 2FA state so the row label can render correctly.
+  useEffect(() => {
+    const sb = getBrowserSupabase();
+    if (!sb) return;
+    void sb.auth.mfa.listFactors().then(({ data }) => {
+      const verified = data?.totp?.find((f) => f.status === "verified") ?? null;
+      setTwoFAEnabled(Boolean(verified));
+      setTwoFAVerifiedFactorId(verified?.id ?? null);
+    });
+  }, []);
+
+  const refreshTwoFAState = async () => {
+    const sb = getBrowserSupabase();
+    if (!sb) return;
+    const { data } = await sb.auth.mfa.listFactors();
+    const verified = data?.totp?.find((f) => f.status === "verified") ?? null;
+    setTwoFAEnabled(Boolean(verified));
+    setTwoFAVerifiedFactorId(verified?.id ?? null);
+  };
+
+  const openTwoFAModal = async () => {
+    setTwoFAError(null);
+    setTwoFACode("");
+    setTwoFAEnrollment(null);
+    setTwoFAModal(true);
+    await refreshTwoFAState();
+  };
+
+  const startEnroll = async () => {
+    const sb = getBrowserSupabase();
+    if (!sb) return;
+    setTwoFAError(null);
+    setTwoFABusy(true);
+    // Clean up any stale unverified factor so enroll doesn't fail.
+    const { data: existing } = await sb.auth.mfa.listFactors();
+    const stale = existing?.totp?.find((f) => f.status !== "verified");
+    if (stale) {
+      await sb.auth.mfa.unenroll({ factorId: stale.id });
+    }
+    const { data, error } = await sb.auth.mfa.enroll({ factorType: "totp" });
+    setTwoFABusy(false);
+    if (error || !data) {
+      setTwoFAError(error?.message ?? "Couldn't start enrollment. Try again.");
+      return;
+    }
+    setTwoFAEnrollment({
+      factorId: data.id,
+      qr: data.totp.qr_code,
+      secret: data.totp.secret,
+    });
+  };
+
+  const verifyEnroll = async () => {
+    const sb = getBrowserSupabase();
+    if (!sb || !twoFAEnrollment) return;
+    setTwoFAError(null);
+    setTwoFABusy(true);
+    const { data: challenge, error: chErr } = await sb.auth.mfa.challenge({
+      factorId: twoFAEnrollment.factorId,
+    });
+    if (chErr || !challenge) {
+      setTwoFABusy(false);
+      setTwoFAError(chErr?.message ?? "Couldn't verify the code. Try again.");
+      return;
+    }
+    const { error: vErr } = await sb.auth.mfa.verify({
+      factorId: twoFAEnrollment.factorId,
+      challengeId: challenge.id,
+      code: twoFACode.trim(),
+    });
+    setTwoFABusy(false);
+    if (vErr) {
+      setTwoFAError(vErr.message);
+      return;
+    }
+    setTwoFAEnrollment(null);
+    setTwoFACode("");
+    await refreshTwoFAState();
+    showToast("Two-factor authentication is on.");
+    setTwoFAModal(false);
+  };
+
+  const removeTwoFA = async () => {
+    const sb = getBrowserSupabase();
+    if (!sb || !twoFAVerifiedFactorId) return;
+    setTwoFAError(null);
+    setTwoFABusy(true);
+    const { error } = await sb.auth.mfa.unenroll({ factorId: twoFAVerifiedFactorId });
+    setTwoFABusy(false);
+    if (error) {
+      setTwoFAError(error.message);
+      return;
+    }
+    await refreshTwoFAState();
+    showToast("Two-factor authentication removed.");
+    setTwoFAModal(false);
+  };
 
   const set = <K extends keyof Profile>(key: K, value: Profile[K]) =>
     setData((d) => ({ ...d, [key]: value }));
@@ -516,7 +629,12 @@ export function SettingsClient({ initial, referral }: Props) {
                 {[
                   { label: "Change email", action: () => setEmailModal(true) },
                   { label: "Change password", action: () => setPasswordModal(true) },
-                  { label: "Two-factor authentication", action: () => showToast("2FA coming in Phase 3.") },
+                  {
+                    label: twoFAEnabled
+                      ? "Two-factor authentication · ON"
+                      : "Two-factor authentication",
+                    action: openTwoFAModal,
+                  },
                   { label: "Connected accounts (Google)", action: () => showToast("Google sign-in available at launch.") },
                 ].map((row, i) => (
                   <li key={i} className="flex items-center justify-between gap-3 py-3.5">
@@ -704,6 +822,136 @@ export function SettingsClient({ initial, referral }: Props) {
             <span className="font-mono tabular-nums">{refundReason.length}/1000</span>
           </p>
         </div>
+      </Modal>
+
+      <Modal
+        open={twoFAModal}
+        onClose={() => {
+          setTwoFAModal(false);
+          setTwoFAEnrollment(null);
+          setTwoFACode("");
+          setTwoFAError(null);
+        }}
+        eyebrow="Two-factor authentication"
+        title={
+          twoFAEnabled
+            ? "Two-factor authentication is on"
+            : twoFAEnrollment
+            ? "Verify the 6-digit code"
+            : "Add an extra layer of protection"
+        }
+        footer={
+          twoFAEnabled ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setTwoFAModal(false)}
+                className="rounded-lg border border-[var(--color-border)] px-5 py-2.5 text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-accent)] transition-colors"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                disabled={twoFABusy}
+                onClick={removeTwoFA}
+                className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {twoFABusy ? "Removing…" : "Remove 2FA"}
+              </button>
+            </>
+          ) : twoFAEnrollment ? (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setTwoFAEnrollment(null);
+                  setTwoFACode("");
+                  setTwoFAError(null);
+                }}
+                className="rounded-lg border border-[var(--color-border)] px-5 py-2.5 text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-accent)] transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                disabled={twoFABusy || twoFACode.trim().length < 6}
+                onClick={verifyEnroll}
+                className="rounded-lg bg-[var(--color-persimmon)] px-5 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-50"
+              >
+                {twoFABusy ? "Verifying…" : "Verify & enable"}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setTwoFAModal(false)}
+                className="rounded-lg border border-[var(--color-border)] px-5 py-2.5 text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-accent)] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={twoFABusy}
+                onClick={startEnroll}
+                className="rounded-lg bg-[var(--color-persimmon)] px-5 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-50"
+              >
+                {twoFABusy ? "Starting…" : "Set up"}
+              </button>
+            </>
+          )
+        }
+      >
+        {twoFAEnabled ? (
+          <p className="text-sm text-[var(--color-ink-soft)]">
+            You&rsquo;ll be asked for a code from your authenticator app whenever you sign in. Remove
+            2FA only if you&rsquo;ve lost access to that app.
+          </p>
+        ) : twoFAEnrollment ? (
+          <div className="space-y-3">
+            <p className="text-sm text-[var(--color-ink-soft)]">
+              Open Google Authenticator, Authy, or 1Password and scan the QR. Then enter the 6-digit
+              code below.
+            </p>
+            <div className="flex items-center justify-center rounded-xl border border-[var(--color-border)] bg-white p-4">
+              {/* Supabase returns an SVG data URL, so an <img> is fine here. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={twoFAEnrollment.qr}
+                alt="Two-factor QR code"
+                className="h-44 w-44"
+              />
+            </div>
+            <p className="text-[11px] text-[var(--color-muted)] text-center font-mono break-all">
+              Manual key: {twoFAEnrollment.secret}
+            </p>
+            <Field label="6-digit code">
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                className={input}
+                value={twoFACode}
+                onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, ""))}
+              />
+            </Field>
+            {twoFAError && (
+              <p className="text-xs text-red-600">{twoFAError}</p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-[var(--color-ink-soft)]">
+              Protect your account with a one-time code from an authenticator app (Google
+              Authenticator, Authy, 1Password). After setup, you&rsquo;ll enter a fresh 6-digit code
+              every time you sign in.
+            </p>
+            {twoFAError && (
+              <p className="text-xs text-red-600">{twoFAError}</p>
+            )}
+          </div>
+        )}
       </Modal>
 
       {toast && (
