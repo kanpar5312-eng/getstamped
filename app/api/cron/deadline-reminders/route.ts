@@ -85,14 +85,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Supabase admin unavailable" }, { status: 500 });
   }
 
-  // ---- Pull every profile with a known interview date AND who hasn't
-  //      muted deadline reminders in Settings → Notifications. The
-  //      `reminders` boolean is set by the Settings UI; default true. ----
-  const { data: profiles, error: profErr } = await sb
+  // ---- Pull every profile with a known interview date.
+  //      The notif_prefs JSONB column holds the per-user toggles; we
+  //      filter post-fetch to keep the SQL simple (Supabase's PostgREST
+  //      ?eq syntax doesn't play nicely with deep jsonb defaults). ----
+  const { data: rawProfiles, error: profErr } = await sb
     .from("profiles")
-    .select("id, first_name, interview_date, country_code, country, reminders")
-    .not("interview_date", "is", null)
-    .or("reminders.is.null,reminders.eq.true");
+    .select("id, first_name, interview_date, country_code, country, notif_prefs")
+    .not("interview_date", "is", null);
+
+  // Drop users who explicitly muted deadline reminders in Settings.
+  // Default (key missing) = enabled, matching the schema default true.
+  const profiles = (rawProfiles ?? []).filter((p) => {
+    const prefs = (p as { notif_prefs?: { reminders?: boolean } }).notif_prefs;
+    return prefs?.reminders !== false;
+  });
 
   if (profErr) {
     return NextResponse.json({ ok: false, error: profErr.message }, { status: 500 });
