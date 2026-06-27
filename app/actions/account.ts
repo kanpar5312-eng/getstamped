@@ -184,43 +184,365 @@ export async function updateNotifPrefs(patch: Partial<NotifPrefs>): Promise<Acco
 }
 
 /**
- * Builds a JSON export of the user's data (profile + step_progress + documents
- * metadata + ai_threads + mock_interview_sessions). Returns a base64 payload
- * the UI can offer as a download. For large accounts this should move to a
- * background job + emailed link — for now we return inline.
+ * Builds a clean, human-readable PDF report of the user's account
+ * (profile, step progress, documents, AI threads, mock interviews).
+ * Returns a base64 PDF the UI offers as a download. The legacy field
+ * name is `jsonBase64` for backwards-compat with the UI; payload is now
+ * application/pdf, not JSON.
  */
 export async function exportUserData(): Promise<
-  | { ok: true; filename: string; jsonBase64: string }
+  | { ok: true; filename: string; jsonBase64: string; mimeType: string }
   | { ok: false; error: string }
 > {
   const u = await requireUser();
   if (!u.ok) return { ok: false, error: u.error };
   const userId = u.user.id;
-  const [profile, steps, activity, docs, threads, messages, sessions] = await Promise.all([
-    u.sb.from("profiles").select("*").eq("id", userId).maybeSingle(),
-    u.sb.from("step_progress").select("*").eq("user_id", userId),
-    u.sb.from("step_activity").select("*").eq("user_id", userId),
-    u.sb.from("documents").select("*").eq("user_id", userId).is("deleted_at", null),
-    u.sb.from("ai_threads").select("*").eq("user_id", userId),
-    u.sb.from("ai_messages").select("*").eq("user_id", userId),
-    u.sb.from("mock_interview_sessions").select("*").eq("user_id", userId),
-  ]);
-  const bundle = {
-    exportedAt: new Date().toISOString(),
-    user: { id: userId, email: u.user.email },
-    profile: profile.data,
-    step_progress: steps.data,
-    step_activity: activity.data,
-    documents: docs.data,
-    ai_threads: threads.data,
-    ai_messages: messages.data,
-    mock_interview_sessions: sessions.data,
-  };
-  const json = JSON.stringify(bundle, null, 2);
-  const buffer = Buffer.from(json, "utf-8");
+  const userEmail = u.user.email ?? "";
+
+  const [profileRes, stepsRes, activityRes, docsRes, threadsRes, messagesRes, sessionsRes] =
+    await Promise.all([
+      u.sb.from("profiles").select("*").eq("id", userId).maybeSingle(),
+      u.sb.from("step_progress").select("*").eq("user_id", userId).order("step_number"),
+      u.sb
+        .from("step_activity")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      u.sb
+        .from("documents")
+        .select("*")
+        .eq("user_id", userId)
+        .is("deleted_at", null)
+        .order("uploaded_at", { ascending: false }),
+      u.sb.from("ai_threads").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
+      u.sb
+        .from("ai_messages")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(100),
+      u.sb
+        .from("mock_interview_sessions")
+        .select("*")
+        .eq("user_id", userId)
+        .order("ended_at", { ascending: false }),
+    ]);
+
+  type AnyRow = Record<string, unknown>;
+  const profile = (profileRes.data ?? {}) as AnyRow;
+  const steps = (stepsRes.data ?? []) as AnyRow[];
+  const activity = (activityRes.data ?? []) as AnyRow[];
+  const docs = (docsRes.data ?? []) as AnyRow[];
+  const threads = (threadsRes.data ?? []) as AnyRow[];
+  const messages = (messagesRes.data ?? []) as AnyRow[];
+  const sessions = (sessionsRes.data ?? []) as AnyRow[];
+
+  const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
+
+  const pdf = await PDFDocument.create();
+  pdf.setTitle("GetStamped — Account Export");
+  pdf.setAuthor("GetStamped");
+  pdf.setSubject(`Account export for ${userEmail}`);
+
+  const helv = await pdf.embedFont(StandardFonts.Helvetica);
+  const helvBold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const helvOb = await pdf.embedFont(StandardFonts.HelveticaOblique);
+
+  // Palette mirrors the dashboard's Paper/Ink/Persimmon brand.
+  const paper = rgb(0.984, 0.965, 0.925);
+  const ink = rgb(0.110, 0.106, 0.102);
+  const inkSoft = rgb(0.290, 0.282, 0.267);
+  const muted = rgb(0.522, 0.498, 0.451);
+  const persimmon = rgb(1.0, 0.357, 0.180);
+  const hairline = rgb(0.902, 0.875, 0.800);
+
+  const W = 612; // US Letter (8.5" × 11" at 72dpi)
+  const H = 792;
+  const MARGIN = 56;
+
+  // Active page + cursor for body text. A `flow()` helper below handles
+  // wrapping and auto-pagination so each section can stay short.
+  let page = pdf.addPage([W, H]);
+  let y = H - MARGIN;
+
+  function paintBackground() {
+    page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: paper });
+  }
+  paintBackground();
+
+  function pageBreak() {
+    page = pdf.addPage([W, H]);
+    paintBackground();
+    y = H - MARGIN;
+  }
+
+  function need(rows: number, lineH = 14) {
+    if (y - rows * lineH < MARGIN + 40) pageBreak();
+  }
+
+  function drawLine(opts: { y: number; thick?: number; color?: ReturnType<typeof rgb> }) {
+    page.drawLine({
+      start: { x: MARGIN, y: opts.y },
+      end: { x: W - MARGIN, y: opts.y },
+      thickness: opts.thick ?? 0.5,
+      color: opts.color ?? hairline,
+    });
+  }
+
+  function eyebrow(text: string) {
+    need(2);
+    page.drawText(text.toUpperCase(), {
+      x: MARGIN,
+      y,
+      size: 9,
+      font: helvBold,
+      color: persimmon,
+    });
+    y -= 16;
+  }
+
+  function h1(text: string) {
+    need(3);
+    page.drawText(text, { x: MARGIN, y, size: 24, font: helvBold, color: ink });
+    y -= 30;
+  }
+
+  function h2(text: string) {
+    need(3);
+    page.drawText(text, { x: MARGIN, y, size: 14, font: helvBold, color: ink });
+    y -= 18;
+    drawLine({ y: y + 4 });
+    y -= 6;
+  }
+
+  function wrap(text: string, font: typeof helv, size: number, maxWidth: number): string[] {
+    const words = String(text ?? "").replace(/\s+/g, " ").trim().split(" ");
+    if (!words[0]) return [""];
+    const lines: string[] = [];
+    let cur = "";
+    for (const w of words) {
+      const test = cur ? `${cur} ${w}` : w;
+      if (font.widthOfTextAtSize(test, size) <= maxWidth) {
+        cur = test;
+      } else {
+        if (cur) lines.push(cur);
+        cur = w;
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  }
+
+  function body(text: string, opts?: { font?: typeof helv; size?: number; color?: ReturnType<typeof rgb> }) {
+    const font = opts?.font ?? helv;
+    const size = opts?.size ?? 10;
+    const color = opts?.color ?? inkSoft;
+    const lines = wrap(text, font, size, W - MARGIN * 2);
+    for (const ln of lines) {
+      need(1);
+      page.drawText(ln, { x: MARGIN, y, size, font, color });
+      y -= size + 4;
+    }
+  }
+
+  function kv(label: string, value: string) {
+    need(1);
+    page.drawText(label, { x: MARGIN, y, size: 9, font: helvBold, color: muted });
+    page.drawText(value || "—", { x: MARGIN + 130, y, size: 10, font: helv, color: ink });
+    y -= 16;
+  }
+
+  function fmt(v: unknown): string {
+    if (v == null || v === "") return "—";
+    if (typeof v === "string") {
+      // Render ISO dates a little friendlier.
+      if (/^\d{4}-\d{2}-\d{2}(T|$)/.test(v)) {
+        const d = new Date(v);
+        if (!isNaN(d.getTime())) {
+          return d.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+        }
+      }
+      return v;
+    }
+    if (typeof v === "boolean") return v ? "Yes" : "No";
+    if (typeof v === "number") return String(v);
+    return JSON.stringify(v);
+  }
+
+  /* ─────────────────────── Cover ─────────────────────── */
+  // Persimmon top rail
+  page.drawRectangle({ x: 0, y: H - 6, width: W, height: 6, color: persimmon });
+
+  page.drawText("GETSTAMPED", {
+    x: MARGIN, y: H - 70, size: 11, font: helvBold, color: persimmon,
+  });
+  page.drawText("ACCOUNT EXPORT", {
+    x: MARGIN, y: H - 86, size: 9, font: helv, color: muted,
+  });
+
+  y = H - 190;
+  h1((profile.first_name as string) || userEmail || "Your account");
+  page.drawText(userEmail, { x: MARGIN, y, size: 12, font: helvOb, color: muted });
+  y -= 28;
+
+  drawLine({ y });
+  y -= 24;
+
+  const exportedAt = new Date().toLocaleString("en-US", {
+    dateStyle: "long",
+    timeStyle: "short",
+  });
+  kv("Exported", exportedAt);
+  kv("User ID", userId);
+  kv("Total steps tracked", String(steps.length));
+  kv("Documents", String(docs.length));
+  kv("AI chat threads", String(threads.length));
+  kv("Mock interviews", String(sessions.length));
+
+  y -= 12;
+  body(
+    "This document is a complete, human-readable snapshot of your GetStamped account on the date above. Keep it as a personal record — it is not a legal document.",
+    { font: helvOb, size: 10, color: muted },
+  );
+
+  /* ─────────────────────── Profile ─────────────────────── */
+  pageBreak();
+  eyebrow("Profile");
+  h1("Personal details");
+  for (const key of [
+    "first_name",
+    "last_name",
+    "country",
+    "country_code",
+    "consulate",
+    "university",
+    "program_type",
+    "intake_term",
+    "interview_date",
+    "plan",
+    "created_at",
+    "updated_at",
+  ]) {
+    if (key in profile) kv(key.replace(/_/g, " "), fmt(profile[key]));
+  }
+
+  /* ─────────────────────── Step progress ─────────────────────── */
+  pageBreak();
+  eyebrow("47-step playbook");
+  h1("Your step progress");
+
+  const done = steps.filter((s) => s.status === "complete").length;
+  const inProg = steps.filter((s) => s.status === "in_progress").length;
+  body(`${done} complete · ${inProg} in progress · ${Math.max(0, steps.length - done - inProg)} not started`);
+  y -= 6;
+
+  for (const s of steps) {
+    const n = String(s.step_number ?? "?").padStart(2, "0");
+    const status = String(s.status ?? "not_started");
+    const mark = status === "complete" ? "■" : status === "in_progress" ? "◐" : "□";
+    const color = status === "complete" ? persimmon : muted;
+    need(1);
+    page.drawText(mark, { x: MARGIN, y, size: 12, font: helvBold, color });
+    page.drawText(`Step ${n}`, { x: MARGIN + 18, y, size: 10, font: helvBold, color: ink });
+    page.drawText(status.replace("_", " "), { x: MARGIN + 80, y, size: 10, font: helv, color: inkSoft });
+    if (s.completed_at) {
+      page.drawText(fmt(s.completed_at), {
+        x: MARGIN + 220, y, size: 9, font: helv, color: muted,
+      });
+    }
+    y -= 16;
+  }
+
+  /* ─────────────────────── Documents ─────────────────────── */
+  if (docs.length > 0) {
+    pageBreak();
+    eyebrow("Document vault");
+    h1("Uploaded documents");
+    for (const d of docs) {
+      need(3);
+      page.drawText(String(d.display_name ?? d.slug ?? "Document"), {
+        x: MARGIN, y, size: 11, font: helvBold, color: ink,
+      });
+      y -= 14;
+      page.drawText(`Status: ${fmt(d.status)} · Uploaded ${fmt(d.uploaded_at)}`, {
+        x: MARGIN, y, size: 9, font: helv, color: muted,
+      });
+      y -= 16;
+    }
+  }
+
+  /* ─────────────────────── Mock interviews ─────────────────────── */
+  if (sessions.length > 0) {
+    pageBreak();
+    eyebrow("Mock interview history");
+    h1("Recorded sessions");
+    for (const s of sessions) {
+      need(4);
+      page.drawText(`Ended ${fmt(s.ended_at)}`, {
+        x: MARGIN, y, size: 11, font: helvBold, color: ink,
+      });
+      y -= 14;
+      if (s.overall_score != null) {
+        page.drawText(`Overall score: ${fmt(s.overall_score)}`, {
+          x: MARGIN, y, size: 10, font: helv, color: inkSoft,
+        });
+        y -= 14;
+      }
+      y -= 4;
+    }
+  }
+
+  /* ─────────────────────── AI chats ─────────────────────── */
+  if (threads.length > 0) {
+    pageBreak();
+    eyebrow("Ask GetStamped");
+    h1("AI chat threads");
+    body(`You have ${threads.length} thread${threads.length === 1 ? "" : "s"} and ${messages.length} recent message${messages.length === 1 ? "" : "s"} on record. The most recent threads are summarised below.`);
+    y -= 8;
+    for (const t of threads.slice(0, 12)) {
+      need(2);
+      page.drawText(String(t.title ?? "Untitled thread"), {
+        x: MARGIN, y, size: 10, font: helvBold, color: ink,
+      });
+      y -= 14;
+      page.drawText(`Created ${fmt(t.created_at)}`, {
+        x: MARGIN, y, size: 9, font: helv, color: muted,
+      });
+      y -= 14;
+    }
+  }
+
+  /* ─────────────────────── Activity ─────────────────────── */
+  if (activity.length > 0) {
+    pageBreak();
+    eyebrow("Activity log");
+    h1("Recent activity");
+    body("Most recent 50 step events, newest first.");
+    y -= 6;
+    for (const a of activity) {
+      need(1);
+      const line = `${fmt(a.created_at)} · ${String(a.event_type ?? a.kind ?? "event")} · Step ${fmt(a.step_number)}`;
+      page.drawText(line, { x: MARGIN, y, size: 9, font: helv, color: inkSoft });
+      y -= 14;
+    }
+  }
+
+  // Footer on the last page.
+  page.drawText(`Exported ${exportedAt} · GetStamped`, {
+    x: MARGIN, y: 40, size: 8, font: helvOb, color: muted,
+  });
+
+  const bytes = await pdf.save();
+  const base64 =
+    typeof Buffer !== "undefined"
+      ? Buffer.from(bytes).toString("base64")
+      : btoa(String.fromCharCode(...bytes));
+
   return {
     ok: true,
-    filename: `getstamped-export-${new Date().toISOString().slice(0, 10)}.json`,
-    jsonBase64: buffer.toString("base64"),
+    filename: `getstamped-export-${new Date().toISOString().slice(0, 10)}.pdf`,
+    jsonBase64: base64,
+    mimeType: "application/pdf",
   };
 }

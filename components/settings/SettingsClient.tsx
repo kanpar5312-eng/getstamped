@@ -341,8 +341,12 @@ export function SettingsClient({ initial, referral }: Props) {
       showToast(res.error);
       return;
     }
-    // Trigger download in the browser
-    const blob = new Blob([Buffer.from(res.jsonBase64, "base64")], { type: "application/json" });
+    // Decode the base64 PDF the server built and trigger a browser
+    // download. atob() works in every modern browser without polyfills.
+    const binary = atob(res.jsonBase64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: res.mimeType ?? "application/pdf" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -655,7 +659,7 @@ export function SettingsClient({ initial, referral }: Props) {
               <ul className="mt-6 space-y-3">
                 {[
                   { label: "Reset all progress", desc: "Clears completed steps. Documents stay.", action: () => setResetModal(true) },
-                  { label: "Export my data", desc: "GDPR · download a JSON archive of everything.", action: handleExport },
+                  { label: "Export my data", desc: "GDPR · download a readable PDF of everything.", action: handleExport },
                   { label: "Delete account", desc: "30-day grace period. Reactivate by signing in within 30 days.", action: () => setDeleteModal(true) },
                 ].map((row, i) => (
                   <li key={i} className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-[var(--color-paper-soft)] p-4">
