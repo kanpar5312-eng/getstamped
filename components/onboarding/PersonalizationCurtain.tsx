@@ -104,8 +104,12 @@ export function PersonalizationCurtain({
         <div className="pc-logo" aria-hidden>
           {/* Base ink ghost of the mark */}
           <LogoSvg className="pc-logo-ghost" />
-          {/* Persimmon fill copy, clipped by an animated rect that rises */}
-          <div className="pc-logo-fill" style={{ animationDuration: `${durationMs}ms` }}>
+          {/* Persimmon fill copy, clipped by an animated rect that rises.
+              The fill is intentionally faster than the overall curtain so
+              the logo is always 100% filled by ~1.8s — even if the curtain
+              exits early for any reason, the user never sees a half-filled
+              mark. The full-fill state holds via `forwards` until unmount. */}
+          <div className="pc-logo-fill" style={{ animationDuration: "1800ms" }}>
             <LogoSvg className="pc-logo-stroke" />
           </div>
           {/* Soft persimmon glow underneath, intensifies with progress */}
@@ -203,8 +207,6 @@ export function PersonalizationCurtain({
         }
         @keyframes pc-fill {
           0%   { clip-path: inset(100% 0 0 0); }
-          8%   { clip-path: inset(90%  0 0 0); }
-          92%  { clip-path: inset(0%   0 0 0); }
           100% { clip-path: inset(0%   0 0 0); }
         }
         .pc-logo-stroke { color: var(--color-persimmon); }
