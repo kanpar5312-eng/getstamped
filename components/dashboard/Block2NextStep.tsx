@@ -72,8 +72,7 @@ export function Block2NextStep({ data }: Props) {
         </p>
         <div className="mt-7">
           <Link
-            href="/onboarding"
-            prefetch={false}
+            href="/dashboard/timeline"
             className="btn-ember inline-flex items-center gap-2 rounded-lg px-5 py-[10px] text-[13px] font-medium transition-colors"
           >
             Set up your timeline →
