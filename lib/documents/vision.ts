@@ -6,7 +6,14 @@ const VISION_MODEL = "llama-3.2-90b-vision-preview";
 
 export type AiFeedback = {
   matches_expected: boolean;
-  issues: { severity: "blocker" | "warning"; message: string }[];
+  issues: {
+    severity: "blocker" | "warning";
+    /** Plain-language sentence explaining what is wrong. */
+    message: string;
+    /** One-sentence actionable correction the student should take.
+     *  Optional so historic rows without `fix` still render. */
+    fix?: string;
+  }[];
   extracted: { expiry_date?: string; name?: string };
 };
 
@@ -24,15 +31,22 @@ Your job:
 You MUST reply with ONLY valid JSON in this exact shape:
 {
   "matches_expected": boolean,
-  "issues": [{"severity": "blocker" | "warning", "message": "plain-language sentence"}],
+  "issues": [{
+    "severity": "blocker" | "warning",
+    "message": "plain-language sentence describing WHAT is wrong",
+    "fix":     "single short sentence telling the student HOW to fix it"
+  }],
   "extracted": {"expiry_date": "YYYY-MM-DD or omit", "name": "string or omit"}
 }
 
 Rules:
 - "blocker" = the document cannot be used as-is (wrong document, illegible, missing required field).
 - "warning" = usable but should be improved (slight glare, edges close to the crop).
-- Each "message" must be a single short sentence written FOR the student, e.g.
-  "The bottom edge is cut off — re-scan with all four corners visible."
+- "message" = ONE short sentence written FOR the student about what is wrong, e.g.
+  "The bottom edge is cut off, so the signature is not fully visible."
+- "fix" = ONE short, concrete sentence telling them exactly what to do, e.g.
+  "Re-scan on a flat surface with all four corners of the page inside the frame."
+- Every issue MUST include both "message" and "fix". Never omit the fix.
 - If the document matches and is fully legible with no warnings, return an empty issues array.
 - Do NOT use the word "verified". Do NOT promise visa approval.
 - Output JSON only. No markdown, no preamble.`;
@@ -102,6 +116,10 @@ export async function checkDocument(
             .map((i) => ({
               severity: i.severity === "blocker" ? "blocker" : "warning",
               message: String(i.message),
+              fix:
+                typeof i.fix === "string" && i.fix.trim().length > 0
+                  ? String(i.fix).trim()
+                  : undefined,
             }))
         : [],
       extracted:

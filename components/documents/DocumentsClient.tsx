@@ -12,7 +12,12 @@ type Plan = "free" | "solo" | "family";
 
 export type DocStatus = "missing" | "uploading" | "checking" | "attention" | "accepted";
 
-export type AiIssue = { severity: "blocker" | "warning"; message: string };
+export type AiIssue = {
+  severity: "blocker" | "warning";
+  message: string;
+  /** Optional actionable correction shown below the message. */
+  fix?: string;
+};
 
 export type DocRow = {
   id: string | null;
@@ -87,6 +92,7 @@ export function DocumentsClient({ plan, initialRows }: Props) {
               {
                 severity: "blocker",
                 message: `File is ${(file.size / 1024 / 1024).toFixed(1)} MB. Limit is 10 MB.`,
+                fix: "Compress the PDF or export the photo at a lower resolution, then upload again.",
               },
             ],
           },
@@ -103,6 +109,7 @@ export function DocumentsClient({ plan, initialRows }: Props) {
               {
                 severity: "blocker",
                 message: "Only PDF, JPG, PNG, or WEBP files are accepted.",
+                fix: "Re-save the file as PDF, JPG, PNG, or WEBP — most phones can export from Photos directly.",
               },
             ],
           },
@@ -122,7 +129,11 @@ export function DocumentsClient({ plan, initialRows }: Props) {
             status: "attention",
             aiFeedback: {
               issues: [
-                { severity: "blocker", message: data.error ?? "Upload failed." },
+                {
+                  severity: "blocker",
+                  message: data.error ?? "Upload failed.",
+                  fix: "Check your connection and try uploading the same file again.",
+                },
               ],
             },
           });
@@ -153,7 +164,8 @@ export function DocumentsClient({ plan, initialRows }: Props) {
                   severity: "warning",
                   message:
                     cdata.error ??
-                    "We couldn't check this automatically. Make sure it's clear and complete.",
+                    "We couldn't check this automatically.",
+                  fix: "Re-scan on a flat surface in bright, even light and re-upload — that fixes most check failures.",
                 },
               ],
             },
@@ -164,7 +176,13 @@ export function DocumentsClient({ plan, initialRows }: Props) {
         updateRow(slug, {
           status: "attention",
           aiFeedback: {
-            issues: [{ severity: "blocker", message: "Network error. Try again." }],
+            issues: [
+              {
+                severity: "blocker",
+                message: "Network error during upload.",
+                fix: "Check your internet connection and tap Upload again.",
+              },
+            ],
           },
         });
       }
@@ -448,7 +466,17 @@ function DocumentRowView({
                         : "mt-[6px] inline-block h-1.5 w-1.5 rounded-full bg-[var(--stone)]"
                     }
                   />
-                  <span className="text-[var(--ink-soft)]">{i.message}</span>
+                  <span className="flex flex-col gap-0.5">
+                    <span className="text-[var(--ink-soft)]">{i.message}</span>
+                    {i.fix && (
+                      <span className="text-[12px] text-[var(--ink-soft)] opacity-80">
+                        <span className="font-semibold text-[var(--ink)]">
+                          Fix:
+                        </span>{" "}
+                        {i.fix}
+                      </span>
+                    )}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -581,7 +609,15 @@ function DetailPanel({
                       key={idx}
                       className="text-[13px] text-[var(--ink-soft)] leading-snug"
                     >
-                      {i.message}
+                      <span className="block">{i.message}</span>
+                      {i.fix && (
+                        <span className="mt-1 block text-[12px] opacity-80">
+                          <span className="font-semibold text-[var(--ink)]">
+                            Fix:
+                          </span>{" "}
+                          {i.fix}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>
