@@ -52,13 +52,14 @@ export function MarketingLanding({ currency }: Props) {
       <Header />
       <main>
         <Hero />
-        {/* Typographic "what's inside" menu — sets up the four pillars
-            with marquee-on-hover rows before the deeper stacked cards. */}
-        <WhatsInside />
-        {/* Pinned, stacking feature cards. Replaces the prior
-            DOCUMENT RECEIVED divider + TrustStrip + FORM I-20 divider +
-            FeatureCycle sequence with a Lenis-smoothed 4-card stack. */}
+        {/* Pinned, stacking feature cards come first — they carry the
+            full Playbook / Document Vault / Mock Interview / Parent Share
+            story right after the hero. */}
         <StackedFeatureCards />
+        {/* Typographic "what's inside" menu — now lands after the
+            scroll-stack so it reads as a recap of the four pillars
+            before the deeper sections. */}
+        <WhatsInside />
         <FeaturesShowcase />
         <SectionDivider label="REVIEW COMPLETE" bg="ink" />
         <Pricing currency={currency} />

@@ -9,85 +9,74 @@
 
 :root {
   /* ════════════════════════════════════════════════════════════════════
-     NEW PALETTE (2026-06-30) — Cream surfaces · Forest green brand ·
-     Telegram blue secondary · Ink text · Warm borders. Every legacy
-     token name (--color-paper-*, --color-persimmon-*) is aliased
-     below so existing components automatically pick up the new colours
-     without any per-file find/replace.
+     BRAND PALETTE — four colours, nothing else.
+       • Persimmon (#E8622A) — primary CTA, accent, emphasis
+       • Beige     (#E3DDD0) — borders, raised hover surfaces
+       • Cream     (#F7F3EC) — page background + soft cards
+       • Ink       (#1C1917) — body text + dark sections
+     Every legacy token name still in the codebase (forest, tg,
+     nocturnal, forsytha, oceanic-noir, mystic-mint, deep-saffron,
+     gold, accent, paper) is aliased below so components automatically
+     re-skin to one of these four. Do not add new colour tokens.
      ════════════════════════════════════════════════════════════════════ */
 
-  /* SURFACES — cream paper, never pure white */
-  --color-cream:        #f5efe4;   /* page bg */
-  --color-cream-soft:   #faf6ed;   /* cards */
-  --color-cream-deep:   #ece4d3;   /* hover / raised */
-  --color-surface:      #ffffff;   /* inputs */
+  /* CREAM — surfaces */
+  --color-cream:        #F7F3EC;   /* page bg */
+  --color-cream-soft:   #FFFFFF;   /* cards / soft surfaces */
+  --color-cream-deep:   #EDE7DA;   /* hover / raised */
 
-  /* BRAND accent — deep forest green */
-  --color-forest:       #143a2f;   /* primary CTA, brand emphasis */
-  --color-forest-deep:  #0e2a22;   /* button hover */
-  --color-forest-soft:  #1d4d40;   /* subtle accents */
+  /* BEIGE — borders + warm hairlines */
+  --color-beige:        #E3DDD0;
+  --color-beige-soft:   #ECE6D8;
 
-  /* TOUCHPOINT accent — Telegram blue */
-  --color-tg:           #229ed9;
-  --color-tg-soft:      #2aabee;
-  --color-tg-deep:      #1c86b8;
-  --color-tg-tint:      #e8f4fb;
+  /* PERSIMMON — primary CTAs, brand accent */
+  --color-persimmon:      #E8622A;
+  --color-persimmon-deep: #C9501F;
+  --color-persimmon-soft: #F07040;
+  --color-persimmon-tint: #FFE4D8;
 
-  /* GREYS */
-  --color-gold:         #6a766f;
-  --color-gold-soft:    #ede4d2;
+  /* INK — text + dark sections */
+  --color-ink:          #1C1917;
+  --color-ink-soft:     #55524F;
+  --color-ink-deep:     #0F0E0D;
 
-  /* TEXT */
-  --color-ink:          #14211c;
-  --color-ink-soft:     #2a3a33;
-  --color-ink-deep:     #0e2a22;
-  --color-muted:        #6a766f;
+  /* Structural helpers (all resolve to one of the four brand families) */
+  --color-surface:      var(--color-cream-soft);
+  --color-border:       var(--color-beige);
+  --color-border-soft:  var(--color-beige-soft);
+  --color-muted:        #8B8784;
 
-  /* BORDERS */
-  --color-border:       #e2d8c6;
-  --color-border-soft:  #ede4d2;
-
-  /* ───── Legacy aliases — point at the new palette ───── */
+  /* ───── Legacy aliases — all four-colour mapped ───── */
   /* Paper → cream */
   --color-paper:        var(--color-cream);
   --color-paper-soft:   var(--color-cream-soft);
   --color-paper-deep:   var(--color-cream-deep);
-  /* Persimmon → forest (primary CTA) */
-  --color-persimmon:      var(--color-forest);
-  --color-persimmon-deep: var(--color-forest-deep);
-  --color-persimmon-tint: #d8e6e0;
 
-  /* ────────────────────────────────────────────────────────────────────
-     Extended palette — added 2026-06-25.
-     Used for dark sections (Nocturnal / Oceanic Noir), warm accents
-     (Forsytha / Deep Saffron), and soft breathing-room backgrounds
-     (Mystic Mint / Arctic Powder). Persimmon / Ink / Paper are the
-     primary brand identity and stay where they are.
-
-     Rule of thumb:
-       • Structure  → Nocturnal, Oceanic Noir
-       • Energy     → Forsytha (badges, stars, never as body text),
-                      Deep Saffron (gradient bridge, secondary icons)
-       • Breathing  → Arctic Powder, Mystic Mint
-     ──────────────────────────────────────────────────────────────────── */
-  --color-arctic-powder: #F1F6F4;
-  --color-mystic-mint:   #D9E8E2;
-  --color-forsytha:      #FFC801;
-  --color-deep-saffron:  #FF9932;
-  --color-nocturnal:     #114C5A;
-  --color-oceanic-noir:  #172B36;
-
-  /* Soft tints derived from the palette, for borders and surfaces. */
-  --color-mystic-mint-soft:  rgba(217, 232, 226, 0.45);
-  --color-forsytha-tint:     rgba(255, 200, 1, 0.18);
-  --color-deep-saffron-tint: rgba(255, 153, 50, 0.16);
-  --color-nocturnal-soft:    rgba(17, 76, 90, 0.12);
-
-  /* Accent / gold aliases used by older surfaces — keep them pointing
-     at the active palette so legacy class names still resolve. */
-  --color-accent:       var(--color-forest);
-  --color-accent-soft:  var(--color-forest-soft);
-  --color-accent-deep:  var(--color-forest-deep);
+  /* Forest / Telegram / Nocturnal / Oceanic-Noir / Gold etc. — all
+     re-pointed at Ink (dark) or Persimmon (accent) so no off-palette
+     colour can leak through a legacy class name. */
+  --color-forest:       var(--color-ink);
+  --color-forest-deep:  var(--color-ink-deep);
+  --color-forest-soft:  var(--color-ink-soft);
+  --color-tg:           var(--color-ink);
+  --color-tg-soft:      var(--color-ink-soft);
+  --color-tg-deep:      var(--color-ink-deep);
+  --color-tg-tint:      var(--color-cream-deep);
+  --color-nocturnal:    var(--color-ink);
+  --color-nocturnal-soft: rgba(28, 25, 23, 0.12);
+  --color-oceanic-noir: var(--color-ink-deep);
+  --color-arctic-powder: var(--color-cream);
+  --color-mystic-mint:  var(--color-cream-deep);
+  --color-mystic-mint-soft: rgba(227, 221, 208, 0.45);
+  --color-forsytha:     var(--color-persimmon);
+  --color-forsytha-tint: var(--color-persimmon-tint);
+  --color-deep-saffron: var(--color-persimmon-soft);
+  --color-deep-saffron-tint: rgba(232, 98, 42, 0.16);
+  --color-gold:         var(--color-muted);
+  --color-gold-soft:    var(--color-beige-soft);
+  --color-accent:       var(--color-persimmon);
+  --color-accent-soft:  var(--color-persimmon-soft);
+  --color-accent-deep:  var(--color-persimmon-deep);
   --color-accent-tint:  var(--color-persimmon-tint);
 
   /* ────────────────────────────────────────────────────────────────────
