@@ -20,8 +20,8 @@ const WARM_PAPER = "#FAF5EE";
 const PERSIMMON = "#E8622A";
 const GREEN = "#3FB37F";
 const RED = "#E5484D";
-const NOCTURNAL = "#114C5A";
-const FORSYTHA = "#FFC801";
+const NOCTURNAL = "var(--color-ink)";
+const FORSYTHA = "var(--color-persimmon)";
 void INK;
 void FORSYTHA;
 

@@ -15,8 +15,8 @@ import Carousel, { type CarouselItem } from "@/components/ui/Carousel";
 const INK = "#1C1917";
 const PAPER = "#FAF8F4";
 const PERSIMMON = "#E8622A";
-const NOCTURNAL = "#114C5A";
-const FORSYTHA = "#FFC801";
+const NOCTURNAL = "var(--color-ink)";
+const FORSYTHA = "var(--color-persimmon)";
 // Kept for any consumer that imports the constants; not all are used.
 void INK;
 

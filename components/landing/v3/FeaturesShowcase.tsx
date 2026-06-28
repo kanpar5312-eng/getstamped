@@ -10,7 +10,7 @@ const ink = "#1C1917";
 const persimmon = "#E8622A";
 const paper = "#FAF8F4";
 const muted = "rgba(28,25,23,0.62)";
-const nocturnal = "#114C5A";
+const nocturnal = "var(--color-ink)";
 void ink;
 
 const cardOuter = {
