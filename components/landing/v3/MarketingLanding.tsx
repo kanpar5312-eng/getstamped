@@ -28,7 +28,7 @@ import { Footer } from "@/components/landing/Footer";
 import type { Currency } from "@/lib/pricing";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
-import { FeaturesShowcase } from "./FeaturesShowcase";
+import { FeaturesBento } from "./FeaturesBento";
 import { Pricing } from "./Pricing";
 import { Reviews } from "./Reviews";
 import { FAQ } from "./FAQ";
@@ -38,7 +38,6 @@ import { SectionDivider } from "./SectionDivider";
 import { ProblemSlam } from "./ProblemSlam";
 import { Styles } from "./Styles";
 import { StackedFeatureCards } from "./StackedFeatureCards";
-import { WhatsInside } from "./WhatsInside";
 
 type Props = {
   currency: Currency;
@@ -52,14 +51,11 @@ export function MarketingLanding({ currency }: Props) {
       <Header />
       <main>
         <Hero />
-        {/* Typographic "what's inside" menu — sets up the four pillars
-            with marquee-on-hover rows before the deeper stacked cards. */}
-        <WhatsInside />
-        {/* Pinned, stacking feature cards. Replaces the prior
-            DOCUMENT RECEIVED divider + TrustStrip + FORM I-20 divider +
-            FeatureCycle sequence with a Lenis-smoothed 4-card stack. */}
+        {/* Wavly-style bento grid — replaces the older WhatsInside marquee
+            and CardSwap showcase. ScrollStack below still carries the
+            longer-form Playbook/Vault/Mock/Parent pinned scroll story. */}
+        <FeaturesBento />
         <StackedFeatureCards />
-        <FeaturesShowcase />
         <SectionDivider label="REVIEW COMPLETE" bg="ink" />
         <ProblemSlam />
         <Pricing currency={currency} />
