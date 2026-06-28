@@ -8,27 +8,54 @@
    ------------------------------------------------------------------------- */
 
 :root {
-  /* ---------- BRAND: Ink + Persimmon + Paper ---------- */
+  /* ════════════════════════════════════════════════════════════════════
+     NEW PALETTE (2026-06-30) — Cream surfaces · Forest green brand ·
+     Telegram blue secondary · Ink text · Warm borders. Every legacy
+     token name (--color-paper-*, --color-persimmon-*) is aliased
+     below so existing components automatically pick up the new colours
+     without any per-file find/replace.
+     ════════════════════════════════════════════════════════════════════ */
 
-  /* Paper — warm off-white surfaces */
-  --color-paper:        #F7F3EC;
-  --color-paper-soft:   #FFFFFF;
-  --color-paper-deep:   #EDE7DA;
+  /* SURFACES — cream paper, never pure white */
+  --color-cream:        #f5efe4;   /* page bg */
+  --color-cream-soft:   #faf6ed;   /* cards */
+  --color-cream-deep:   #ece4d3;   /* hover / raised */
+  --color-surface:      #ffffff;   /* inputs */
 
-  /* Ink — primary text + brand emphasis */
-  --color-ink:          #1C1B1A;
-  --color-ink-soft:     #55524F;
-  --color-ink-deep:     #1A2330;
+  /* BRAND accent — deep forest green */
+  --color-forest:       #143a2f;   /* primary CTA, brand emphasis */
+  --color-forest-deep:  #0e2a22;   /* button hover */
+  --color-forest-soft:  #1d4d40;   /* subtle accents */
 
-  /* Persimmon — primary CTAs, brand accent */
-  --color-persimmon:      #FF5B2E;
-  --color-persimmon-deep: #D9461E;
-  --color-persimmon-tint: #FFE4D8;
+  /* TOUCHPOINT accent — Telegram blue */
+  --color-tg:           #229ed9;
+  --color-tg-soft:      #2aabee;
+  --color-tg-deep:      #1c86b8;
+  --color-tg-tint:      #e8f4fb;
 
-  /* Hairlines / structure */
-  --color-border:       #E3DDD0;
-  --color-border-soft:  #ECE6D8;
-  --color-muted:        #8B8784;
+  /* GREYS */
+  --color-gold:         #6a766f;
+  --color-gold-soft:    #ede4d2;
+
+  /* TEXT */
+  --color-ink:          #14211c;
+  --color-ink-soft:     #2a3a33;
+  --color-ink-deep:     #0e2a22;
+  --color-muted:        #6a766f;
+
+  /* BORDERS */
+  --color-border:       #e2d8c6;
+  --color-border-soft:  #ede4d2;
+
+  /* ───── Legacy aliases — point at the new palette ───── */
+  /* Paper → cream */
+  --color-paper:        var(--color-cream);
+  --color-paper-soft:   var(--color-cream-soft);
+  --color-paper-deep:   var(--color-cream-deep);
+  /* Persimmon → forest (primary CTA) */
+  --color-persimmon:      var(--color-forest);
+  --color-persimmon-deep: var(--color-forest-deep);
+  --color-persimmon-tint: #d8e6e0;
 
   /* ────────────────────────────────────────────────────────────────────
      Extended palette — added 2026-06-25.
@@ -56,21 +83,12 @@
   --color-deep-saffron-tint: rgba(255, 153, 50, 0.16);
   --color-nocturnal-soft:    rgba(17, 76, 90, 0.12);
 
-  /* ---------- LEGACY ALIASES (kept so existing files keep rendering
-     while the codebase is being swept; do not add new uses) ---------- */
-  --color-cream:        var(--color-paper);
-  --color-cream-soft:   var(--color-paper-soft);
-  --color-cream-deep:   var(--color-paper-deep);
-  --color-surface:      var(--color-paper-soft);
-  --color-forest:       var(--color-ink);
-  --color-forest-deep:  var(--color-ink-deep);
-  --color-forest-soft:  var(--color-ink-soft);
-  --color-accent:       var(--color-persimmon);
-  --color-accent-soft:  var(--color-persimmon);
-  --color-accent-deep:  var(--color-persimmon-deep);
+  /* Accent / gold aliases used by older surfaces — keep them pointing
+     at the active palette so legacy class names still resolve. */
+  --color-accent:       var(--color-forest);
+  --color-accent-soft:  var(--color-forest-soft);
+  --color-accent-deep:  var(--color-forest-deep);
   --color-accent-tint:  var(--color-persimmon-tint);
-  --color-gold:         var(--color-muted);
-  --color-gold-soft:    var(--color-border-soft);
 
   /* ────────────────────────────────────────────────────────────────────
      Apple-style polish tokens — radius, glass, shadow.
