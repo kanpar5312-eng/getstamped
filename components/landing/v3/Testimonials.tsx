@@ -261,7 +261,7 @@ export function Testimonials() {
         position: "relative",
         background: NOCTURNAL,
         color: PAPER,
-        padding: "clamp(80px, 12vw, 160px) 24px",
+        padding: "clamp(56px, 7vw, 96px) 24px",
         overflow: "hidden",
       }}
     >

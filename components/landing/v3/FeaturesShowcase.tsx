@@ -74,7 +74,7 @@ export function FeaturesShowcase() {
         position: "relative",
         background: paper,
         color: ink,
-        padding: "clamp(80px, 12vw, 160px) 24px",
+        padding: "clamp(56px, 7vw, 96px) 24px",
       }}
     >
       <div
@@ -86,7 +86,7 @@ export function FeaturesShowcase() {
           gridTemplateColumns: "1.05fr 1fr",
           gap: 48,
           alignItems: "center",
-          minHeight: 720,
+          minHeight: 540,
         }}
       >
         {/* Left — editorial copy */}
@@ -174,7 +174,7 @@ export function FeaturesShowcase() {
           style={{
             position: "relative",
             height: 720,
-            minHeight: 720,
+            minHeight: 540,
           }}
         >
           <CardSwap
@@ -422,13 +422,13 @@ export function FeaturesShowcase() {
           }
           .gs-features-cards {
             height: 600px !important;
-            min-height: 600px !important;
+            min-height: 480px !important;
           }
         }
         @media (max-width: 480px) {
           .gs-features-cards {
             height: 520px !important;
-            min-height: 520px !important;
+            min-height: 420px !important;
           }
         }
       `}</style>

@@ -28,8 +28,8 @@ export function ProblemSlam() {
       style={{
         background: "var(--color-ink)",
         color: "var(--color-paper)",
-        paddingTop: 140,
-        paddingBottom: 100,
+        paddingTop: 80,
+        paddingBottom: 60,
       }}
     >
       {/* Centered column. width:100% + maxWidth + margin auto guarantees

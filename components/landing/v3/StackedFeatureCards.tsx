@@ -75,7 +75,7 @@ function CardShell({
         gridTemplateColumns: "1.05fr 1fr",
         gap: "clamp(32px, 5vw, 80px)",
         alignItems: "center",
-        padding: "clamp(40px, 5vw, 80px) clamp(24px, 6vw, 96px)",
+        padding: "clamp(32px, 4vw, 56px) clamp(24px, 6vw, 80px)",
       }}
     >
       <div className="gs-sc-copy" style={{ maxWidth: 560 }}>
