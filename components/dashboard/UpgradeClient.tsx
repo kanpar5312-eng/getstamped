@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { usePricing } from "@/lib/PricingContext";
 import { PRICES, type Currency } from "@/lib/pricing";
+import { applyPromoCode } from "@/app/actions/promo";
 
 type Plan = "free" | "solo" | "family";
 
@@ -388,6 +391,14 @@ export function UpgradeClient({ currentPlan, earlyBirdRemaining }: Props) {
         </button>
       </div>
 
+      {/* Promo code (visible only to free users; if they're already on
+          a paid plan there's nothing to unlock). */}
+      {currentPlan === "free" && (
+        <div className="mt-10 flex justify-center">
+          <PromoCodeBox />
+        </div>
+      )}
+
       {/* 3-card grid */}
       <section className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 items-stretch">
         {TIERS.map((t) => (
@@ -433,5 +444,84 @@ export function UpgradeClient({ currentPlan, earlyBirdRemaining }: Props) {
         for early-bird interest.
       </p>
     </div>
+  );
+}
+
+/* ─────────────────────────── Promo code box ─────────────────────────── */
+
+function PromoCodeBox() {
+  const router = useRouter();
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<
+    | { tone: "ok"; text: string }
+    | { tone: "err"; text: string }
+    | null
+  >(null);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (busy || !code.trim()) return;
+    setBusy(true);
+    setResult(null);
+    const r = await applyPromoCode(code);
+    setBusy(false);
+    if (r.ok) {
+      setResult({ tone: "ok", text: r.message });
+      // Pull fresh server data so currentPlan reflects the upgrade
+      // (the promo box hides + paid tiers re-render as current).
+      router.refresh();
+    } else {
+      setResult({ tone: "err", text: r.error });
+    }
+  };
+
+  return (
+    <form
+      onSubmit={onSubmit}
+      className="w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper-soft)] p-4 sm:p-5"
+      aria-label="Promo code"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[12px] font-medium text-[var(--color-ink)]">
+          Have a promo code?
+        </span>
+        <span className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-muted)]">
+          Unlocks paid plan
+        </span>
+      </div>
+      <div className="mt-3 flex items-center gap-2">
+        <input
+          type="text"
+          value={code}
+          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          placeholder="e.g. BETA10"
+          autoCapitalize="characters"
+          autoComplete="off"
+          className="flex-1 rounded-lg border border-[var(--color-border)] bg-transparent px-3 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted)]/70 outline-none focus:border-[var(--color-persimmon)]"
+          disabled={busy}
+        />
+        <button
+          type="submit"
+          disabled={busy || !code.trim()}
+          className="inline-flex items-center justify-center rounded-lg bg-[var(--color-persimmon)] px-4 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-50"
+        >
+          {busy ? "Applying…" : "Apply"}
+        </button>
+      </div>
+      {result && (
+        <p
+          role={result.tone === "err" ? "alert" : "status"}
+          className={
+            "mt-3 text-[12px] " +
+            (result.tone === "ok"
+              ? "text-[var(--color-persimmon-deep)]"
+              : "text-red-600")
+          }
+        >
+          {result.text}
+        </p>
+      )}
+    </form>
   );
 }
