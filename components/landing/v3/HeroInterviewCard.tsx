@@ -213,7 +213,7 @@ function Bubble({
           background: isLeft
             ? "rgba(255,255,255,0.75)"
             : "var(--color-ink)",
-          color: isLeft ? "var(--color-ink)" : "#FAF8F4",
+          color: isLeft ? "var(--color-ink)" : "var(--color-cream-soft)",
           border: isLeft ? "1px solid rgba(28,25,23,0.08)" : "none",
           boxShadow: isLeft
             ? "0 6px 16px -10px rgba(28,25,23,0.18)"

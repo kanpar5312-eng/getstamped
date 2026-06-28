@@ -153,7 +153,7 @@ export function FeaturesBento() {
                     fontSize: "clamp(1.5rem, 2.4vw, 2rem)",
                     lineHeight: 1.15,
                     letterSpacing: "-0.018em",
-                    color: "#FAF8F4",
+                    color: "var(--color-cream-soft)",
                     margin: "10px 0 0 0",
                     maxWidth: 540,
                   }}
@@ -221,7 +221,7 @@ function Cell({
         border: `1px solid ${border}`,
         borderRadius: 20,
         padding: 26,
-        color: isLight ? "var(--color-ink)" : "#FAF8F4",
+        color: isLight ? "var(--color-ink)" : "var(--color-cream-soft)",
         transition: "border-color 220ms ease, transform 220ms ease",
         boxShadow: isLight
           ? "0 1px 0 rgba(28,25,23,0.02)"
@@ -268,7 +268,7 @@ function Inner({
           fontSize: "clamp(1.15rem, 1.6vw, 1.5rem)",
           lineHeight: 1.18,
           letterSpacing: "-0.015em",
-          color: dark ? "#FAF8F4" : "var(--color-ink)",
+          color: dark ? "var(--color-cream-soft)" : "var(--color-ink)",
           margin: 0,
         }}
       >
@@ -336,7 +336,7 @@ function PlaybookMock() {
                 : r.next
                 ? "1.5px solid var(--color-forest)"
                 : "1.5px solid var(--color-border)",
-              color: "#FAF8F4",
+              color: "var(--color-cream-soft)",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
@@ -596,7 +596,7 @@ function PriceMock() {
           fontFamily: "var(--font-display-stack)",
           fontSize: 42,
           letterSpacing: "-0.02em",
-          color: "#FAF8F4",
+          color: "var(--color-cream-soft)",
         }}
       >
         ₹2,999
@@ -655,7 +655,7 @@ function ErrorCycler() {
             alignItems: "center",
             gap: 10,
             fontSize: 13.5,
-            color: "#FAF8F4",
+            color: "var(--color-cream-soft)",
           }}
         >
           <span

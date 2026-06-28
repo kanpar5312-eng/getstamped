@@ -121,7 +121,7 @@ export function Hero() {
               fontFamily: "var(--font-display-stack)",
               fontWeight: 400,
               fontSize: "clamp(2.6rem, 6vw, 4rem)",
-              color: "#FAF8F4",
+              color: "var(--color-cream-soft)",
               lineHeight: 1.04,
               letterSpacing: "-0.025em",
               margin: "20px 0 0 0",
@@ -242,7 +242,7 @@ export function Hero() {
         }
         .gs-hero-primary {
           background: var(--color-forest);
-          color: #FAF8F4;
+          color: var(--color-cream-soft);
           font-family: var(--font-sans-stack);
           font-size: 14px;
           font-weight: 600;
@@ -280,7 +280,7 @@ export function Hero() {
         }
         @media (hover: hover) and (pointer: fine) {
           .gs-hero-secondary:hover {
-            color: #FAF8F4;
+            color: var(--color-cream-soft);
             border-color: rgba(250,248,244,0.45);
             background: rgba(250,248,244,0.04);
           }

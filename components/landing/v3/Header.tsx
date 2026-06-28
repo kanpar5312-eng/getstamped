@@ -133,7 +133,7 @@ export function Header() {
                 padding: "9px 16px",
                 borderRadius: 10,
                 background: "var(--color-forest)",
-                color: "#FAF8F4",
+                color: "var(--color-cream-soft)",
                 fontFamily: "var(--font-sans-stack)",
                 fontSize: 13.5,
                 fontWeight: 600,
