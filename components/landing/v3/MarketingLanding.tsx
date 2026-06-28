@@ -36,7 +36,6 @@ import { FAQ } from "./FAQ";
 import { StampedCloser } from "./StampedCloser";
 import { ScrollTransitions } from "./ScrollTransitions";
 import { SectionDivider } from "./SectionDivider";
-import { ProblemSlam } from "./ProblemSlam";
 import { Styles } from "./Styles";
 import { StackedFeatureCards } from "./StackedFeatureCards";
 
@@ -59,7 +58,6 @@ export function MarketingLanding({ currency }: Props) {
         <HowItWorks />
         <StackedFeatureCards />
         <SectionDivider label="REVIEW COMPLETE" bg="ink" />
-        <ProblemSlam />
         <Pricing currency={currency} />
         <SectionDivider label="APPROVED FOR ENTRY" bg="paper" />
         {/* Testimonials removed per Wavly redesign brief. Reviews stays
