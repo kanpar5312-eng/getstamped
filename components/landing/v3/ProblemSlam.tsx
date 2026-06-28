@@ -84,8 +84,8 @@ export function ProblemSlam() {
                 display: "flex",
                 alignItems: "center",
                 gap: 14,
-                paddingTop: 14,
-                paddingBottom: 14,
+                paddingTop: 7,
+                paddingBottom: 7,
                 borderBottom: "1px solid rgba(245, 239, 230, 0.10)",
               }}
             >
