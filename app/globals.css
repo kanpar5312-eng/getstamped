@@ -8,78 +8,69 @@
    ------------------------------------------------------------------------- */
 
 :root {
-  /* ════════════════════════════════════════════════════════════════════
-     Wavly-inspired token system (2026-06-30).
-     Surfaces — Cream family · Brand — Persimmon (Forest alias) ·
-     Secondary accent — Nocturnal (TG alias) · Text — Ink family ·
-     Borders. All other older tokens at the bottom point here so
-     existing components keep rendering against the new palette.
-     ════════════════════════════════════════════════════════════════════ */
+  /* ---------- BRAND: Ink + Persimmon + Paper ---------- */
 
-  /* SURFACES */
-  --color-cream:        #f5efe4;   /* page bg */
-  --color-cream-soft:   #faf6ed;   /* cards */
-  --color-cream-deep:   #ece4d3;   /* hover / sunken */
-  --color-surface:      #ffffff;   /* inputs */
+  /* Paper — warm off-white surfaces */
+  --color-paper:        #F7F3EC;
+  --color-paper-soft:   #FFFFFF;
+  --color-paper-deep:   #EDE7DA;
 
-  /* BRAND — Persimmon (kept as primary, named Forest in the system) */
-  --color-forest:       #E8622A;   /* primary CTA, accent */
-  --color-forest-deep:  #c9501f;   /* button hover */
-  --color-forest-soft:  #f07040;   /* subtle accents */
+  /* Ink — primary text + brand emphasis */
+  --color-ink:          #1C1B1A;
+  --color-ink-soft:     #55524F;
+  --color-ink-deep:     #1A2330;
 
-  /* SECONDARY ACCENT — Nocturnal (TG) */
-  --color-tg:           #114C5A;   /* focus, dots, dark surfaces */
-  --color-tg-soft:      #1a6070;
-  --color-tg-deep:      #0d3a45;
-  --color-tg-tint:      #e6f0f2;
-
-  /* TEXT */
-  --color-ink:          #1C1917;   /* primary text */
-  --color-ink-soft:     #3a3330;   /* secondary text */
-  --color-ink-deep:     #0d3a45;   /* alias to TG-deep for dark headings */
-  --color-muted:        #7a6f6a;   /* metadata */
-
-  /* BORDERS */
-  --color-border:       #e2d8c6;
-  --color-border-soft:  #ede4d2;
-
-  /* ──────────── PERSIMMON ALIASES (legacy `--color-persimmon-*`
-     tokens used widely across the app — keep mapped to the same
-     Forest brand color so swapping the variable system doesn't
-     require a per-component find/replace.) ──────────── */
-  --color-persimmon:      var(--color-forest);
-  --color-persimmon-deep: var(--color-forest-deep);
+  /* Persimmon — primary CTAs, brand accent */
+  --color-persimmon:      #FF5B2E;
+  --color-persimmon-deep: #D9461E;
   --color-persimmon-tint: #FFE4D8;
 
-  /* ──────────── PAPER ALIASES — point at the cream family so any
-     remaining `--color-paper-*` usage maps to the new surfaces. */
-  --color-paper:        var(--color-cream);
-  --color-paper-soft:   var(--color-cream-soft);
-  --color-paper-deep:   var(--color-cream-deep);
+  /* Hairlines / structure */
+  --color-border:       #E3DDD0;
+  --color-border-soft:  #ECE6D8;
+  --color-muted:        #8B8784;
 
-  /* ---------- LEGACY ALIASES (kept so existing files keep rendering
-     while the codebase is being swept; do not add new uses) ---------- */
-  --color-accent:       var(--color-forest);
-  --color-accent-soft:  var(--color-forest-soft);
-  --color-accent-deep:  var(--color-forest-deep);
-  --color-accent-tint:  var(--color-persimmon-tint);
-  --color-gold:         var(--color-muted);
-  --color-gold-soft:    var(--color-border-soft);
-  /* The old "Nocturnal" name pointed at the same #114C5A as TG; keep
-     it as an alias so any leftover usage still resolves correctly. */
-  --color-nocturnal:    var(--color-tg);
-  --color-nocturnal-soft: rgba(17, 76, 90, 0.12);
-  /* Forsytha (yellow badge) and Deep Saffron (gradient bridge) are not
-     in the Wavly palette, but a handful of badges still reference them.
-     Keep the literal hex so those visuals don't degrade. */
+  /* ────────────────────────────────────────────────────────────────────
+     Extended palette — added 2026-06-25.
+     Used for dark sections (Nocturnal / Oceanic Noir), warm accents
+     (Forsytha / Deep Saffron), and soft breathing-room backgrounds
+     (Mystic Mint / Arctic Powder). Persimmon / Ink / Paper are the
+     primary brand identity and stay where they are.
+
+     Rule of thumb:
+       • Structure  → Nocturnal, Oceanic Noir
+       • Energy     → Forsytha (badges, stars, never as body text),
+                      Deep Saffron (gradient bridge, secondary icons)
+       • Breathing  → Arctic Powder, Mystic Mint
+     ──────────────────────────────────────────────────────────────────── */
   --color-arctic-powder: #F1F6F4;
   --color-mystic-mint:   #D9E8E2;
   --color-forsytha:      #FFC801;
   --color-deep-saffron:  #FF9932;
+  --color-nocturnal:     #114C5A;
   --color-oceanic-noir:  #172B36;
+
+  /* Soft tints derived from the palette, for borders and surfaces. */
   --color-mystic-mint-soft:  rgba(217, 232, 226, 0.45);
   --color-forsytha-tint:     rgba(255, 200, 1, 0.18);
   --color-deep-saffron-tint: rgba(255, 153, 50, 0.16);
+  --color-nocturnal-soft:    rgba(17, 76, 90, 0.12);
+
+  /* ---------- LEGACY ALIASES (kept so existing files keep rendering
+     while the codebase is being swept; do not add new uses) ---------- */
+  --color-cream:        var(--color-paper);
+  --color-cream-soft:   var(--color-paper-soft);
+  --color-cream-deep:   var(--color-paper-deep);
+  --color-surface:      var(--color-paper-soft);
+  --color-forest:       var(--color-ink);
+  --color-forest-deep:  var(--color-ink-deep);
+  --color-forest-soft:  var(--color-ink-soft);
+  --color-accent:       var(--color-persimmon);
+  --color-accent-soft:  var(--color-persimmon);
+  --color-accent-deep:  var(--color-persimmon-deep);
+  --color-accent-tint:  var(--color-persimmon-tint);
+  --color-gold:         var(--color-muted);
+  --color-gold-soft:    var(--color-border-soft);
 
   /* ────────────────────────────────────────────────────────────────────
      Apple-style polish tokens — radius, glass, shadow.

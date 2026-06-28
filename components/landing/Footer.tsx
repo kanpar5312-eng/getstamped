@@ -1,16 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { usePricing } from "@/lib/PricingContext";
 
-/* ════════════════════════════════════════════════════════════════════════
-   Footer — Wavly 5-column layout. Cream-soft surface, Persimmon hairline
-   at the top, brand block + Product / Company / Legal / Connect columns,
-   bottom strip with copyright + tiny inline links.
-   ═════════════════════════════════════════════════════════════════════════ */
-
-const EMAIL = "getstamped.online@gmail.com";
+const EMAIL = "founder@getstamped.app";
 
 type LinkItem = { label: string; href: string; external?: boolean };
 
@@ -19,7 +14,7 @@ const PRODUCT: LinkItem[] = [
   { label: "Pricing", href: "/#pricing" },
   { label: "How it works", href: "/#how-it-works" },
   { label: "FAQ", href: "/#faq" },
-  { label: "Mock interview", href: "/dashboard/mock-interview" },
+  { label: "Mock interview", href: "/#voice" },
 ];
 
 const COMPANY: LinkItem[] = [
@@ -36,29 +31,24 @@ const LEGAL: LinkItem[] = [
   { label: "Disclaimer", href: "/terms#disclaimer-of-warranty" },
 ];
 
-const CONNECT: LinkItem[] = [
-  { label: "Twitter / X", href: "https://twitter.com", external: true },
-  { label: "Instagram", href: "https://instagram.com", external: true },
-  { label: EMAIL, href: `mailto:${EMAIL}`, external: true },
-];
-
-function Out({ item }: { item: LinkItem }) {
-  const cls =
-    "text-[13.5px] text-[var(--color-ink-soft)] hover:text-[var(--color-forest)] transition-colors";
+function LinkOut({ item }: { item: LinkItem }) {
   if (item.external) {
     return (
       <a
         href={item.href}
         target={item.href.startsWith("mailto:") ? undefined : "_blank"}
         rel="noopener noreferrer"
-        className={cls}
+        className="text-sm text-[var(--color-paper)] hover:text-[var(--color-forsytha)] transition-colors"
       >
         {item.label}
       </a>
     );
   }
   return (
-    <Link href={item.href} className={cls}>
+    <Link
+      href={item.href}
+      className="text-sm text-[var(--color-paper)] hover:text-[var(--color-forsytha)] transition-colors"
+    >
       {item.label}
     </Link>
   );
@@ -67,23 +57,11 @@ function Out({ item }: { item: LinkItem }) {
 function Column({ heading, items }: { heading: string; items: LinkItem[] }) {
   return (
     <div>
-      <h4
-        style={{
-          fontFamily: "var(--font-mono-stack, var(--font-sans-stack))",
-          fontSize: 10,
-          letterSpacing: "0.24em",
-          textTransform: "uppercase",
-          color: "var(--color-muted)",
-          margin: 0,
-          fontWeight: 700,
-        }}
-      >
-        {heading}
-      </h4>
-      <ul style={{ listStyle: "none", margin: "16px 0 0", padding: 0, display: "grid", gap: 10 }}>
+      <Eyebrow className="!text-[var(--color-paper)]/55">{heading}</Eyebrow>
+      <ul className="mt-5 space-y-3">
         {items.map((item) => (
           <li key={item.label}>
-            <Out item={item} />
+            <LinkOut item={item} />
           </li>
         ))}
       </ul>
@@ -97,136 +75,105 @@ export function Footer() {
   const otherSymbol = currency === "INR" ? "$" : "₹";
 
   return (
-    <footer
-      style={{
-        position: "relative",
-        background: "var(--color-cream-soft)",
-        borderTop: "1px solid var(--color-border-soft)",
-        color: "var(--color-ink)",
-      }}
-    >
-      {/* Persimmon hairline at the very top */}
-      <span
+    <footer className="relative w-full bg-[var(--color-oceanic-noir)] text-[var(--color-paper)]">
+      <div
         aria-hidden
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          top: 0,
-          height: 1,
-          background:
-            "linear-gradient(90deg, transparent 0%, rgba(232,98,42,0.6) 50%, transparent 100%)",
-        }}
+        className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--color-persimmon)]/80 to-transparent"
       />
 
-      <div
-        className="mx-auto max-w-7xl"
-        style={{ padding: "56px 24px 24px" }}
-      >
-        <div
-          className="gs-foot-grid grid"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-            gap: 40,
-          }}
-        >
-          {/* Brand block — spans 2 cols on desktop */}
-          <div className="gs-foot-brand" style={{ gridColumn: "span 2" }}>
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-10 pt-16 lg:pt-20 pb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-10">
+          {/* Brand block — 2 of 5 conceptual cols */}
+          <div className="lg:col-span-4 max-w-[360px]">
             <Link
               href="/"
               aria-label="GetStamped — home"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                color: "var(--color-ink)",
-                textDecoration: "none",
-                fontFamily: "var(--font-display-stack)",
-                fontSize: 22,
-              }}
+              className="inline-flex items-center gap-2 text-[var(--color-paper)]"
             >
               <BrandMark size={28} />
-              GetStamped
+              <span className="font-display text-[22px] leading-none tracking-tight text-[var(--color-paper)]">
+                GetStamped
+              </span>
             </Link>
-            <p
-              style={{
-                marginTop: 14,
-                fontSize: 14,
-                lineHeight: 1.6,
-                color: "var(--color-ink-soft)",
-                maxWidth: 320,
-              }}
-            >
-              F-1 visa prep, end to end. Built by a 17-year-old.
+            <p className="mt-5 text-sm leading-relaxed text-[var(--color-paper)]/75">
+              F-1 visa prep, end to end.
             </p>
-            <button
-              type="button"
-              onClick={toggle}
-              style={{
-                marginTop: 16,
-                background: "transparent",
-                border: "1px solid var(--color-border)",
-                borderRadius: 999,
-                padding: "6px 14px",
-                fontFamily: "var(--font-mono-stack, var(--font-sans-stack))",
-                fontSize: 11,
-                color: "var(--color-ink-soft)",
-                cursor: "pointer",
-              }}
-            >
-              Pricing in {currency === "INR" ? "₹" : "$"} · switch to {otherSymbol}
-            </button>
+            <p className="mt-3 text-xs text-[var(--color-paper)]/55">
+              Built by a 17-year-old.{" "}
+              <Link
+                href="/#about"
+                className="underline underline-offset-2 hover:text-[var(--color-forsytha)] transition-colors"
+              >
+                Read the story →
+              </Link>
+            </p>
           </div>
 
-          <Column heading="Product" items={PRODUCT} />
-          <Column heading="Company" items={COMPANY} />
-          <Column heading="Legal" items={LEGAL} />
-          <Column heading="Connect" items={CONNECT} />
+          <div className="lg:col-span-2">
+            <Column heading="Product" items={PRODUCT} />
+          </div>
+          <div className="lg:col-span-2">
+            <Column heading="Company" items={COMPANY} />
+          </div>
+          <div className="lg:col-span-2">
+            <Column heading="Legal" items={LEGAL} />
+          </div>
+          <div className="lg:col-span-2">
+            <Eyebrow className="!text-[var(--color-paper)]/55">Connect</Eyebrow>
+            <ul className="mt-5 space-y-3">
+              <li>
+                <a
+                  href="https://twitter.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-[var(--color-paper)] hover:text-[var(--color-forsytha)] transition-colors"
+                >
+                  Twitter / X
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://instagram.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-[var(--color-paper)] hover:text-[var(--color-forsytha)] transition-colors"
+                >
+                  Instagram
+                </a>
+              </li>
+              <li>
+                <a
+                  href={`mailto:${EMAIL}`}
+                  className="text-sm text-[var(--color-paper)] hover:text-[var(--color-forsytha)] transition-colors"
+                >
+                  {EMAIL}
+                </a>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={toggle}
+                  className="text-sm text-[var(--color-paper)]/65 hover:text-[var(--color-paper)] transition-colors"
+                >
+                  Pricing in {currency === "INR" ? "₹" : "$"} ·{" "}
+                  <span className="underline underline-offset-2">
+                    change to {otherSymbol}
+                  </span>
+                </button>
+              </li>
+            </ul>
+          </div>
         </div>
 
-        <div
-          style={{
-            marginTop: 48,
-            paddingTop: 24,
-            borderTop: "1px solid var(--color-border-soft)",
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 14,
-            fontSize: 12,
-            color: "var(--color-muted)",
-          }}
-        >
-          <span>© {year} GetStamped</span>
-          <div style={{ display: "inline-flex", gap: 14 }}>
-            <Link href="/privacy" style={{ color: "inherit", textDecoration: "none" }}>
-              Privacy
-            </Link>
-            <span aria-hidden style={{ opacity: 0.4 }}>·</span>
-            <Link href="/terms" style={{ color: "inherit", textDecoration: "none" }}>
-              Terms
-            </Link>
-            <span aria-hidden style={{ opacity: 0.4 }}>·</span>
-            <a
-              href={`mailto:${EMAIL}`}
-              style={{ color: "inherit", textDecoration: "none" }}
-            >
-              Email
-            </a>
-          </div>
+        <div className="mt-16 border-t border-[var(--color-paper)]/10" />
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs text-[var(--color-paper)]/45">
+          <p>© {year} GetStamped</p>
+          <p className="sm:max-w-md sm:text-right leading-relaxed">
+            Not affiliated with any government agency. Information for
+            guidance only — not legal advice.
+          </p>
         </div>
       </div>
-
-      <style>{`
-        @media (min-width: 768px) {
-          .gs-foot-grid {
-            grid-template-columns: 2fr 1fr 1fr 1fr 1fr !important;
-          }
-          .gs-foot-brand { grid-column: span 1 !important; }
-        }
-      `}</style>
     </footer>
   );
 }

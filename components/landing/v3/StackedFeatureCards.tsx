@@ -14,13 +14,13 @@ import { ScrollStackItem } from "@/components/ui/ScrollStackItem";
    Pinning, ScrollStack, and ScrollStackItem behavior are untouched.
    ═════════════════════════════════════════════════════════════════════════ */
 
-const INK = "var(--color-ink)";
-const PAPER = "var(--color-cream-soft)";
+const INK = "#1C1917";
+const PAPER = "#FAF8F4";
 const WARM_PAPER = "#FAF5EE";
-const PERSIMMON = "var(--color-forest)";
+const PERSIMMON = "#E8622A";
 const GREEN = "#3FB37F";
 const RED = "#E5484D";
-const NOCTURNAL = "var(--color-tg)";
+const NOCTURNAL = "#114C5A";
 const FORSYTHA = "#FFC801";
 void INK;
 void FORSYTHA;
@@ -861,7 +861,7 @@ function ParentViewMock() {
           style={{
             height: "100%",
             width: "66%",
-            background: "linear-gradient(90deg, var(--color-forest), var(--color-forest-soft))",
+            background: "linear-gradient(90deg, #E8622A, #F07040)",
             borderRadius: 999,
             boxShadow: "0 0 8px rgba(232,98,42,0.35)",
           }}

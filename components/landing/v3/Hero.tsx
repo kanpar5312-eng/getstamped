@@ -4,13 +4,12 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import FloatingLines from "@/components/ui/FloatingLines";
 import TextType from "@/components/ui/TextType";
-import { HeroInterviewCard } from "./HeroInterviewCard";
 
 /* ════════════════════════════════════════════════════════════════════════
-   Hero — Wavly-style two-column layout. Left column carries the eyebrow,
-   typewriter headline, subtext, CTA row, and trust strip. Right column
-   carries the glass mock-interview card. WebGL FloatingLines + typewriter
-   animation are preserved verbatim from the prior Hero.
+   Hero — full-bleed Ink panel with a Lightfall WebGL backdrop. The old
+   macOS-window video frame is gone; the streaks are the atmosphere now.
+   All text + CTAs are preserved verbatim from the prior Hero so brand
+   voice is untouched.
    ═════════════════════════════════════════════════════════════════════════ */
 
 const fadeUp = {
@@ -26,13 +25,16 @@ export function Hero() {
       style={{
         position: "relative",
         width: "100%",
-        minHeight: "100vh",
+        height: "100vh",
+        minHeight: 640,
         overflow: "hidden",
         background: "#000000",
       }}
       className="gs-hero-root"
     >
-      {/* Layer 1 — WebGL light streaks (unchanged). */}
+      {/* Layer 1 — WebGL light streaks. Lightfall fills the 100%×100%
+          of this wrapper via .lightfall-container CSS; the wrapper
+          handles the absolute positioning behind the Hero content. */}
       <div
         aria-hidden
         style={{
@@ -59,7 +61,7 @@ export function Hero() {
         />
       </div>
 
-      {/* Layer 2 — ink gradient overlay for headline contrast. */}
+      {/* Layer 2 — subtle ink gradient overlay so headline stays readable */}
       <div
         aria-hidden
         style={{
@@ -72,182 +74,201 @@ export function Hero() {
         }}
       />
 
-      {/* Layer 3 — two-column content grid. */}
+      {/* Layer 3 — content */}
       <div
-        className="gs-hero-grid mx-auto max-w-7xl"
+        className="gs-hero-content"
         style={{
           position: "relative",
           zIndex: 2,
-          padding: "8rem 24px 5rem",
-          display: "grid",
-          gridTemplateColumns: "1fr",
-          gap: 48,
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
           alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          padding: "0 24px",
+          maxWidth: 860,
+          margin: "0 auto",
         }}
       >
-        {/* ── Left column ── */}
-        <div className="gs-hero-left">
-          <motion.span
-            variants={fadeUp}
-            initial="initial"
-            animate="animate"
-            transition={{ duration: 0.5, ease, delay: 0.05 }}
-            className="gs-hero-eyebrow"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              padding: "6px 14px",
-              borderRadius: 999,
-              background: "rgba(232,98,42,0.12)",
-              border: "1px solid rgba(232,98,42,0.35)",
-              fontFamily: "var(--font-sans-stack)",
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: "0.32em",
-              textTransform: "uppercase",
-              color: "var(--color-forest)",
-            }}
-          >
-            F-1 Student Visa · End-to-End
-          </motion.span>
+        {/* 1. Eyebrow */}
+        <motion.p
+          variants={fadeUp}
+          initial="initial"
+          animate="animate"
+          transition={{ duration: 0.5, ease, delay: 0.2 }}
+          style={{
+            fontFamily: "var(--font-sans-stack)",
+            fontSize: 10,
+            color: "#E8622A",
+            textTransform: "uppercase",
+            letterSpacing: "0.5em",
+            fontWeight: 600,
+            margin: 0,
+            marginBottom: 24,
+          }}
+        >
+          F-1 Student Visa · End-to-End
+        </motion.p>
 
-          <motion.h1
-            variants={fadeUp}
-            initial="initial"
-            animate="animate"
-            transition={{ duration: 0.6, ease, delay: 0.15 }}
-            className="gs-hero-headline"
-            style={{
-              fontFamily: "var(--font-display-stack)",
-              fontWeight: 400,
-              fontSize: "clamp(2.6rem, 6vw, 4rem)",
-              color: "var(--color-cream-soft)",
-              lineHeight: 1.04,
-              letterSpacing: "-0.025em",
-              margin: "20px 0 0 0",
-              textWrap: "balance" as "balance",
-              minHeight: "1.1em",
-            }}
-          >
-            <TextType
-              text={["The only visa tool", "you will ever need.", "Get Stamped."]}
-              typingSpeed={75}
-              pauseDuration={1500}
-              showCursor
-              cursorCharacter="_"
-              texts={[
-                "The only visa tool you will ever need.",
-                "47 steps. Nothing skipped.",
-                "Built for your stamp.",
-              ]}
-              deletingSpeed={50}
-              variableSpeedEnabled={false}
-              variableSpeedMin={60}
-              variableSpeedMax={120}
-              cursorBlinkDuration={0.5}
-              cursorStyle={{ color: "var(--color-forest)" }}
-            />
-          </motion.h1>
+        {/* 2. Headline — typewriter cycling through three brand lines.
+            All other Hero copy/structure is unchanged. */}
+        <motion.h1
+          variants={fadeUp}
+          initial="initial"
+          animate="animate"
+          transition={{ duration: 0.6, ease, delay: 0.4 }}
+          className="gs-hero-headline"
+          style={{
+            fontFamily: "var(--font-display-stack)",
+            fontWeight: 400,
+            fontSize: "clamp(48px, 8vw, 88px)",
+            color: "#FAF8F4",
+            lineHeight: 1.0,
+            letterSpacing: "-0.03em",
+            margin: 0,
+            textAlign: "center",
+            textWrap: "balance" as "balance",
+            minHeight: "1.05em",
+          }}
+        >
+          <TextType
+            text={["The only visa tool", "you will ever need.", "Get Stamped."]}
+            typingSpeed={75}
+            pauseDuration={1500}
+            showCursor
+            cursorCharacter="_"
+            texts={[
+              "The only visa tool you will ever need.",
+              "47 steps. Nothing skipped.",
+              "Built for your stamp.",
+            ]}
+            deletingSpeed={50}
+            variableSpeedEnabled={false}
+            variableSpeedMin={60}
+            variableSpeedMax={120}
+            cursorBlinkDuration={0.5}
+            cursorStyle={{ color: "#E8622A" }}
+          />
+        </motion.h1>
 
-          <motion.p
-            variants={fadeUp}
-            initial="initial"
-            animate="animate"
-            transition={{ duration: 0.6, ease, delay: 0.27 }}
-            style={{
-              fontFamily: "var(--font-sans-stack)",
-              fontSize: 17,
-              color: "rgba(250,248,244,0.66)",
-              lineHeight: 1.65,
-              maxWidth: 560,
-              margin: "22px 0 0 0",
-            }}
-          >
-            Forty-seven ordered steps. AI document checks trained on real consular failure
-            modes. Voice mock interviews scored like the real thing. One workspace until your
-            passport is stamped.
-          </motion.p>
+        {/* 3. Subhead */}
+        <motion.p
+          variants={fadeUp}
+          initial="initial"
+          animate="animate"
+          transition={{ duration: 0.7, ease, delay: 0.5 }}
+          className="gs-hero-sub"
+          style={{
+            fontFamily: "var(--font-sans-stack)",
+            fontSize: 17,
+            color: "rgba(250,248,244,0.60)",
+            lineHeight: 1.65,
+            maxWidth: 560,
+            margin: "24px auto 0",
+          }}
+        >
+          Forty-seven ordered steps. AI document checks trained on real consular failure
+          modes. Voice mock interviews scored like the real thing. One workspace until your
+          passport is stamped.
+        </motion.p>
 
-          <motion.div
-            variants={fadeUp}
-            initial="initial"
-            animate="animate"
-            transition={{ duration: 0.6, ease, delay: 0.39 }}
-            className="gs-hero-ctas"
-            style={{
-              marginTop: 30,
-              display: "flex",
-              gap: 14,
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <Link href="/sign-up" className="gs-hero-primary">
-              Start free — Phase 1 forever
-            </Link>
-            <Link href="#how-it-works" className="gs-hero-secondary">
-              <span aria-hidden style={{ display: "inline-block", marginRight: 6 }}>▸</span>
-              Watch 60-second tour
-            </Link>
-          </motion.div>
-
-          <motion.ul
-            variants={fadeUp}
-            initial="initial"
-            animate="animate"
-            transition={{ duration: 0.7, ease, delay: 0.51 }}
-            className="gs-hero-stats"
-            style={{
-              marginTop: 36,
-              display: "flex",
-              gap: 28,
-              alignItems: "center",
-              flexWrap: "wrap",
-              listStyle: "none",
-              padding: 0,
-              fontFamily: "var(--font-sans-stack)",
-              fontSize: 10,
-              color: "rgba(250,248,244,0.35)",
-              textTransform: "uppercase",
-              letterSpacing: "0.2em",
-            }}
-          >
-            <li>47 Ordered Steps</li>
-            <li aria-hidden style={{ color: "rgba(250,248,244,0.18)" }}>·</li>
-            <li>200+ Real F-1 Questions</li>
-            <li aria-hidden style={{ color: "rgba(250,248,244,0.18)" }}>·</li>
-            <li>One-Time Payment</li>
-          </motion.ul>
-        </div>
-
-        {/* ── Right column — glass mock-interview card ── */}
+        {/* 4. CTA row */}
         <motion.div
           variants={fadeUp}
           initial="initial"
           animate="animate"
-          transition={{ duration: 0.8, ease, delay: 0.3 }}
-          className="gs-hero-right"
+          transition={{ duration: 0.6, ease, delay: 0.7 }}
+          className="gs-hero-ctas"
+          style={{
+            marginTop: 40,
+            display: "flex",
+            gap: 16,
+            alignItems: "center",
+            justifyContent: "center",
+            flexWrap: "wrap",
+          }}
         >
-          <HeroInterviewCard />
+          <Link href="/sign-up" className="gs-hero-primary">
+            Start free — Phase 1 forever
+          </Link>
         </motion.div>
+
+        {/* 5. Stats row */}
+        <motion.ul
+          variants={fadeUp}
+          initial="initial"
+          animate="animate"
+          transition={{ duration: 0.8, ease, delay: 0.9 }}
+          className="gs-hero-stats"
+          style={{
+            marginTop: 48,
+            display: "flex",
+            gap: 32,
+            alignItems: "center",
+            justifyContent: "center",
+            flexWrap: "wrap",
+            listStyle: "none",
+            padding: 0,
+            margin: "48px 0 0 0",
+            fontFamily: "var(--font-sans-stack)",
+            fontSize: 10,
+            color: "rgba(250,248,244,0.30)",
+            textTransform: "uppercase",
+            letterSpacing: "0.2em",
+          }}
+        >
+          <li>47 Ordered Steps</li>
+          <li aria-hidden style={{ color: "rgba(250,248,244,0.15)" }}>·</li>
+          <li>200+ Real F-1 Questions</li>
+          <li aria-hidden style={{ color: "rgba(250,248,244,0.15)" }}>·</li>
+          <li>One-Time Payment</li>
+        </motion.ul>
       </div>
 
+      {/* 6. Scroll indicator — vertical line with a dot sliding down */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, ease, delay: 1.2 }}
+        aria-hidden
+        className="gs-hero-scrollcue"
+        style={{
+          position: "absolute",
+          bottom: 32,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 2,
+          width: 1,
+          height: 40,
+          background: "rgba(250,248,244,0.2)",
+          pointerEvents: "none",
+        }}
+      >
+        <span
+          aria-hidden
+          style={{
+            position: "absolute",
+            left: -1,
+            top: 0,
+            width: 3,
+            height: 8,
+            background: "#E8622A",
+            borderRadius: 999,
+            animation: "gs-hero-cue 1.5s ease-in-out infinite",
+          }}
+        />
+      </motion.div>
+
       <style>{`
-        @media (min-width: 1024px) {
-          .gs-hero-grid {
-            grid-template-columns: 7fr 5fr !important;
-            gap: 64px !important;
-            padding: 10rem 40px 7rem !important;
-          }
-        }
         .gs-hero-primary {
-          background: var(--color-forest);
-          color: var(--color-cream-soft);
+          background: #E8622A;
+          color: #FAF8F4;
           font-family: var(--font-sans-stack);
-          font-size: 14px;
+          font-size: 15px;
           font-weight: 600;
-          padding: 12px 22px;
-          border-radius: 10px;
+          padding: 16px 32px;
+          border-radius: 999px;
           border: none;
           text-decoration: none;
           display: inline-flex;
@@ -258,7 +279,7 @@ export function Hero() {
         }
         @media (hover: hover) and (pointer: fine) {
           .gs-hero-primary:hover {
-            background: var(--color-forest-deep);
+            background: #F07040;
             transform: translateY(-1px);
             box-shadow: 0 8px 28px rgba(232,98,42,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
           }
@@ -266,33 +287,45 @@ export function Hero() {
         .gs-hero-primary:active { transform: translateY(0) scale(0.98); }
 
         .gs-hero-secondary {
+          background: transparent;
+          color: rgba(250,248,244,0.70);
           font-family: var(--font-sans-stack);
           font-size: 14px;
-          color: rgba(250,248,244,0.78);
-          border: 1px solid rgba(250,248,244,0.20);
-          background: transparent;
-          border-radius: 10px;
-          padding: 11px 18px;
-          text-decoration: none;
+          border: none;
           display: inline-flex;
           align-items: center;
-          transition: border-color 200ms ease, color 200ms ease, background-color 200ms ease;
+          gap: 8px;
+          cursor: pointer;
+          padding: 8px 4px;
+          transition: color 200ms ease;
+        }
+        .gs-hero-secondary span:last-child,
+        .gs-hero-secondary {
+          text-underline-offset: 4px;
         }
         @media (hover: hover) and (pointer: fine) {
           .gs-hero-secondary:hover {
-            color: var(--color-cream-soft);
-            border-color: rgba(250,248,244,0.45);
-            background: rgba(250,248,244,0.04);
+            color: rgba(250,248,244,1);
+            text-decoration: underline;
           }
         }
 
-        /* Mobile tuning */
+        @keyframes gs-hero-cue {
+          0%   { transform: translateY(0); opacity: 0; }
+          15%  { opacity: 1; }
+          85%  { opacity: 1; }
+          100% { transform: translateY(32px); opacity: 0; }
+        }
+
+        /* Mobile tuning per spec */
         @media (max-width: 767px) {
-          .gs-hero-root { min-height: 100svh !important; }
-          .gs-hero-headline { font-size: clamp(2.2rem, 9vw, 3rem) !important; }
-          .gs-hero-ctas { width: 100%; }
-          .gs-hero-ctas > a {
-            flex: 1;
+          .gs-hero-root { height: 100svh !important; }
+          .gs-hero-headline { font-size: clamp(36px, 10vw, 52px) !important; }
+          .gs-hero-sub { font-size: 15px !important; max-width: 100% !important; }
+          .gs-hero-ctas { flex-direction: column !important; gap: 12px !important; width: 100%; }
+          .gs-hero-ctas .gs-hero-primary,
+          .gs-hero-ctas .gs-hero-secondary {
+            width: 100%;
             justify-content: center;
           }
           .gs-hero-stats { gap: 16px !important; font-size: 9px !important; }

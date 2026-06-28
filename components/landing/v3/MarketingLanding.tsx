@@ -28,16 +28,18 @@ import { Footer } from "@/components/landing/Footer";
 import type { Currency } from "@/lib/pricing";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
-import { FeaturesBento } from "./FeaturesBento";
-import { HowItWorks } from "./HowItWorks";
+import { FeaturesShowcase } from "./FeaturesShowcase";
+import { Testimonials } from "./Testimonials";
 import { Pricing } from "./Pricing";
 import { Reviews } from "./Reviews";
 import { FAQ } from "./FAQ";
 import { StampedCloser } from "./StampedCloser";
 import { ScrollTransitions } from "./ScrollTransitions";
 import { SectionDivider } from "./SectionDivider";
+import { ProblemSlam } from "./ProblemSlam";
 import { Styles } from "./Styles";
 import { StackedFeatureCards } from "./StackedFeatureCards";
+import { WhatsInside } from "./WhatsInside";
 
 type Props = {
   currency: Currency;
@@ -51,17 +53,22 @@ export function MarketingLanding({ currency }: Props) {
       <Header />
       <main>
         <Hero />
-        {/* Wavly-style bento grid — replaces the older WhatsInside marquee
-            and CardSwap showcase. ScrollStack below still carries the
-            longer-form Playbook/Vault/Mock/Parent pinned scroll story. */}
-        <FeaturesBento />
-        <HowItWorks />
+        {/* Typographic "what's inside" menu — sets up the four pillars
+            with marquee-on-hover rows before the deeper stacked cards. */}
+        <WhatsInside />
+        {/* Pinned, stacking feature cards. Replaces the prior
+            DOCUMENT RECEIVED divider + TrustStrip + FORM I-20 divider +
+            FeatureCycle sequence with a Lenis-smoothed 4-card stack. */}
         <StackedFeatureCards />
+        <FeaturesShowcase />
         <SectionDivider label="REVIEW COMPLETE" bg="ink" />
+        <ProblemSlam />
         <Pricing currency={currency} />
         <SectionDivider label="APPROVED FOR ENTRY" bg="paper" />
-        {/* Testimonials removed per Wavly redesign brief. Reviews stays
-            hidden until ≥3 real beta quotes are in. */}
+        <Testimonials />
+        {/* Reviews hidden for MVP — fictional testimonials replaced when
+            we have ≥3 real student quotes from beta. Re-add <Reviews />
+            here when ready. */}
         <FAQ />
         <StampedCloser />
       </main>

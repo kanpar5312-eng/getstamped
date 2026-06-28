@@ -1,210 +1,83 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { motion, useInView } from "motion/react";
+import { Eyebrow } from "./primitives/Eyebrow";
 
-/* ════════════════════════════════════════════════════════════════════════
-   FAQ — Wavly-style minimal accordion. No category chips, no numbered
-   watermarks. Plus icon rotates to × on open; answer fades in below.
-   Copy is preserved verbatim from the previous FAQ.
-   ═════════════════════════════════════════════════════════════════════════ */
-
-type Item = { q: string; a: string };
+type Item = { cat: string; q: string; a: string };
 
 const ITEMS: Item[] = [
-  {
-    q: "Is it really one payment forever?",
-    a: "Yes. One charge unlocks every phase, every step, every tool until your visa is stamped. No renewal, no usage tier, no trial timer.",
-  },
-  {
-    q: "Are you actual visa lawyers?",
-    a: "No, and we say that everywhere. We are a structured prep tool built on the official DS-160, FAM 9, and SEVP guidance, with sources cited on every claim. For legal advice, talk to an immigration attorney.",
-  },
-  {
-    q: "What does the AI document check actually do?",
-    a: "It reads each page you upload — passport bio, I-20, bank statements — and flags missing signatures, expired SEVIS receipts, wrong DS-160 confirmation numbers, and 14 other refusal patterns documented in 221(g) data.",
-  },
-  {
-    q: "How is the mock interview scored?",
-    a: "Your voice is transcribed and graded on four axes officers actually weight: clarity (filler words, sentence length), confidence (response latency, hedging), specificity (named programs, dates), and financial story (sponsor consistency).",
-  },
-  {
-    q: "Do my parents need to install anything?",
-    a: "No. The parent view is a read-only link you share. They open it in any browser and see progress, the next step, and what is blocking. No login, no app, no document downloads.",
-  },
-  {
-    q: "What if I get refused — do I get my money back?",
-    a: "Refunds in the first 14 days for any reason. After that, we don't refund based on visa outcome — that depends on factors no prep tool can guarantee. We're honest about that.",
-  },
+  { cat: "Pricing", q: "Is it really one payment forever?", a: "Yes. One charge unlocks every phase, every step, every tool until your visa is stamped. No renewal, no usage tier, no trial timer." },
+  { cat: "Trust", q: "Are you actual visa lawyers?", a: "No, and we say that everywhere. We are a structured prep tool built on the official DS-160, FAM 9, and SEVP guidance, with sources cited on every claim. For legal advice, talk to an immigration attorney." },
+  { cat: "Product", q: "What does the AI document check actually do?", a: "It reads each page you upload — passport bio, I-20, bank statements — and flags missing signatures, expired SEVIS receipts, wrong DS-160 confirmation numbers, and 14 other refusal patterns documented in 221(g) data." },
+  { cat: "Product", q: "How is the mock interview scored?", a: "Your voice is transcribed and graded on four axes officers actually weight: clarity (filler words, sentence length), confidence (response latency, hedging), specificity (named programs, dates), and financial story (sponsor consistency)." },
+  { cat: "Parents", q: "Do my parents need to install anything?", a: "No. The parent view is a read-only link you share. They open it in any browser and see progress, the next step, and what is blocking. No login, no app, no document downloads." },
+  { cat: "Refund", q: "What if I get refused — do I get my money back?", a: "Refunds in the first 14 days for any reason. After that, we don't refund based on visa outcome — that depends on factors no prep tool can guarantee. We're honest about that." },
 ];
 
 export function FAQ() {
   return (
-    <section
-      id="faq"
-      aria-label="Frequently asked questions"
-      style={{
-        background: "var(--color-cream)",
-        color: "var(--color-ink)",
-        padding: "96px 20px",
-      }}
-    >
-      <div className="mx-auto" style={{ maxWidth: 760 }}>
-        <div style={{ textAlign: "center" }}>
-          <p
-            style={{
-              fontFamily: "var(--font-mono-stack, var(--font-sans-stack))",
-              fontSize: 10,
-              letterSpacing: "0.32em",
-              textTransform: "uppercase",
-              color: "var(--color-forest)",
-              margin: 0,
-              fontWeight: 700,
-            }}
-          >
-            FAQ
-          </p>
-          <h2
-            style={{
-              fontFamily: "var(--font-display-stack)",
-              fontWeight: 400,
-              fontSize: "clamp(2rem, 4.4vw, 3rem)",
-              lineHeight: 1.06,
-              letterSpacing: "-0.02em",
-              margin: "14px 0 0 0",
-            }}
-          >
-            Questions,{" "}
-            <em
-              style={{
-                fontStyle: "italic",
-                color: "var(--color-forest)",
-                fontFamily: "inherit",
-              }}
-            >
-              answered.
-            </em>
-          </h2>
-          <p
-            style={{
-              marginTop: 16,
-              fontSize: 15,
-              lineHeight: 1.6,
-              color: "var(--color-ink-soft)",
-            }}
-          >
-            Still curious?{" "}
-            <a
-              href="mailto:getstamped.online@gmail.com"
-              style={{
-                color: "var(--color-forest)",
-                textDecoration: "none",
-                borderBottom: "1px solid currentColor",
-              }}
-            >
-              getstamped.online@gmail.com
-            </a>
-          </p>
-        </div>
-
-        <ul
-          style={{
-            marginTop: 48,
-            padding: 0,
-            listStyle: "none",
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-          }}
-        >
-          {ITEMS.map((it) => (
-            <Row key={it.q} item={it} />
-          ))}
-        </ul>
+    <section id="faq" className="v3-section v3-faq">
+      <div className="v3-faq-head">
+        <Eyebrow>Q&amp;A</Eyebrow>
+        <h2 className="v3-h2 v3-mt-6">Questions students ask first.</h2>
+        <p className="v3-lead v3-mt-6 v3-max-reading">
+          Short answers. No corporate hedging. If yours isn&rsquo;t here,{" "}
+          <a className="v3-link" href="mailto:getstamped.online@gmail.com">
+            getstamped.online@gmail.com
+          </a>{" "}
+          and a human replies same day.
+        </p>
       </div>
+      <ul className="v3-faq-list">
+        {ITEMS.map((it, idx) => (
+          <Row key={it.q} index={idx + 1} item={it} />
+        ))}
+      </ul>
     </section>
   );
 }
 
-function Row({ item }: { item: Item }) {
+function Row({ index, item }: { index: number; item: Item }) {
   const [open, setOpen] = useState(false);
+  const num = index.toString().padStart(2, "0");
+
+  // Scroll-in animation borrowed from AnimatedList: each row scales
+  // 0.7 → 1 and fades in once half the row is in view. `once: false`
+  // replays it if the user scrolls back up past the FAQ.
+  const ref = useRef<HTMLLIElement>(null);
+  const inView = useInView(ref, { amount: 0.5, once: false });
+
   return (
-    <li
-      style={{
-        borderTop: "1px solid var(--color-border-soft)",
-        borderBottom: "1px solid var(--color-border-soft)",
-        transition: "border-color 200ms ease",
-      }}
+    <motion.li
+      ref={ref}
+      className={`v3-faq-item${open ? " is-open" : ""}`}
+      initial={{ scale: 0.7, opacity: 0 }}
+      animate={inView ? { scale: 1, opacity: 1 } : { scale: 0.7, opacity: 0 }}
+      transition={{ duration: 0.25, delay: 0.05 }}
     >
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        className="v3-faq-btn"
         aria-expanded={open}
-        style={{
-          all: "unset",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 16,
-          width: "100%",
-          padding: "18px 20px",
-          cursor: "pointer",
-          fontFamily: "var(--font-display-stack)",
-          fontSize: 18,
-          letterSpacing: "-0.01em",
-          color: "var(--color-ink)",
-          fontWeight: 400,
-        }}
+        onClick={() => setOpen((v) => !v)}
       >
-        <span>{item.q}</span>
-        <span
-          aria-hidden
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 28,
-            height: 28,
-            color: "var(--color-forest)",
-            transform: open ? "rotate(45deg)" : "rotate(0deg)",
-            transition: "transform 280ms cubic-bezier(0.22, 1, 0.36, 1)",
-            fontSize: 22,
-            lineHeight: 1,
-          }}
-        >
-          +
+        <span className="v3-mono v3-faq-num">{num}</span>
+        <div className="v3-faq-body">
+          <span className="v3-faq-cat">{item.cat}</span>
+          <span className="v3-faq-q">{item.q}</span>
+        </div>
+        <span className="v3-faq-toggle" aria-hidden>
+          <svg viewBox="0 0 14 14" width="14" height="14">
+            <path d="M3 5.5L7 9.5L11 5.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </span>
       </button>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateRows: open ? "1fr" : "0fr",
-          transition: "grid-template-rows 320ms cubic-bezier(0.22, 1, 0.36, 1)",
-        }}
-      >
-        <div
-          style={{
-            overflow: "hidden",
-            opacity: open ? 1 : 0,
-            transform: open ? "translateY(0)" : "translateY(-4px)",
-            transition:
-              "opacity 280ms ease 60ms, transform 280ms ease 60ms",
-          }}
-        >
-          <p
-            style={{
-              margin: 0,
-              padding: "0 20px 20px",
-              fontSize: 15,
-              lineHeight: 1.7,
-              color: "var(--color-ink-soft)",
-              maxWidth: "62ch",
-            }}
-          >
-            {item.a}
-          </p>
+      <div className="v3-faq-panel">
+        <div className="v3-faq-panel-inner">
+          <p>{item.a}</p>
         </div>
       </div>
-    </li>
+    </motion.li>
   );
 }
