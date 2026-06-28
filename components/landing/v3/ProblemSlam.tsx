@@ -26,8 +26,8 @@ export function ProblemSlam() {
     <section
       aria-label="Without GetStamped"
       style={{
-        background: "var(--color-nocturnal)",
-        color: "var(--color-paper)",
+        background: "var(--color-tg)",
+        color: "#FAF8F4",
         paddingTop: 140,
         paddingBottom: 100,
       }}
