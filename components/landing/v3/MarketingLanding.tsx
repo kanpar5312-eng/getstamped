@@ -29,6 +29,7 @@ import type { Currency } from "@/lib/pricing";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
 import { FeaturesBento } from "./FeaturesBento";
+import { HowItWorks } from "./HowItWorks";
 import { Pricing } from "./Pricing";
 import { Reviews } from "./Reviews";
 import { FAQ } from "./FAQ";
@@ -55,6 +56,7 @@ export function MarketingLanding({ currency }: Props) {
             and CardSwap showcase. ScrollStack below still carries the
             longer-form Playbook/Vault/Mock/Parent pinned scroll story. */}
         <FeaturesBento />
+        <HowItWorks />
         <StackedFeatureCards />
         <SectionDivider label="REVIEW COMPLETE" bg="ink" />
         <ProblemSlam />
