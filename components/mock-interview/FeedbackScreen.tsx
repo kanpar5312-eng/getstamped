@@ -23,6 +23,12 @@ export type TurnSummary = {
   score?: number;
   /** Optional category label rendered as a badge on the card. */
   category?: string;
+  /** AI-generated, per-answer "what was wrong" — replaces the
+   *  keyword-routed `note` whenever the LLM responded. */
+  fix?: string;
+  /** AI-generated stronger answer the student should rehearse. Rendered
+   *  as a dedicated "What you could have said" block below the note. */
+  better?: string;
 };
 
 export type Scores = {
@@ -614,7 +620,7 @@ function QuestionCard({ turn, index }: { turn: TurnSummary; index: number }) {
         </div>
       ) : null}
 
-      {turn.note && !turn.noAudio && (
+      {(turn.fix || turn.note) && !turn.noAudio && (
         <div style={{ marginTop: 12 }}>
           <p
             style={{
@@ -637,7 +643,45 @@ function QuestionCard({ turn, index }: { turn: TurnSummary; index: number }) {
               margin: "4px 0 0 0",
             }}
           >
-            {turn.note}
+            {turn.fix || turn.note}
+          </p>
+        </div>
+      )}
+
+      {turn.better && !turn.noAudio && (
+        <div
+          style={{
+            marginTop: 12,
+            background: "rgba(232,98,42,0.06)",
+            border: "1px solid rgba(232,98,42,0.18)",
+            borderRadius: 8,
+            padding: "12px 14px",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-sans-stack)",
+              fontSize: 9,
+              color: PERSIMMON,
+              textTransform: "uppercase",
+              letterSpacing: "0.2em",
+              margin: 0,
+              fontWeight: 600,
+            }}
+          >
+            What you could have said
+          </p>
+          <p
+            style={{
+              fontFamily: "var(--font-display-stack)",
+              fontStyle: "italic",
+              fontSize: 14,
+              lineHeight: 1.55,
+              color: INK,
+              margin: "6px 0 0 0",
+            }}
+          >
+            &ldquo;{turn.better}&rdquo;
           </p>
         </div>
       )}

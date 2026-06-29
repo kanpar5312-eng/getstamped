@@ -790,10 +790,43 @@ export function MockInterviewClient({ plan, consulate }: Props) {
       notifyNetworkError();
     }
 
+    // Per-turn rich feedback. Call /score in parallel for each
+    // non-empty answer so every QuestionCard gets a specific "what
+    // was weak" line + a "what you could have said" rewrite. Failure
+    // here is non-fatal — buildFeedback falls back to the keyword
+    // hints for any turn that didn't resolve.
+    const perTurnFeedback: Array<{ fix?: string; better?: string } | null> =
+      await Promise.all(
+        turnsPayload.map(async (t) => {
+          if (!t.answer || t.answer.length < 8) return null;
+          try {
+            const r = await fetch("/api/mock-interview/score", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                question: t.question,
+                answer: t.answer,
+                scenario: consulate ?? undefined,
+                officerStyle,
+                difficulty: finishDifficulty,
+              }),
+            });
+            if (!r.ok) return null;
+            const data = (await r.json()) as {
+              ok: boolean;
+              feedback?: { fix?: string; better?: string };
+            };
+            return data.ok && data.feedback ? data.feedback : null;
+          } catch {
+            return null;
+          }
+        }),
+      );
+
     // Build the FeedbackScreen payload from the Groq result if we got
     // one, otherwise fall back to the existing heuristic so a failed
     // /finish doesn't block the user from seeing their session.
-    const built = buildFeedback(durationSec, groqResult);
+    const built = buildFeedback(durationSec, groqResult, perTurnFeedback);
     setFinalFeedback(built);
     setPhase("feedback");
   };
@@ -840,6 +873,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   const buildFeedback = (
     durationSecArg: number,
     groq: GroqFinishResult | null,
+    perTurn: Array<{ fix?: string; better?: string } | null> = [],
   ): {
     verdict: string;
     scores: Scores;
@@ -907,11 +941,14 @@ export function MockInterviewClient({ plan, consulate }: Props) {
       // Crude per-turn score derived from answer length × overall band.
       const lenScore = noAudio ? 0 : ans.length < 25 ? 35 : ans.length < 80 ? 60 : 82;
       const score = Math.round((lenScore + scores.overall) / 2);
+      const ai = perTurn[i] ?? null;
       return {
         question,
         answer: noAudio ? "" : ans,
         timestampSec: t,
         note,
+        fix: ai?.fix,
+        better: ai?.better,
         isWeakest,
         noAudio,
         score,
