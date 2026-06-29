@@ -1,438 +1,292 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Carousel, { type CarouselItem } from "@/components/ui/Carousel";
-
 /* ════════════════════════════════════════════════════════════════════════
-   Testimonials — paper-on-ink editorial section that wraps the React Bits
-   Carousel. Six grounded F-1 student testimonials, each with name,
-   program, consulate, and a persimmon-tinted initial avatar.
-
-   Carousel timings are untouched. Brand colors override its default
-   dark-purple palette via scoped CSS at the bottom of the file.
+   Testimonials — two-row continuous marquee. Compact cards (avatar +
+   quote + persimmon handle), opposite-direction scroll, edge-fade mask,
+   pause on hover. Brand: ink bg, paper text, persimmon accents.
    ═════════════════════════════════════════════════════════════════════════ */
 
-const INK = "#1C1917";
 const PAPER = "#FAF8F4";
 const PERSIMMON = "#E8622A";
 const NOCTURNAL = "var(--color-ink)";
-const FORSYTHA = "var(--color-persimmon)";
-// Kept for any consumer that imports the constants; not all are used.
-void INK;
 
 type Testimonial = {
-  name: string;
+  handle: string;
   initials: string;
-  program: string;
-  university: string;
-  consulate: string;
   quote: string;
-  stamped: string;
-  tint: string;
+  tint?: "persimmon" | "paper";
 };
 
-const TESTIMONIALS: Testimonial[] = [
+const ROW_A: Testimonial[] = [
   {
-    name: "Ananya Iyer",
+    handle: "@ananya_iyer",
     initials: "AI",
-    program: "MS Computer Science",
-    university: "Carnegie Mellon",
-    consulate: "Mumbai",
     quote:
-      "The 47-step list felt overwhelming on day one. By week three it was just a checklist. My DS-160 cleared first time and the officer asked exactly the funding question the mock interview had drilled.",
-    stamped: "Stamped · Aug 2025",
-    tint: "#E8622A",
+      "The 47-step list felt overwhelming on day one. By week three it was a checklist. DS-160 cleared first time.",
+    tint: "persimmon",
   },
   {
-    name: "Rohit Sharma",
+    handle: "@rohit.s",
     initials: "RS",
-    program: "MS Data Science",
-    university: "Northeastern",
-    consulate: "Hyderabad",
     quote:
-      "The vault caught a missing signature on my I-20 the day before my appointment. I would have walked into Hyderabad with a 221(g) on the table. Worth it for that one catch alone.",
-    stamped: "Stamped · Jul 2025",
-    tint: "#1C1917",
+      "The vault caught a missing DSO signature the day before my appointment. Worth it for that one catch alone.",
   },
   {
-    name: "Folake Adeyemi",
+    handle: "@folake_ade",
     initials: "FA",
-    program: "MS Mechanical Eng.",
-    university: "Purdue",
-    consulate: "Lagos",
     quote:
-      "Most prep advice online is American students guessing what officers want. GetStamped breaks down the four things they actually score, and the mock interview voice doesn't let you get away with vague answers.",
-    stamped: "Stamped · Jun 2025",
-    tint: "#E8622A",
+      "Breaks down the four things officers actually score. The mock interview doesn't let vague answers slide.",
+    tint: "persimmon",
   },
   {
-    name: "Diego Ramírez",
+    handle: "@diego.r",
     initials: "DR",
-    program: "MBA",
-    university: "UT Austin",
-    consulate: "Bogotá",
     quote:
-      "My parents stopped asking me for updates the day I shared the read-only link. They could see exactly where I was — phase, mocks, documents. Replaced three phone calls a week.",
-    stamped: "Stamped · Sep 2025",
-    tint: "#1C1917",
+      "My parents stopped asking for updates the day I shared the read-only link. Replaced three calls a week.",
   },
   {
-    name: "Ji-Min Park",
+    handle: "@jimin_p",
     initials: "JP",
-    program: "MS Industrial Eng.",
-    university: "Purdue",
-    consulate: "Seoul",
     quote:
-      "Brutal in the best way. I did six mock interviews. By the real one I'd already heard every variant of 'why this school' the system could think to ask. The officer's question felt familiar.",
-    stamped: "Stamped · May 2025",
-    tint: "#E8622A",
-  },
-  {
-    name: "Priya Nair",
-    initials: "PN",
-    program: "MS Bioinformatics",
-    university: "UC San Diego",
-    consulate: "Chennai",
-    quote:
-      "Phase 1 was free, so I tried it. Then I paid because there was nowhere else to get this stuff in order. The financial story rubric saved me — my answer was way too vague before.",
-    stamped: "Stamped · Jul 2025",
-    tint: "#1C1917",
+      "Did six mocks. By the real one I'd already heard every variant of 'why this school'. Felt familiar.",
+    tint: "persimmon",
   },
 ];
 
-function Avatar({ t }: { t: Testimonial }) {
-  return (
-    <span
-      aria-hidden
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 56,
-        height: 56,
-        borderRadius: 999,
-        background: t.tint === PERSIMMON ? "rgba(232,98,42,0.14)" : "rgba(250,248,244,0.10)",
-        border: `1px solid ${t.tint === PERSIMMON ? "rgba(232,98,42,0.45)" : "rgba(250,248,244,0.18)"}`,
-        color: t.tint === PERSIMMON ? PERSIMMON : PAPER,
-        fontFamily: "var(--font-display-stack)",
-        fontSize: 22,
-        letterSpacing: "-0.02em",
-      }}
-    >
-      {t.initials}
-    </span>
-  );
-}
+const ROW_B: Testimonial[] = [
+  {
+    handle: "@priya.nair",
+    initials: "PN",
+    quote:
+      "Phase 1 was free so I tried it. Paid because nowhere else gets this stuff in order. Financial story rubric saved me.",
+  },
+  {
+    handle: "@aarav_s",
+    initials: "AS",
+    quote:
+      "Almost paid a consultant 40k. Did Phase 1 free and knew within an hour this was better.",
+    tint: "persimmon",
+  },
+  {
+    handle: "@tunde.o",
+    initials: "TO",
+    quote:
+      "Lagos yesterday. Approved in four minutes. Officer said 'you're clearly prepared'.",
+  },
+  {
+    handle: "@mei.l",
+    initials: "ML",
+    quote:
+      "221(g) on attempt one. Approved on attempt two. Difference was the financial paperwork GetStamped flagged.",
+    tint: "persimmon",
+  },
+  {
+    handle: "@niran_v",
+    initials: "NV",
+    quote:
+      "Chennai officer asked what my father does. I gave the exact line from mock #3. Stamped.",
+  },
+];
 
-function QuoteMark() {
+function Card({ t }: { t: Testimonial }) {
+  const accent = t.tint === "persimmon";
   return (
-    <span
-      aria-hidden
-      style={{
-        fontFamily: "var(--font-display-stack)",
-        fontSize: 64,
-        lineHeight: 0.7,
-        color: PERSIMMON,
-        opacity: 0.85,
-        display: "inline-block",
-      }}
-    >
-      &ldquo;
-    </span>
-  );
-}
-
-function Stars() {
-  return (
-    <span aria-hidden style={{ display: "inline-flex", gap: 3, color: FORSYTHA }}>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <svg key={i} width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77 5.82 21l1.18-6.88-5-4.87 6.91-1.01L12 2z" />
-        </svg>
-      ))}
-    </span>
-  );
-}
-
-const Title = ({ t }: { t: Testimonial }) => (
-  <span style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-    <span style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-      <QuoteMark />
-      <span
-        style={{
-          fontFamily: "var(--font-display-stack)",
-          fontWeight: 400,
-          fontSize: 18,
-          lineHeight: 1.45,
-          color: PAPER,
-          letterSpacing: "-0.005em",
-        }}
-      >
-        {t.quote}
+    <figure className={`gs-tm-card${accent ? " is-accent" : ""}`}>
+      <span className="gs-tm-avatar" aria-hidden>
+        {t.initials}
       </span>
-    </span>
-  </span>
-);
+      <div className="gs-tm-body">
+        <blockquote className="gs-tm-quote">&ldquo;{t.quote}&rdquo;</blockquote>
+        <figcaption className="gs-tm-handle">{t.handle}</figcaption>
+      </div>
+    </figure>
+  );
+}
 
-const Description = ({ t }: { t: Testimonial }) => (
-  <span
-    style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: 12,
-      marginTop: 18,
-      paddingTop: 16,
-      borderTop: "1px solid rgba(250,248,244,0.08)",
-    }}
-  >
-    <span style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-      <Avatar t={t} />
-      <span style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <span
-          style={{
-            fontFamily: "var(--font-sans-stack)",
-            fontWeight: 600,
-            fontSize: 14,
-            color: PAPER,
-            letterSpacing: "-0.005em",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {t.name}
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-sans-stack)",
-            fontSize: 12,
-            color: "rgba(250,248,244,0.55)",
-            lineHeight: 1.4,
-          }}
-        >
-          {t.program} · {t.university}
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-mono-stack, var(--font-sans-stack))",
-            fontSize: 10,
-            letterSpacing: "0.16em",
-            textTransform: "uppercase",
-            color: "rgba(250,248,244,0.4)",
-            marginTop: 2,
-          }}
-        >
-          {t.consulate} · {t.stamped}
-        </span>
-      </span>
-    </span>
-    <Stars />
-  </span>
-);
+function Row({ items, direction }: { items: Testimonial[]; direction: "ltr" | "rtl" }) {
+  // Duplicate the list so the translate loop is seamless.
+  const loop = [...items, ...items];
+  return (
+    <div className="gs-tm-row">
+      <div className={`gs-tm-track gs-tm-${direction}`}>
+        {loop.map((t, i) => (
+          <Card key={`${direction}-${i}`} t={t} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function Testimonials() {
-  const [baseWidth, setBaseWidth] = useState(520);
-  const ref = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const apply = () => {
-      const w = window.innerWidth;
-      if (w < 480) setBaseWidth(Math.min(w - 32, 360));
-      else if (w < 900) setBaseWidth(440);
-      else setBaseWidth(560);
-    };
-    apply();
-    window.addEventListener("resize", apply);
-    return () => window.removeEventListener("resize", apply);
-  }, []);
-
-  const items: CarouselItem[] = TESTIMONIALS.map((t, i) => ({
-    id: i,
-    title: <Title t={t} />,
-    description: <Description t={t} />,
-  }));
-
   return (
     <section
       id="testimonials"
-      aria-label="Student testimonials"
-      style={{
-        position: "relative",
-        background: NOCTURNAL,
-        color: PAPER,
-        padding: "clamp(56px, 7vw, 96px) 24px",
-        overflow: "hidden",
-      }}
+      aria-label="What people say"
+      className="gs-tm-section"
     >
-      {/* Persimmon glow */}
-      <span
-        aria-hidden
-        style={{
-          position: "absolute",
-          top: "-20%",
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: 900,
-          height: 900,
-          background:
-            "radial-gradient(closest-side, rgba(232,98,42,0.20), rgba(232,98,42,0) 70%)",
-          filter: "blur(20px)",
-          pointerEvents: "none",
-        }}
-      />
-
-      <div
-        style={{
-          position: "relative",
-          maxWidth: 1080,
-          margin: "0 auto",
-          textAlign: "center",
-        }}
-      >
-        <p
-          style={{
-            fontFamily: "var(--font-mono-stack, var(--font-sans-stack))",
-            fontSize: 11,
-            letterSpacing: "0.4em",
-            textTransform: "uppercase",
-            color: PERSIMMON,
-            margin: 0,
-          }}
-        >
-          What students say
-        </p>
-
-        <h2
-          className="gs-testi-h2"
-          style={{
-            fontFamily: "var(--font-display-stack)",
-            fontWeight: 400,
-            fontSize: "clamp(40px, 5.5vw, 72px)",
-            lineHeight: 1.04,
-            letterSpacing: "-0.025em",
-            margin: "20px auto 0",
-            color: PAPER,
-            maxWidth: 720,
-            textWrap: "balance" as "balance",
-          }}
-        >
-          Real students.{" "}
-          <em style={{ color: PERSIMMON, fontStyle: "italic" }}>Real stamps.</em>
+      <div className="gs-tm-head">
+        <h2 className="gs-tm-title">
+          <span className="gs-tm-chevron" aria-hidden>
+            ›
+          </span>
+          What People Say
         </h2>
-
-        <p
-          style={{
-            margin: "22px auto 0",
-            maxWidth: 580,
-            fontSize: 17,
-            lineHeight: 1.65,
-            color: "rgba(250,248,244,0.65)",
-          }}
-        >
-          Six students. Six consulates. Six approvals. They used GetStamped to walk in
-          knowing exactly what an officer was about to ask — and what counted as a good
-          answer.
-        </p>
-
-        {/* Trust band */}
-        <ul
-          style={{
-            listStyle: "none",
-            padding: 0,
-            margin: "36px 0 0 0",
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 32,
-            justifyContent: "center",
-            alignItems: "center",
-            fontFamily: "var(--font-mono-stack, var(--font-sans-stack))",
-            fontSize: 10,
-            letterSpacing: "0.22em",
-            textTransform: "uppercase",
-            color: "rgba(250,248,244,0.45)",
-          }}
-        >
-          <li style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-            <Stars /> 4.9 average score
-          </li>
-          <li aria-hidden style={{ color: "rgba(250,248,244,0.15)" }}>·</li>
-          <li>1,200+ Phase 1 students</li>
-          <li aria-hidden style={{ color: "rgba(250,248,244,0.15)" }}>·</li>
-          <li>92% report officer asked a question they rehearsed</li>
-        </ul>
+        <a className="gs-tm-viewall" href="#waitlist">
+          View all <span aria-hidden>→</span>
+        </a>
       </div>
 
-      <div
-        ref={ref}
-        className="gs-testi-carousel"
-        style={{
-          marginTop: 56,
-          display: "flex",
-          justifyContent: "center",
-        }}
-      >
-        <Carousel
-          items={items}
-          baseWidth={baseWidth}
-          autoplay
-          autoplayDelay={5000}
-          pauseOnHover
-          loop
-        />
+      <div className="gs-tm-marquee" aria-hidden={false}>
+        <Row items={ROW_A} direction="ltr" />
+        <Row items={ROW_B} direction="rtl" />
       </div>
 
-      {/* Brand override for the carousel internals (scoped to this section) */}
       <style>{`
-        .gs-testi-carousel .carousel-container {
-          border: 1px solid rgba(250,248,244,0.10);
-          border-radius: 24px;
-          padding: 18px;
-          background: linear-gradient(180deg, rgba(250,248,244,0.025), rgba(250,248,244,0.0));
-          box-shadow: 0 30px 80px -30px rgba(0,0,0,0.55);
+        .gs-tm-section {
+          position: relative;
+          background: ${NOCTURNAL};
+          color: ${PAPER};
+          padding: clamp(48px, 6vw, 80px) 0 clamp(56px, 7vw, 88px);
+          overflow: hidden;
         }
-        .gs-testi-carousel .carousel-item {
-          background: rgba(250,248,244,0.04);
-          border: 1px solid rgba(250,248,244,0.10);
-          padding: 28px 26px 24px 26px;
-          min-height: 320px;
+        .gs-tm-head {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 16px;
+          max-width: 1240px;
+          margin: 0 auto 28px;
+          padding: 0 clamp(20px, 4vw, 48px);
         }
-        .gs-testi-carousel .carousel-item:hover {
-          border-color: rgba(232,98,42,0.35);
+        .gs-tm-title {
+          display: inline-flex;
+          align-items: baseline;
+          gap: 12px;
+          margin: 0;
+          font-family: var(--font-display-stack);
+          font-weight: 500;
+          font-size: clamp(28px, 3vw, 40px);
+          letter-spacing: -0.02em;
+          color: ${PAPER};
         }
-        .gs-testi-carousel .carousel-item-header { display: none; }
-        .gs-testi-carousel .carousel-item-content {
-          padding: 0;
-          width: 100%;
+        .gs-tm-chevron {
+          color: ${PERSIMMON};
+          font-weight: 400;
+          font-size: 0.85em;
+          opacity: 0.9;
+          transform: translateY(-1px);
+        }
+        .gs-tm-viewall {
+          font-family: var(--font-sans-stack);
+          font-size: 14px;
+          font-weight: 500;
+          color: ${PERSIMMON};
+          text-decoration: none;
+          letter-spacing: -0.005em;
+          transition: opacity 200ms ease-out;
+        }
+        .gs-tm-viewall:hover { opacity: 0.78; }
+
+        .gs-tm-marquee {
+          position: relative;
           display: flex;
           flex-direction: column;
-          justify-content: space-between;
-          height: 100%;
+          gap: 18px;
+          -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
         }
-        .gs-testi-carousel .carousel-item-title {
-          font-weight: 400;
-          font-size: inherit;
-          color: ${PAPER};
+
+        .gs-tm-row { overflow: hidden; }
+        .gs-tm-track {
+          display: flex;
+          gap: 18px;
+          width: max-content;
+          will-change: transform;
+        }
+        .gs-tm-ltr { animation: gs-tm-scroll-ltr 60s linear infinite; }
+        .gs-tm-rtl { animation: gs-tm-scroll-rtl 60s linear infinite; }
+        .gs-tm-row:hover .gs-tm-track { animation-play-state: paused; }
+
+        @keyframes gs-tm-scroll-ltr {
+          from { transform: translate3d(0, 0, 0); }
+          to   { transform: translate3d(-50%, 0, 0); }
+        }
+        @keyframes gs-tm-scroll-rtl {
+          from { transform: translate3d(-50%, 0, 0); }
+          to   { transform: translate3d(0, 0, 0); }
+        }
+
+        .gs-tm-card {
+          flex: 0 0 auto;
+          width: clamp(320px, 32vw, 420px);
+          display: flex;
+          align-items: flex-start;
+          gap: 16px;
+          padding: 18px 22px;
           margin: 0;
+          background: rgba(250, 248, 244, 0.025);
+          border: 1px solid rgba(250, 248, 244, 0.09);
+          border-radius: 18px;
+          transition: border-color 200ms ease-out, background 200ms ease-out;
         }
-        .gs-testi-carousel .carousel-item-description {
-          font-size: inherit;
-          color: inherit;
+        .gs-tm-card:hover {
+          border-color: rgba(232, 98, 42, 0.35);
+          background: rgba(250, 248, 244, 0.04);
+        }
+        .gs-tm-card.is-accent {
+          border-color: rgba(232, 98, 42, 0.22);
+        }
+
+        .gs-tm-avatar {
+          flex: 0 0 auto;
+          width: 44px;
+          height: 44px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-family: var(--font-display-stack);
+          font-size: 16px;
+          letter-spacing: -0.02em;
+          color: ${PERSIMMON};
+          background: rgba(232, 98, 42, 0.14);
+          border: 1px solid rgba(232, 98, 42, 0.4);
+        }
+
+        .gs-tm-body {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          min-width: 0;
+        }
+        .gs-tm-quote {
           margin: 0;
+          font-family: var(--font-sans-stack);
+          font-size: 14px;
+          line-height: 1.55;
+          color: rgba(250, 248, 244, 0.86);
+          letter-spacing: -0.003em;
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
-        .gs-testi-carousel .carousel-indicator.active {
-          background-color: ${PERSIMMON};
-          box-shadow: 0 0 0 4px rgba(232,98,42,0.15);
+        .gs-tm-handle {
+          font-family: var(--font-sans-stack);
+          font-size: 13px;
+          font-weight: 500;
+          color: ${PERSIMMON};
+          letter-spacing: -0.005em;
         }
-        .gs-testi-carousel .carousel-indicator.inactive {
-          background-color: rgba(250,248,244,0.18);
-        }
-        .gs-testi-carousel .carousel-indicator:focus-visible {
-          outline-color: ${PERSIMMON};
-        }
+
         @media (max-width: 640px) {
-          .gs-testi-carousel .carousel-item { padding: 22px 20px; min-height: 360px; }
-          .gs-testi-h2 { font-size: 36px !important; }
+          .gs-tm-card { width: 280px; padding: 16px 18px; }
+          .gs-tm-quote { font-size: 13px; -webkit-line-clamp: 4; }
+          .gs-tm-avatar { width: 38px; height: 38px; font-size: 14px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .gs-tm-ltr, .gs-tm-rtl { animation: none; }
         }
       `}</style>
     </section>
