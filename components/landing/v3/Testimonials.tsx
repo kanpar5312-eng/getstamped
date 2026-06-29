@@ -239,28 +239,18 @@ export function Testimonials() {
           gap: 16px;
           padding: 20px 22px;
           margin: 0;
-          background: rgba(255, 253, 247, 0.6);
-          backdrop-filter: blur(20px) saturate(180%);
-          -webkit-backdrop-filter: blur(20px) saturate(180%);
-          border: 1px solid rgba(255, 255, 255, 0.6);
+          background: #FFFDF7;
+          border: 1px solid rgba(11, 30, 63, 0.10);
           border-radius: 18px;
-          box-shadow:
-            0 1px 0 rgba(255, 255, 255, 0.85) inset,
-            0 0 0 1px rgba(11, 30, 63, 0.05),
-            0 16px 32px -22px rgba(11, 30, 63, 0.18);
-          transition: transform 200ms ease-out, border-color 200ms ease-out, box-shadow 200ms ease-out;
+          box-shadow: 0 12px 24px -20px rgba(11, 30, 63, 0.18);
+          transition: border-color 200ms ease-out;
         }
         .gs-tm-card:hover {
           border-color: rgba(232, 98, 42, 0.45);
-          transform: translateY(-2px);
-          box-shadow:
-            0 1px 0 rgba(255, 255, 255, 0.9) inset,
-            0 0 0 1px rgba(232, 98, 42, 0.25),
-            0 22px 40px -22px rgba(232, 98, 42, 0.28);
         }
         .gs-tm-card.is-accent {
-          background: rgba(251, 232, 217, 0.7);
-          border-color: rgba(232, 98, 42, 0.35);
+          background: #FBE8D9;
+          border-color: rgba(232, 98, 42, 0.30);
         }
 
         .gs-tm-avatar {

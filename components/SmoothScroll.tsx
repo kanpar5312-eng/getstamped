@@ -19,13 +19,14 @@ export function SmoothScroll() {
     if (prefersReduced) return;
 
     const lenis = new Lenis({
-      duration: 1.05,
-      // exponential ease-out — classic buttery curve
-      easing: (t: number) => 1 - Math.pow(1 - t, 4),
+      // Snappier defaults — lower duration + tighter lerp =
+      // less perceived lag, still smooth.
+      duration: 0.85,
+      easing: (t: number) => 1 - Math.pow(1 - t, 3),
       smoothWheel: true,
       wheelMultiplier: 1,
       touchMultiplier: 1.4,
-      lerp: 0.1,
+      lerp: 0.14,
     });
 
     let rafId = 0;

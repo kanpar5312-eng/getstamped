@@ -274,14 +274,9 @@ export function Hero() {
           height: 260px;
           overflow: hidden;
           border-radius: 20px;
-          border: 1px solid rgba(255,255,255,0.55);
-          background: rgba(255, 253, 247, 0.55);
-          backdrop-filter: blur(24px) saturate(180%);
-          -webkit-backdrop-filter: blur(24px) saturate(180%);
-          box-shadow:
-            0 1px 0 rgba(255,255,255,0.85) inset,
-            0 0 0 1px rgba(11,30,63,0.06),
-            0 30px 60px -32px rgba(11,30,63,0.22);
+          border: 1px solid rgba(11,30,63,0.08);
+          background: #FFFDF7;
+          box-shadow: 0 24px 48px -28px rgba(11,30,63,0.22);
           -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 70%, transparent 100%);
                   mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 70%, transparent 100%);
         }

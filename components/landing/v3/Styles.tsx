@@ -98,11 +98,10 @@ export function Styles() {
         /* Heavier opaque tint + lighter blur — same premium look at a fraction
            of the per-frame paint cost. backdrop-filter is one of the most
            expensive properties in the browser. */
-        background: rgba(247, 243, 236, 0.72);
-        backdrop-filter: saturate(180%) blur(20px);
-        -webkit-backdrop-filter: saturate(180%) blur(20px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 1px 0 rgba(11, 30, 63, 0.04);
+        background: rgba(247, 243, 236, 0.94);
+        backdrop-filter: saturate(140%) blur(8px);
+        -webkit-backdrop-filter: saturate(140%) blur(8px);
+        border-bottom: 1px solid rgba(11, 30, 63, 0.06);
         transition: border-color 200ms var(--ease-soft), background-color 200ms var(--ease-soft);
         will-change: background-color;
       }
@@ -633,17 +632,11 @@ export function Styles() {
          highlight that catches the eye without screaming. */
       .v3-price-card {
         position: relative; display: flex; flex-direction: column;
-        background: rgba(255, 255, 255, 0.55);
-        backdrop-filter: blur(24px) saturate(180%);
-        -webkit-backdrop-filter: blur(24px) saturate(180%);
-        border: 1px solid rgba(255,255,255,0.6);
+        background: #FFFDF7;
+        border: 1px solid rgba(11,30,63,0.08);
         border-radius: 28px; padding: 32px 28px;
-        box-shadow:
-          0 1px 0 rgba(255,255,255,0.9) inset,
-          0 0 0 1px rgba(11,30,63,0.05),
-          0 30px 60px -30px rgba(11,30,63,0.18);
+        box-shadow: 0 24px 48px -28px rgba(11,30,63,0.18);
         overflow: hidden;
-        transform: translateZ(0);
         transition: transform 240ms var(--ease-soft),
           box-shadow 240ms var(--ease-soft);
       }
@@ -652,17 +645,13 @@ export function Styles() {
         background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.85) 20%, rgba(255,255,255,0.85) 80%, transparent 100%);
         pointer-events: none;
       }
-      /* Solo "most chosen" — soft peach-persimmon tint with a
-         persimmon halo + frosted glass. Stays warm and bright. */
+      /* Solo "most chosen" — soft peach with a persimmon halo. */
       .v3-price-solo {
-        background: rgba(251, 232, 217, 0.72);
-        backdrop-filter: blur(24px) saturate(180%);
-        -webkit-backdrop-filter: blur(24px) saturate(180%);
-        border: 1px solid rgba(232,98,42,0.45);
+        background: #FBE8D9;
+        border: 1px solid rgba(232,98,42,0.40);
         box-shadow:
-          0 1px 0 rgba(255,255,255,0.7) inset,
-          0 0 0 1px rgba(232,98,42,0.35),
-          0 30px 70px -28px rgba(232,98,42,0.28);
+          0 0 0 1px rgba(232,98,42,0.30),
+          0 24px 56px -28px rgba(232,98,42,0.32);
         color: var(--color-ink);
         overflow: visible;
       }
