@@ -37,7 +37,6 @@ import { ScrollTransitions } from "./ScrollTransitions";
 import { SectionDivider } from "./SectionDivider";
 import { Styles } from "./Styles";
 import { StackedFeatureCards } from "./StackedFeatureCards";
-import { WhatsInside } from "./WhatsInside";
 
 type Props = {
   currency: Currency;
@@ -55,10 +54,6 @@ export function MarketingLanding({ currency }: Props) {
             full Playbook / Document Vault / Mock Interview / Parent Share
             story right after the hero. */}
         <StackedFeatureCards />
-        {/* Typographic "what's inside" menu — now lands after the
-            scroll-stack so it reads as a recap of the four pillars
-            before the deeper sections. */}
-        <WhatsInside />
         <SectionDivider label="REVIEW COMPLETE" bg="ink" />
         <Pricing currency={currency} />
         <SectionDivider label="APPROVED FOR ENTRY" bg="paper" />
