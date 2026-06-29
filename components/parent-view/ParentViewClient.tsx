@@ -18,6 +18,12 @@ type Props = {
   lastViewedAt: Date | null;
   plan: "free" | "solo" | "family";
   isReal?: boolean;
+  /** Real progress snapshot shown in the "See what they see" preview. */
+  studentName: string;
+  completedSteps: number;
+  totalSteps: number;
+  currentPhaseNumber: number;
+  currentPhaseName: string;
 };
 
 function CheckIcon() {
@@ -27,7 +33,21 @@ function XIcon() {
   return <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M6 6l12 12" /><path d="M18 6L6 18" /></svg>;
 }
 
-export function ParentViewClient({ initialEnabled, initialToken, views, lastViewedAt, plan, isReal = false }: Props) {
+export function ParentViewClient({
+  initialEnabled,
+  initialToken,
+  views,
+  lastViewedAt,
+  plan,
+  isReal = false,
+  studentName,
+  completedSteps,
+  totalSteps,
+  currentPhaseNumber,
+  currentPhaseName,
+}: Props) {
+  const pct = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+  const possessive = studentName.endsWith("s") ? `${studentName}'` : `${studentName}'s`;
   const [enabled, setEnabled] = useState(initialEnabled);
   const [token, setToken] = useState(initialToken);
   const [regenOpen, setRegenOpen] = useState(false);
@@ -193,12 +213,21 @@ export function ParentViewClient({ initialEnabled, initialToken, views, lastView
         <div className="mt-4 rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-paper)] p-4 sm:p-6">
           <div className="text-center max-w-md mx-auto">
             <p className="text-[10px] uppercase tracking-[0.18em] font-medium text-[var(--color-muted)]">Read-only view</p>
-            <h3 className="mt-2 font-display text-xl text-[var(--color-ink)] tracking-tight">Arya&rsquo;s F-1 Application</h3>
-            <p className="mt-1 text-xs text-[var(--color-ink-soft)]">Currently on Phase 3: DS-160 and fees</p>
+            <h3 className="mt-2 font-display text-xl text-[var(--color-ink)] tracking-tight">
+              {possessive} F-1 Application
+            </h3>
+            <p className="mt-1 text-xs text-[var(--color-ink-soft)]">
+              Currently on Phase {currentPhaseNumber}: {currentPhaseName}
+            </p>
             <div className="mt-3 h-1.5 w-full rounded-full bg-[var(--color-border-soft)] overflow-hidden">
-              <div className="h-full bg-[var(--color-persimmon)]" style={{ width: "49%" }} />
+              <div
+                className="h-full bg-[var(--color-persimmon)] transition-[width] duration-500"
+                style={{ width: `${pct}%` }}
+              />
             </div>
-            <p className="mt-2 text-[11px] font-mono text-[var(--color-muted)]">23 of 47 complete · 49%</p>
+            <p className="mt-2 text-[11px] font-mono text-[var(--color-muted)]">
+              {completedSteps} of {totalSteps} complete · {pct}%
+            </p>
           </div>
         </div>
       </section>
