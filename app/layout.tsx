@@ -13,6 +13,7 @@ import { NavigationProgress } from "@/components/ui/NavigationProgress";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { NetworkToast } from "@/components/NetworkToast";
 import { SmoothScroll } from "@/components/SmoothScroll";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Currency } from "@/lib/pricing";
 
 export const metadata: Metadata = {
@@ -77,6 +78,7 @@ export default async function RootLayout({
             <CookieBanner />
             <NetworkToast />
             <Analytics domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN ?? null} />
+            <SpeedInsights />
           </CountryProvider>
         </PricingProvider>
       </body>
