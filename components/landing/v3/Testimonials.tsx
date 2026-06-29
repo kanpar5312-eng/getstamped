@@ -6,9 +6,9 @@
    pause on hover. Brand: ink bg, paper text, persimmon accents.
    ═════════════════════════════════════════════════════════════════════════ */
 
-const PAPER = "#FAF8F4";
+const INK = "#0B1E3F";
+const BONE = "#F5F1E8";
 const PERSIMMON = "#E8622A";
-const NOCTURNAL = "var(--color-ink)";
 
 type Testimonial = {
   handle: string;
@@ -144,8 +144,8 @@ export function Testimonials() {
       <style>{`
         .gs-tm-section {
           position: relative;
-          background: ${NOCTURNAL};
-          color: ${PAPER};
+          background: ${BONE};
+          color: ${INK};
           padding: clamp(48px, 6vw, 80px) 0 clamp(56px, 7vw, 88px);
           overflow: hidden;
         }
@@ -167,7 +167,7 @@ export function Testimonials() {
           font-weight: 500;
           font-size: clamp(28px, 3vw, 40px);
           letter-spacing: -0.02em;
-          color: ${PAPER};
+          color: ${INK};
         }
         .gs-tm-chevron {
           color: ${PERSIMMON};
@@ -192,8 +192,8 @@ export function Testimonials() {
           display: flex;
           flex-direction: column;
           gap: 18px;
-          -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
-          mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+          -webkit-mask-image: linear-gradient(90deg, transparent 0, #fff 8%, #fff 92%, transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #fff 8%, #fff 92%, transparent 100%);
         }
 
         .gs-tm-row { overflow: hidden; }
@@ -224,17 +224,19 @@ export function Testimonials() {
           gap: 16px;
           padding: 18px 22px;
           margin: 0;
-          background: rgba(250, 248, 244, 0.025);
-          border: 1px solid rgba(250, 248, 244, 0.09);
+          background: #FAF8F1;
+          border: 1px solid rgba(11, 30, 63, 0.10);
           border-radius: 18px;
+          box-shadow: 0 1px 0 rgba(11, 30, 63, 0.02);
           transition: border-color 200ms ease-out, background 200ms ease-out;
         }
         .gs-tm-card:hover {
-          border-color: rgba(232, 98, 42, 0.35);
-          background: rgba(250, 248, 244, 0.04);
+          border-color: rgba(232, 98, 42, 0.45);
+          background: #FFFCF5;
         }
         .gs-tm-card.is-accent {
-          border-color: rgba(232, 98, 42, 0.22);
+          border-color: rgba(232, 98, 42, 0.32);
+          background: #FBE8D9;
         }
 
         .gs-tm-avatar {
@@ -264,7 +266,7 @@ export function Testimonials() {
           font-family: var(--font-sans-stack);
           font-size: 14px;
           line-height: 1.55;
-          color: rgba(250, 248, 244, 0.86);
+          color: rgba(11, 30, 63, 0.78);
           letter-spacing: -0.003em;
           display: -webkit-box;
           -webkit-line-clamp: 3;

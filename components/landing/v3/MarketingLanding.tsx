@@ -54,7 +54,7 @@ export function MarketingLanding({ currency }: Props) {
             full Playbook / Document Vault / Mock Interview / Parent Share
             story right after the hero. */}
         <StackedFeatureCards />
-        <SectionDivider label="REVIEW COMPLETE" bg="ink" />
+        <SectionDivider label="REVIEW COMPLETE" bg="paper" />
         <Pricing currency={currency} />
         <SectionDivider label="APPROVED FOR ENTRY" bg="paper" />
         <Testimonials />

@@ -38,7 +38,7 @@ function LinkOut({ item }: { item: LinkItem }) {
         href={item.href}
         target={item.href.startsWith("mailto:") ? undefined : "_blank"}
         rel="noopener noreferrer"
-        className="text-sm text-[var(--color-paper)] hover:text-[var(--color-forsytha)] transition-colors"
+        className="text-sm text-[var(--color-ink)] hover:text-[var(--color-forsytha)] transition-colors"
       >
         {item.label}
       </a>
@@ -47,7 +47,7 @@ function LinkOut({ item }: { item: LinkItem }) {
   return (
     <Link
       href={item.href}
-      className="text-sm text-[var(--color-paper)] hover:text-[var(--color-forsytha)] transition-colors"
+      className="text-sm text-[var(--color-ink)] hover:text-[var(--color-forsytha)] transition-colors"
     >
       {item.label}
     </Link>
@@ -57,7 +57,7 @@ function LinkOut({ item }: { item: LinkItem }) {
 function Column({ heading, items }: { heading: string; items: LinkItem[] }) {
   return (
     <div>
-      <Eyebrow className="!text-[var(--color-paper)]/55">{heading}</Eyebrow>
+      <Eyebrow className="!text-[var(--color-ink)]/55">{heading}</Eyebrow>
       <ul className="mt-5 space-y-3">
         {items.map((item) => (
           <li key={item.label}>
@@ -75,7 +75,7 @@ export function Footer() {
   const otherSymbol = currency === "INR" ? "$" : "₹";
 
   return (
-    <footer className="relative w-full bg-[var(--color-oceanic-noir)] text-[var(--color-paper)]">
+    <footer className="relative w-full bg-[var(--color-paper)] text-[var(--color-ink)]">
       <div
         aria-hidden
         className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--color-persimmon)]/80 to-transparent"
@@ -88,17 +88,17 @@ export function Footer() {
             <Link
               href="/"
               aria-label="GetStamped — home"
-              className="inline-flex items-center gap-2 text-[var(--color-paper)]"
+              className="inline-flex items-center gap-2 text-[var(--color-ink)]"
             >
               <BrandMark size={28} />
-              <span className="font-display text-[22px] leading-none tracking-tight text-[var(--color-paper)]">
+              <span className="font-display text-[22px] leading-none tracking-tight text-[var(--color-ink)]">
                 GetStamped
               </span>
             </Link>
-            <p className="mt-5 text-sm leading-relaxed text-[var(--color-paper)]/75">
+            <p className="mt-5 text-sm leading-relaxed text-[var(--color-ink)]/75">
               F-1 visa prep, end to end.
             </p>
-            <p className="mt-3 text-xs text-[var(--color-paper)]/55">
+            <p className="mt-3 text-xs text-[var(--color-ink)]/55">
               Built by a 17-year-old.{" "}
               <Link
                 href="/#about"
@@ -119,14 +119,14 @@ export function Footer() {
             <Column heading="Legal" items={LEGAL} />
           </div>
           <div className="lg:col-span-2">
-            <Eyebrow className="!text-[var(--color-paper)]/55">Connect</Eyebrow>
+            <Eyebrow className="!text-[var(--color-ink)]/55">Connect</Eyebrow>
             <ul className="mt-5 space-y-3">
               <li>
                 <a
                   href="https://twitter.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-[var(--color-paper)] hover:text-[var(--color-forsytha)] transition-colors"
+                  className="text-sm text-[var(--color-ink)] hover:text-[var(--color-forsytha)] transition-colors"
                 >
                   Twitter / X
                 </a>
@@ -136,7 +136,7 @@ export function Footer() {
                   href="https://instagram.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-[var(--color-paper)] hover:text-[var(--color-forsytha)] transition-colors"
+                  className="text-sm text-[var(--color-ink)] hover:text-[var(--color-forsytha)] transition-colors"
                 >
                   Instagram
                 </a>
@@ -144,7 +144,7 @@ export function Footer() {
               <li>
                 <a
                   href={`mailto:${EMAIL}`}
-                  className="text-sm text-[var(--color-paper)] hover:text-[var(--color-forsytha)] transition-colors"
+                  className="text-sm text-[var(--color-ink)] hover:text-[var(--color-forsytha)] transition-colors"
                 >
                   {EMAIL}
                 </a>
@@ -153,7 +153,7 @@ export function Footer() {
                 <button
                   type="button"
                   onClick={toggle}
-                  className="text-sm text-[var(--color-paper)]/65 hover:text-[var(--color-paper)] transition-colors"
+                  className="text-sm text-[var(--color-ink)]/65 hover:text-[var(--color-ink)] transition-colors"
                 >
                   Pricing in {currency === "INR" ? "₹" : "$"} ·{" "}
                   <span className="underline underline-offset-2">
@@ -166,7 +166,7 @@ export function Footer() {
         </div>
 
         <div className="mt-16 border-t border-[var(--color-paper)]/10" />
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs text-[var(--color-paper)]/45">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs text-[var(--color-ink)]/45">
           <p>© {year} GetStamped</p>
           <p className="sm:max-w-md sm:text-right leading-relaxed">
             Not affiliated with any government agency. Information for
