@@ -9,6 +9,7 @@ import { CountryProvider } from "@/lib/countryContext";
 import { Suspense } from "react";
 import { CookieBanner } from "@/components/ui/CookieBanner";
 import { Analytics } from "@/components/ui/Analytics";
+import { Analytics as VercelAnalytics } from "@vercel/analytics/next";
 import { NavigationProgress } from "@/components/ui/NavigationProgress";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { NetworkToast } from "@/components/NetworkToast";
@@ -77,6 +78,7 @@ export default async function RootLayout({
             <CookieBanner />
             <NetworkToast />
             <Analytics domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN ?? null} />
+            <VercelAnalytics />
           </CountryProvider>
         </PricingProvider>
       </body>
