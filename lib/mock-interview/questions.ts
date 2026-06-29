@@ -271,6 +271,15 @@ export function selectQuestions({
   // Final shuffle of order so categories aren't bunched together.
   const ordered = shuffle(picks);
 
+  // Real consular interviews open with an identity check — name, where
+  // you're from, where you're going. Prepend it so the mock matches and
+  // the user can warm up on something light before the substantive
+  // questions begin. Tone shifts with difficulty.
+  const intro =
+    difficulty === "strict"
+      ? "Good morning. State your full name and the university you're attending."
+      : "Good morning. Please tell me your full name and where you're heading to study.";
+
   // Strict only: inject a financial follow-up directly after each
   // financial question. Total session length may grow by 1–N as a
   // result; that's intentional per the spec.
@@ -284,8 +293,8 @@ export function selectQuestions({
         expanded.push(followUps[fuIdx++]);
       }
     }
-    return expanded.map((q) => q.text);
+    return [intro, ...expanded.map((q) => q.text)];
   }
 
-  return ordered.map((q) => q.text);
+  return [intro, ...ordered.map((q) => q.text)];
 }

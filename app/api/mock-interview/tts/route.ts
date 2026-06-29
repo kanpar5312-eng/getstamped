@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/supabase/server";
-import { isElevenLabsConfigured, streamTts, type InterviewerVoice } from "@/lib/elevenlabs";
+import {
+  isElevenLabsConfigured,
+  streamTts,
+  type InterviewerVoice,
+  type OfficerTone,
+} from "@/lib/elevenlabs";
 
 /* ════════════════════════════════════════════════════════════════════════
    POST /api/mock-interview/tts
@@ -21,7 +26,7 @@ export const dynamic = "force-dynamic";
 
 const MAX_TEXT_CHARS = 800;
 
-type Body = { text?: string; interviewer?: string };
+type Body = { text?: string; interviewer?: string; tone?: string };
 
 export async function POST(req: Request) {
   const user = await getSessionUser();
@@ -40,10 +45,11 @@ export async function POST(req: Request) {
 
   const interviewer: InterviewerVoice =
     body.interviewer === "male" ? "male" : "female";
+  const tone: OfficerTone = body.tone === "strict" ? "strict" : "standard";
 
   let upstream: Response;
   try {
-    upstream = await streamTts({ text, voice: interviewer });
+    upstream = await streamTts({ text, voice: interviewer, tone });
   } catch (err) {
     console.error("[tts] upstream call failed:", err);
     return NextResponse.json({ error: "tts_failed" }, { status: 502 });

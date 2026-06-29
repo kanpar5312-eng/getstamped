@@ -15,8 +15,35 @@ import "server-only";
    ════════════════════════════════════════════════════════════════════════ */
 
 export type InterviewerVoice = "female" | "male";
+export type OfficerTone = "standard" | "strict";
 
 const MODEL_ID = "eleven_turbo_v2_5";
+
+/**
+ * Voice settings + speed shift with the chosen difficulty so the same
+ * stock voice can read warmer/slower as a friendly officer or sharper/
+ * faster as a strict one.
+ *   • standard — calm, deliberate, slightly under-tempo (0.96×)
+ *   • strict   — pointed, faster delivery (1.06×), less smoothing
+ */
+function settingsFor(tone: OfficerTone) {
+  if (tone === "strict") {
+    return {
+      stability: 0.40,
+      similarity_boost: 0.85,
+      style: 0.32,
+      use_speaker_boost: true,
+      speed: 1.06,
+    };
+  }
+  return {
+    stability: 0.55,
+    similarity_boost: 0.80,
+    style: 0.15,
+    use_speaker_boost: true,
+    speed: 0.96,
+  };
+}
 
 // Sensible stock-voice fallbacks so the route doesn't 500 if the operator
 // forgot to set the voice envs after pasting the API key. These are the
@@ -47,6 +74,7 @@ export function isElevenLabsConfigured(): boolean {
 export async function streamTts(opts: {
   text: string;
   voice: InterviewerVoice;
+  tone?: OfficerTone;
 }): Promise<Response> {
   const key = process.env.ELEVENLABS_API_KEY;
   if (!key) throw new Error("ELEVENLABS_API_KEY not set");
@@ -64,12 +92,7 @@ export async function streamTts(opts: {
     body: JSON.stringify({
       text: opts.text,
       model_id: MODEL_ID,
-      voice_settings: {
-        stability: 0.55,
-        similarity_boost: 0.8,
-        style: 0.15,
-        use_speaker_boost: true,
-      },
+      voice_settings: settingsFor(opts.tone ?? "standard"),
     }),
   });
 

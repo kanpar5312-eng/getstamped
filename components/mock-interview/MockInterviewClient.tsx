@@ -32,8 +32,33 @@ const SILENCE_MAX_STANDARD_MS = 8000;
 const SILENCE_MAX_STRICT_MS = 5000;
 const COUNTDOWN_MS = 3000;
 
-const silenceMaxFor = (d: "standard" | "strict") =>
-  d === "strict" ? SILENCE_MAX_STRICT_MS : SILENCE_MAX_STANDARD_MS;
+/** Pick the silence budget for a specific question.
+ *  • intro / name questions: shorter (a name + sentence is quick).
+ *  • financial questions: longer (mental math + sponsor recall).
+ *  • everything else: the difficulty default.
+ */
+const silenceMaxFor = (d: "standard" | "strict", question?: string) => {
+  const base = d === "strict" ? SILENCE_MAX_STRICT_MS : SILENCE_MAX_STANDARD_MS;
+  if (!question) return base;
+  const q = question.toLowerCase();
+  // Identity / opener — "state your full name", "tell me your name and..."
+  if (q.includes("your full name") || (q.includes("name") && q.includes("university"))) {
+    return Math.max(5000, base - 2000);
+  }
+  // Financial — needs more thinking time even on strict.
+  if (
+    q.includes("fund") ||
+    q.includes("financ") ||
+    q.includes("sponsor") ||
+    q.includes("pay") ||
+    q.includes("cost") ||
+    q.includes("savings") ||
+    q.includes("loan")
+  ) {
+    return base + (d === "strict" ? 3000 : 4000);
+  }
+  return base;
+};
 
 // Strict mode: probability that the officer fires a short follow-up
 // probe after the user finishes an answer, before the next question.
@@ -169,14 +194,18 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   /** Hit the TTS route, return an object-URL the <audio> tag can play. */
   const fetchTtsUrl = useCallback(
     async (text: string): Promise<string | null> => {
-      const cacheKey = `${interviewer}:${text}`;
+      const cacheKey = `${interviewer}:${difficulty}:${text}`;
       const cached = prefetchRef.current.get(cacheKey);
       if (cached) return cached;
       try {
         const r = await fetch("/api/mock-interview/tts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text, interviewer }),
+          body: JSON.stringify({
+            text,
+            interviewer,
+            tone: difficulty === "strict" ? "strict" : "standard",
+          }),
         });
         if (!r.ok) {
           if (r.status === 503) setTtsAvail(false); // not configured
@@ -191,7 +220,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
         return null;
       }
     },
-    [interviewer],
+    [interviewer, difficulty],
   );
 
   /**
@@ -472,7 +501,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     lastTranscriptRef.current = "";
     setSilenceCountdown(null);
 
-    const silenceMax = silenceMaxFor(difficulty);
+    const silenceMax = silenceMaxFor(difficulty, questions[idx]);
 
     type SR = { new (): SpeechRecognitionLike };
     const w = window as unknown as Record<string, SR | undefined>;
@@ -562,7 +591,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
    *  transcript so /finish grades it as part of that question. */
   const runProbeListen = (idx: number): Promise<void> => {
     return new Promise((resolve) => {
-      const silenceMax = silenceMaxFor(difficulty);
+      const silenceMax = silenceMaxFor(difficulty, questions[idx]);
       const probeStartTs = performance.now();
       probeStartTsRef.current = probeStartTs;
       let probeLastSpeechAt = performance.now();
