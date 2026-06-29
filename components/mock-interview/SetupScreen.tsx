@@ -8,8 +8,8 @@ export type Length = 5 | 10 | 15;
 export type Difficulty = "standard" | "strict";
 
 const INTERVIEWERS: { id: Interviewer; name: string; src: string }[] = [
-  { id: "female", name: "Officer Reyes", src: "/female.svg" },
-  { id: "male", name: "Officer Walsh", src: "/male.png" },
+  { id: "female", name: "Officer Reyes", src: "/reyes.png" },
+  { id: "male", name: "Officer Walsh", src: "/walsh.png" },
 ];
 
 type Props = {
