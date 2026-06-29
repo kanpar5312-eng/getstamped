@@ -28,7 +28,6 @@ import { Footer } from "@/components/landing/Footer";
 import type { Currency } from "@/lib/pricing";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
-import { FeaturesShowcase } from "./FeaturesShowcase";
 import { Testimonials } from "./Testimonials";
 import { Pricing } from "./Pricing";
 import { Reviews } from "./Reviews";
@@ -60,7 +59,6 @@ export function MarketingLanding({ currency }: Props) {
             scroll-stack so it reads as a recap of the four pillars
             before the deeper sections. */}
         <WhatsInside />
-        <FeaturesShowcase />
         <SectionDivider label="REVIEW COMPLETE" bg="ink" />
         <Pricing currency={currency} />
         <SectionDivider label="APPROVED FOR ENTRY" bg="paper" />
