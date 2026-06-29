@@ -12,7 +12,6 @@ import { Analytics } from "@/components/ui/Analytics";
 import { NavigationProgress } from "@/components/ui/NavigationProgress";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { NetworkToast } from "@/components/NetworkToast";
-import { SmoothScroll } from "@/components/SmoothScroll";
 import type { Currency } from "@/lib/pricing";
 
 export const metadata: Metadata = {
@@ -65,7 +64,6 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col bg-[var(--color-paper)] text-[var(--color-ink)] overflow-x-hidden">
         <PricingProvider initial={initialCurrency}>
           <CountryProvider>
-            <SmoothScroll />
             <Suspense fallback={null}>
               <NavigationProgress />
             </Suspense>
