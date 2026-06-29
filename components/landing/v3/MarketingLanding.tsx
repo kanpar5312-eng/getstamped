@@ -34,7 +34,6 @@ import { Reviews } from "./Reviews";
 import { FAQ } from "./FAQ";
 import { StampedCloser } from "./StampedCloser";
 import { ScrollTransitions } from "./ScrollTransitions";
-import { SectionDivider } from "./SectionDivider";
 import { Styles } from "./Styles";
 import { StackedFeatureCards } from "./StackedFeatureCards";
 
@@ -54,9 +53,7 @@ export function MarketingLanding({ currency }: Props) {
             full Playbook / Document Vault / Mock Interview / Parent Share
             story right after the hero. */}
         <StackedFeatureCards />
-        <SectionDivider label="REVIEW COMPLETE" bg="paper" />
         <Pricing currency={currency} />
-        <SectionDivider label="APPROVED FOR ENTRY" bg="paper" />
         <Testimonials />
         {/* Reviews hidden for MVP — fictional testimonials replaced when
             we have ≥3 real student quotes from beta. Re-add <Reviews />

@@ -7,8 +7,10 @@
    ═════════════════════════════════════════════════════════════════════════ */
 
 const INK = "#0B1E3F";
+const CREAM = "#F5F1E8";
 const PEACH = "#FBE8D9";
 const PERSIMMON = "#E8622A";
+void PERSIMMON;
 
 type Testimonial = {
   handle: string;
@@ -144,7 +146,7 @@ export function Testimonials() {
       <style>{`
         .gs-tm-section {
           position: relative;
-          background: ${PEACH};
+          background: ${CREAM};
           color: ${INK};
           padding: clamp(48px, 6vw, 80px) 0 clamp(56px, 7vw, 88px);
           overflow: hidden;
@@ -224,35 +226,27 @@ export function Testimonials() {
           gap: 16px;
           padding: 20px 22px;
           margin: 0;
-          background: #FAF5EE;
-          border: 1px solid rgba(11, 30, 63, 0.14);
+          background: #FFFDF7;
+          border: 1px solid rgba(11, 30, 63, 0.10);
           border-radius: 18px;
           box-shadow:
             0 1px 0 rgba(255, 255, 255, 0.6) inset,
-            0 12px 28px -18px rgba(11, 30, 63, 0.25);
+            0 10px 26px -18px rgba(11, 30, 63, 0.18);
           transition: transform 200ms ease-out, border-color 200ms ease-out, box-shadow 200ms ease-out;
         }
         .gs-tm-card:hover {
-          border-color: rgba(232, 98, 42, 0.55);
+          border-color: rgba(232, 98, 42, 0.45);
           transform: translateY(-2px);
           box-shadow:
             0 1px 0 rgba(255, 255, 255, 0.7) inset,
-            0 18px 38px -18px rgba(232, 98, 42, 0.35);
+            0 18px 36px -18px rgba(232, 98, 42, 0.30);
         }
         .gs-tm-card.is-accent {
-          background: ${INK};
-          border-color: rgba(232, 98, 42, 0.55);
+          background: ${PEACH};
+          border-color: rgba(232, 98, 42, 0.35);
           box-shadow:
-            0 1px 0 rgba(255, 255, 255, 0.08) inset,
-            0 18px 38px -18px rgba(11, 30, 63, 0.55);
-        }
-        .gs-tm-card.is-accent .gs-tm-quote {
-          color: rgba(250, 248, 244, 0.92);
-        }
-        .gs-tm-card.is-accent .gs-tm-avatar {
-          color: ${PEACH};
-          background: rgba(232, 98, 42, 0.22);
-          border-color: rgba(232, 98, 42, 0.6);
+            0 1px 0 rgba(255, 255, 255, 0.6) inset,
+            0 12px 30px -18px rgba(232, 98, 42, 0.28);
         }
 
         .gs-tm-avatar {
