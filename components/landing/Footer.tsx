@@ -75,7 +75,7 @@ export function Footer() {
   const otherSymbol = currency === "INR" ? "$" : "₹";
 
   return (
-    <footer className="relative w-full bg-[var(--color-paper)] text-[var(--color-ink)]">
+    <footer className="relative w-full bg-[#FBE8D9] text-[var(--color-ink)]">
       <div
         aria-hidden
         className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--color-persimmon)]/80 to-transparent"
