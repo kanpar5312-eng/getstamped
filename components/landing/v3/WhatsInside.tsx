@@ -9,33 +9,61 @@ import FlowingMenu from "@/components/ui/FlowingMenu";
    loud-orange treatment so the section reads editorial, not banner-ad.
    ═════════════════════════════════════════════════════════════════════════ */
 
-const menuItems = [
-  {
-    link: "#playbook",
-    text: "Playbook",
-    image: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=600&q=80",
-  },
-  {
-    link: "#vault",
-    text: "Document Vault",
-    image: "https://images.unsplash.com/photo-1568219557405-376e23e4f7cf?w=600&q=80",
-  },
-  {
-    link: "#interview",
-    text: "Mock Interview",
-    image: "https://images.unsplash.com/photo-1507537297725-24a1c029d3ca?w=600&q=80",
-  },
-  {
-    link: "#parent",
-    text: "Parent Share",
-    image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80",
-  },
-];
-
 const BONE = "#F5F1E8";
 const INK = "#0B1E3F";
 const PERSIMMON = "#E8622A";
 const STONE = "rgba(11, 30, 63, 0.12)";
+
+/* Inline brand tiles — deep ink card with a persimmon glyph and an
+   eyebrow label. Encoded as data URIs so FlowingMenu's <img> can render
+   them without a network round-trip or external asset. */
+function tile(label: string, glyph: string) {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'>
+  <rect width='600' height='600' fill='${INK}'/>
+  <rect x='18' y='18' width='564' height='564' fill='none' stroke='${PERSIMMON}' stroke-opacity='0.35' stroke-width='1'/>
+  <text x='44' y='72' font-family='ui-monospace, SFMono-Regular, Menlo, monospace' font-size='18' letter-spacing='6' fill='${PERSIMMON}'>${label}</text>
+  <g transform='translate(300 320)' stroke='${PERSIMMON}' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'>${glyph}</g>
+  <text x='44' y='560' font-family='Georgia, serif' font-style='italic' font-size='22' fill='${BONE}' opacity='0.7'>GetStamped</text>
+</svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+const GLYPH_PLAYBOOK = `
+  <line x1='-110' y1='-70' x2='110' y2='-70'/>
+  <line x1='-110' y1='-20' x2='60' y2='-20'/>
+  <line x1='-110' y1='30' x2='90' y2='30'/>
+  <line x1='-110' y1='80' x2='40' y2='80'/>
+  <circle cx='-130' cy='-70' r='6' fill='${PERSIMMON}'/>
+  <circle cx='-130' cy='-20' r='6' fill='${PERSIMMON}'/>
+  <circle cx='-130' cy='30' r='6' fill='${PERSIMMON}'/>
+  <circle cx='-130' cy='80' r='6' fill='${PERSIMMON}'/>`;
+
+const GLYPH_VAULT = `
+  <rect x='-110' y='-90' width='180' height='220' rx='6'/>
+  <rect x='-80' y='-60' width='180' height='220' rx='6'/>
+  <line x1='-50' y1='-20' x2='70' y2='-20'/>
+  <line x1='-50' y1='20' x2='40' y2='20'/>
+  <line x1='-50' y1='60' x2='70' y2='60'/>`;
+
+const GLYPH_INTERVIEW = `
+  <rect x='-25' y='-110' width='50' height='110' rx='25'/>
+  <path d='M -60 -20 a 60 60 0 0 0 120 0'/>
+  <line x1='0' y1='40' x2='0' y2='90'/>
+  <line x1='-40' y1='110' x2='40' y2='110'/>`;
+
+const GLYPH_PARENT = `
+  <circle cx='-60' cy='-40' r='32'/>
+  <circle cx='60' cy='-40' r='32'/>
+  <circle cx='0' cy='60' r='26'/>
+  <path d='M -60 0 q 0 60 60 60'/>
+  <path d='M 60 0 q 0 60 -60 60'/>`;
+
+const menuItems = [
+  { link: "#playbook", text: "Playbook", image: tile("PLAYBOOK", GLYPH_PLAYBOOK) },
+  { link: "#vault", text: "Document Vault", image: tile("VAULT", GLYPH_VAULT) },
+  { link: "#interview", text: "Mock Interview", image: tile("INTERVIEW", GLYPH_INTERVIEW) },
+  { link: "#parent", text: "Parent Share", image: tile("PARENT SHARE", GLYPH_PARENT) },
+];
 
 export function WhatsInside() {
   return (
