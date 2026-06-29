@@ -95,14 +95,16 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
   const mobileNavRef = useRef<HTMLElement>(null);
   const tabRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const mobileTabRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
-  const [indicator, setIndicator] = useState<{ left: number; width: number; visible: boolean }>({
+  const [indicator, setIndicator] = useState<{ left: number; width: number; top: number; visible: boolean }>({
     left: 0,
     width: 0,
+    top: 0,
     visible: false,
   });
-  const [mobileIndicator, setMobileIndicator] = useState<{ left: number; width: number; visible: boolean }>({
+  const [mobileIndicator, setMobileIndicator] = useState<{ left: number; width: number; top: number; visible: boolean }>({
     left: 0,
     width: 0,
+    top: 0,
     visible: false,
   });
   const [hasMounted, setHasMounted] = useState(false);
@@ -142,6 +144,10 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
       setIndicator({
         left: tabRect.left - navRect.left,
         width: tabRect.width,
+        // Anchor to the active tab's bottom edge (relative to nav)
+        // so the bar sits directly under the text regardless of nav
+        // padding.
+        top: tabRect.bottom - navRect.top + 4,
         visible: true,
       });
     }
@@ -151,12 +157,13 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
     const mnav = mobileNavRef.current;
     const mtab = labelOf(mobileTabRefs.current[activeHref]);
     if (mnav && mtab) {
-      const navLeft = mnav.getBoundingClientRect().left;
+      const navRect = mnav.getBoundingClientRect();
       const navScroll = mnav.scrollLeft;
       const mtabRect = mtab.getBoundingClientRect();
       setMobileIndicator({
-        left: mtabRect.left - navLeft + navScroll,
+        left: mtabRect.left - navRect.left + navScroll,
         width: mtabRect.width,
+        top: mtabRect.bottom - navRect.top + 4,
         visible: true,
       });
     }
@@ -238,14 +245,15 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
           {/* Shared underline — glides between tabs on route change */}
           <span
             aria-hidden
-            className="pointer-events-none absolute bottom-[-1px] h-[2px] rounded-full bg-[var(--ember)]"
+            className="pointer-events-none absolute left-0 h-[2px] rounded-full bg-[var(--ember)]"
             style={{
+              top: `${indicator.top}px`,
               transform: `translateX(${indicator.left}px)`,
               width: `${indicator.width}px`,
               opacity: indicator.visible ? 1 : 0,
               // No transition on first mount → it snaps under Home rather than gliding from x=0
               transition: hasMounted
-                ? "transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), width 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease"
+                ? "transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), width 0.36s cubic-bezier(0.22, 1, 0.36, 1), top 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease"
                 : "opacity 0.2s ease",
               willChange: "transform, width",
               boxShadow: "0 0 8px rgba(232, 98, 42, 0.45)",
@@ -255,11 +263,11 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
 
         {/* Right cluster — 12px gaps, flush to viewport right edge */}
         <div className="ml-auto flex items-center gap-3 shrink-0 pl-4">
-          {/* Search — expands when there's room, icon-only otherwise */}
+          {/* Search — icon button on mobile + tablet, expands wide on 2xl */}
           <button
             type="button"
             onClick={() => window.dispatchEvent(new CustomEvent("cmdk:open"))}
-            className="hidden sm:inline-flex 2xl:hidden h-8 w-8 items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--surface)] text-[var(--stone)] hover:border-[var(--line-hover)] hover:text-[var(--ink)] transition-colors"
+            className="inline-flex 2xl:hidden h-8 w-8 items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--surface)] text-[var(--stone)] hover:border-[var(--line-hover)] hover:text-[var(--ink)] transition-colors"
             aria-label="Search (⌘K)"
           >
             <SearchIcon />
@@ -330,17 +338,19 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
             </Link>
           );
         })}
-        {/* Gliding mobile underline. Matches desktop curve + duration so
-            the same motion language reads across both layouts. */}
+        {/* Gliding mobile underline. Anchors to the active tab's bottom
+            edge so the bar sits directly under the label regardless of
+            the nav's bottom padding or horizontal scroll position. */}
         <span
           aria-hidden
-          className="pointer-events-none absolute bottom-0 h-[2px] rounded-full bg-[var(--ember)]"
+          className="pointer-events-none absolute left-0 h-[2px] rounded-full bg-[var(--ember)]"
           style={{
+            top: `${mobileIndicator.top}px`,
             transform: `translateX(${mobileIndicator.left}px)`,
             width: `${mobileIndicator.width}px`,
             opacity: mobileIndicator.visible ? 1 : 0,
             transition: hasMounted
-              ? "transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), width 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease"
+              ? "transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), width 0.36s cubic-bezier(0.22, 1, 0.36, 1), top 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease"
               : "opacity 0.2s ease",
             willChange: "transform, width",
             boxShadow: "0 0 8px rgba(232, 98, 42, 0.45)",
