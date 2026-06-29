@@ -3,12 +3,12 @@
 import FlowingMenu from "@/components/ui/FlowingMenu";
 
 /* ════════════════════════════════════════════════════════════════════════
-   WhatsInside — typographic preview of the four pillars that follow on
-   the landing. FlowingMenu (GSAP) drives the hover image follower +
-   marquee strip per row.
+   WhatsInside — typographic preview of the four pillars. Resting rows
+   sit quiet on bone with ink serif text; hover sweeps a deep-ink band
+   in from the left with persimmon italic text. Inverts the previous
+   loud-orange treatment so the section reads editorial, not banner-ad.
    ═════════════════════════════════════════════════════════════════════════ */
 
-// TODO: replace with GetStamped branded images before launch
 const menuItems = [
   {
     link: "#playbook",
@@ -32,43 +32,85 @@ const menuItems = [
   },
 ];
 
+const BONE = "#F5F1E8";
+const INK = "#0B1E3F";
+const PERSIMMON = "#E8622A";
+const STONE = "rgba(11, 30, 63, 0.12)";
+
 export function WhatsInside() {
   return (
-    <section style={{ position: "relative" }}>
-      <p
-        style={{
-          textAlign: "center",
-          paddingTop: 80,
-          paddingBottom: 32,
-          fontSize: 10,
-          color: "#E8622A",
-          letterSpacing: "0.4em",
-          textTransform: "uppercase",
-          fontFamily: "var(--font-sans-stack)",
-          fontWeight: 600,
-          margin: 0,
-        }}
-      >
-        What&rsquo;s Inside
-      </p>
-      <div
-        className="gs-whats-inside-frame"
-        style={{ height: 500, position: "relative" }}
-      >
+    <section
+      className="gs-whats-inside"
+      style={{ position: "relative", background: BONE }}
+    >
+      <div className="gs-whats-inside-head">
+        <p className="gs-whats-inside-eyebrow">What&rsquo;s Inside</p>
+        <h2 className="gs-whats-inside-title">
+          Four tools, <em>one stamp.</em>
+        </h2>
+      </div>
+
+      <div className="gs-whats-inside-frame">
         <FlowingMenu
           items={menuItems}
           speed={15}
-          textColor="#FAF8F4"
-          bgColor="#1C1917"
-          marqueeBgColor="#E8622A"
-          marqueeTextColor="#FAF8F4"
-          borderColor="rgba(250,248,244,0.10)"
+          textColor={INK}
+          bgColor={BONE}
+          marqueeBgColor={INK}
+          marqueeTextColor={PERSIMMON}
+          borderColor={STONE}
         />
       </div>
 
       <style>{`
+        .gs-whats-inside {
+          padding-bottom: 8px;
+        }
+        .gs-whats-inside-head {
+          text-align: center;
+          padding: 72px 24px 36px;
+        }
+        .gs-whats-inside-eyebrow {
+          font-size: 10px;
+          color: ${PERSIMMON};
+          letter-spacing: 0.4em;
+          text-transform: uppercase;
+          font-family: var(--font-sans-stack);
+          font-weight: 600;
+          margin: 0 0 18px;
+        }
+        .gs-whats-inside-title {
+          margin: 0;
+          font-family: var(--font-display-stack);
+          font-weight: 400;
+          font-size: clamp(28px, 3.4vw, 44px);
+          line-height: 1.1;
+          letter-spacing: -0.022em;
+          color: ${INK};
+        }
+        .gs-whats-inside-title em {
+          font-style: italic;
+          color: ${PERSIMMON};
+        }
+        .gs-whats-inside-frame {
+          height: 500px;
+          position: relative;
+        }
+
+        /* Refine the rest state inside FlowingMenu — serif, italic on hover row */
+        .gs-whats-inside .gs-flow-text {
+          font-family: var(--font-display-stack) !important;
+          font-weight: 400 !important;
+          letter-spacing: -0.02em !important;
+        }
+        .gs-whats-inside .gs-flow-marquee .gs-flow-text,
+        .gs-whats-inside .gs-flow-marquee span {
+          font-style: italic !important;
+        }
+
         @media (max-width: 768px) {
-          .gs-whats-inside-frame { height: 400px !important; }
+          .gs-whats-inside-frame { height: 400px; }
+          .gs-whats-inside-head { padding: 56px 20px 28px; }
         }
       `}</style>
     </section>
