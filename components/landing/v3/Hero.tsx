@@ -93,7 +93,12 @@ export function Hero() {
             margin: "24px 0 0",
             textAlign: "center",
             textWrap: "balance" as "balance",
-            minHeight: "1.08em",
+            /* Reserve two lines worth of height so cycling between
+               short and long phrases never reflows the page below. */
+            minHeight: "2.1em",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             maxWidth: 18 + "ch",
           }}
         >
@@ -178,8 +183,8 @@ export function Hero() {
         </div>
         <div className="gs-hero-teaser-frame">
           <div className="gs-hero-teaser-track">
-            {STEPS.slice(0, 5).map((s) => (
-              <Row key={s.n} step={s} />
+            {[...STEPS, ...STEPS].map((s, i) => (
+              <Row key={`${s.n}-${i}`} step={s} />
             ))}
           </div>
         </div>
@@ -284,6 +289,8 @@ export function Hero() {
           display: flex;
           flex-direction: column;
           gap: 0;
+          animation: gs-hero-track 28s linear infinite;
+          will-change: transform;
         }
         .gs-hero-row {
           display: grid;
