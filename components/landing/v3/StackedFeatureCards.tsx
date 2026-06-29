@@ -17,6 +17,7 @@ import { ScrollStackItem } from "@/components/ui/ScrollStackItem";
 const INK = "#1C1917";
 const PAPER = "#FAF8F4";
 const WARM_PAPER = "#FAF5EE";
+const SOFT_PEACH = "#FBE8D9";
 const PERSIMMON = "#E8622A";
 const GREEN = "#3FB37F";
 const RED = "#E5484D";
@@ -24,6 +25,7 @@ const NOCTURNAL = "var(--color-ink)";
 const FORSYTHA = "var(--color-persimmon)";
 void INK;
 void FORSYTHA;
+void NOCTURNAL;
 
 /* ────────────────────────────────────────────── shared primitives ── */
 
@@ -148,11 +150,11 @@ function PlaybookMock() {
     <div
       className="gs-sc-panel gs-sc-panel-dark"
       style={{
-        background: "rgba(250,248,244,0.04)",
+        background: "var(--color-ink)",
         border: "0.5px solid rgba(250,248,244,0.10)",
         borderRadius: 20,
         padding: 22,
-        boxShadow: "0 24px 60px rgba(0,0,0,0.35)",
+        boxShadow: "0 24px 60px rgba(11,30,63,0.25)",
       }}
     >
       <div
@@ -591,11 +593,11 @@ function InterviewMock() {
     <div
       className="gs-sc-panel gs-sc-panel-dark"
       style={{
-        background: "rgba(250,248,244,0.04)",
-        border: "0.5px solid rgba(255,255,255,0.10)",
+        background: "var(--color-ink)",
+        border: "0.5px solid rgba(250,248,244,0.10)",
         borderRadius: 20,
         padding: 22,
-        boxShadow: "0 24px 60px rgba(0,0,0,0.35)",
+        boxShadow: "0 24px 60px rgba(11,30,63,0.25)",
       }}
     >
       <div
@@ -1020,12 +1022,12 @@ export function StackedFeatureCards() {
     <>
       <ScrollStack>
         <ScrollStackItem>
-          <CardShell bg={NOCTURNAL} ink={PAPER} demo={<PlaybookMock />}>
-            <Chip dark>01 / PLAYBOOK</Chip>
-            <Headline ink={PAPER}>
+          <CardShell bg={WARM_PAPER} ink={INK} demo={<PlaybookMock />}>
+            <Chip dark={false}>01 / PLAYBOOK</Chip>
+            <Headline ink={INK}>
               47 steps. In the exact order the consulate expects them.
             </Headline>
-            <Body ink="rgba(250,248,244,0.55)">
+            <Body ink="rgba(28,25,23,0.55)">
               Every form, fee, and deadline — sequenced, dated, and checked off as you go.
               Nothing ambiguous. Nothing missed.
             </Body>
@@ -1046,12 +1048,12 @@ export function StackedFeatureCards() {
         </ScrollStackItem>
 
         <ScrollStackItem>
-          <CardShell bg={NOCTURNAL} ink={PAPER} demo={<InterviewMock />}>
-            <Chip dark>03 / MOCK INTERVIEW</Chip>
-            <Headline ink={PAPER}>
+          <CardShell bg={SOFT_PEACH} ink={INK} demo={<InterviewMock />}>
+            <Chip dark={false}>03 / MOCK INTERVIEW</Chip>
+            <Headline ink={INK}>
               Answer until you stop freezing.
             </Headline>
-            <Body ink="rgba(250,248,244,0.55)">
+            <Body ink="rgba(28,25,23,0.55)">
               A voice officer asks real F-1 questions in the order they actually ask them.
               You answer out loud. We score your ties-to-home argument, your study plan
               clarity, and your confidence.

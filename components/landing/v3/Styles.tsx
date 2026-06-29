@@ -646,28 +646,20 @@ export function Styles() {
         background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.85) 20%, rgba(255,255,255,0.85) 80%, transparent 100%);
         pointer-events: none;
       }
+      /* Solo "most chosen" — soft peach-persimmon tint with a
+         persimmon halo. Stays warm and bright; readable ink text. */
       .v3-price-solo {
-        background: var(--color-ink);
-        border: 0.5px solid rgba(255,255,255,0.10);
-        box-shadow: var(--gs-shadow-lg), 0 0 0 1px rgba(232,98,42,0.3);
-        color: var(--color-paper);
+        background: #FBE8D9;
+        border: 0.5px solid rgba(232,98,42,0.45);
+        box-shadow: var(--gs-shadow-lg), 0 0 0 1px rgba(232,98,42,0.35);
+        color: var(--color-ink);
         overflow: visible;
       }
       .v3-price-solo::before {
-        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.10) 20%, rgba(255,255,255,0.10) 80%, transparent 100%);
+        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.55) 20%, rgba(255,255,255,0.55) 80%, transparent 100%);
       }
-      /* Solo lives on an ink background — re-tint every child that
-         otherwise inherits ink/muted colors so the card is readable. */
-      .v3-price-solo .v3-price-name { color: rgba(250,248,244,0.65); }
-      .v3-price-solo .v3-price-caption { color: var(--color-paper); }
-      .v3-price-solo .v3-price-amt { color: var(--color-paper); }
-      .v3-price-solo .v3-price-symbol { color: rgba(250,248,244,0.60); }
-      .v3-price-solo .v3-price-per { color: rgba(250,248,244,0.55); }
-      .v3-price-solo .v3-price-strike { color: rgba(250,248,244,0.45); }
-      .v3-price-solo .v3-price-bullets,
-      .v3-price-solo .v3-price-bullets li { color: rgba(250,248,244,0.85); }
       .v3-price-solo .v3-check {
-        background: rgba(232,98,42,0.18);
+        background: rgba(232,98,42,0.22);
         border-color: rgba(232,98,42,0.55);
       }
       @media (hover: hover) and (pointer: fine) {
