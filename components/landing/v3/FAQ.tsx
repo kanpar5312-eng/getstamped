@@ -42,6 +42,26 @@ const faqs: FaqItem[] = [
     answer:
       "Refunds in the first 14 days for any reason. After that, we don't refund based on visa outcome — that depends on factors no prep tool can guarantee. We're honest about that.",
   },
+  {
+    question: "When should I actually start using this?",
+    answer:
+      "Ideally the day your I-20 lands. Earlier than that you're still picking schools — Phase 1 is free, so feel free to poke around. The latest we'd recommend starting is 6 weeks before your appointment. Tighter than that and the mock interview prep gets rushed.",
+  },
+  {
+    question: "Is my passport and bank info actually safe?",
+    answer:
+      "Yes. Documents are encrypted at rest and never used to train AI models. Only you can see them — even our team can't unless you explicitly share access for support. Delete your account and everything is wiped within 24 hours.",
+  },
+  {
+    question: "Will this work for my consulate? (Mumbai, Lagos, Bogotá, etc.)",
+    answer:
+      "Yes. The 47 steps are identical across every US consulate worldwide. The mock interview officer profiles are tuned per region — Mumbai officers ask different follow-ups than Lagos officers, and we've coded for that.",
+  },
+  {
+    question: "What about UK / Canada / Australia visas?",
+    answer:
+      "Coming, but not yet. Right now we cover US F-1 only — that's where we're sharpest. The same architecture (phased playbook, document vault, mock interview) ports cleanly to UK Student Route, Canadian Study Permit, and Australian subclass 500. Rolling out late 2026.",
+  },
 ];
 
 export function FAQ() {

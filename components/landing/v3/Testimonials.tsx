@@ -12,81 +12,94 @@ const PEACH = "#FBE8D9";
 const PERSIMMON = "#E8622A";
 void PERSIMMON;
 
+type AvatarKey = "persimmon" | "peach" | "cream" | "saffron" | "ink";
+
 type Testimonial = {
   handle: string;
   initials: string;
   quote: string;
+  avatar: AvatarKey;
   tint?: "persimmon" | "paper";
 };
 
 const ROW_A: Testimonial[] = [
   {
-    handle: "@ananya_iyer",
+    handle: "@ananya.iy",
     initials: "AI",
     quote:
-      "The 47-step list felt overwhelming on day one. By week three it was a checklist. DS-160 cleared first time.",
+      "ngl thought 47 steps was made up until i hit step 19. it's literally that many lol. ds-160 cleared first try tho 🤝",
+    avatar: "persimmon",
     tint: "persimmon",
   },
   {
-    handle: "@rohit.s",
+    handle: "@rohit_srm",
     initials: "RS",
     quote:
-      "The vault caught a missing DSO signature the day before my appointment. Worth it for that one catch alone.",
+      "vault told me my i-20 wasn't signed by my dso the NIGHT BEFORE my appointment. would've been so cooked 💀",
+    avatar: "cream",
   },
   {
-    handle: "@folake_ade",
+    handle: "@folake.a",
     initials: "FA",
     quote:
-      "Breaks down the four things officers actually score. The mock interview doesn't let vague answers slide.",
+      "the mock interview will humble you fr. was saying 'umm' every 4 words at first. by attempt 5 i actually sounded human",
+    avatar: "peach",
     tint: "persimmon",
   },
   {
-    handle: "@diego.r",
+    handle: "@diegooo",
     initials: "DR",
     quote:
-      "My parents stopped asking for updates the day I shared the read-only link. Replaced three calls a week.",
+      "mom stopped texting me 'beta how is application?' every night the day i shared the parent link. peace fr",
+    avatar: "saffron",
   },
   {
     handle: "@jimin_p",
     initials: "JP",
     quote:
-      "Did six mocks. By the real one I'd already heard every variant of 'why this school'. Felt familiar.",
+      "did the mock at 1am six times. by the real one i was lowkey bored answering 'why this uni'. stamped ✨",
+    avatar: "persimmon",
     tint: "persimmon",
   },
 ];
 
 const ROW_B: Testimonial[] = [
   {
-    handle: "@priya.nair",
+    handle: "@priya.n",
     initials: "PN",
     quote:
-      "Phase 1 was free so I tried it. Paid because nowhere else gets this stuff in order. Financial story rubric saved me.",
+      "phase 1 is free??? tried it for fun. paid the $9 in 20 min bc it was actually good. no cap this thing slaps",
+    avatar: "ink",
   },
   {
-    handle: "@aarav_s",
+    handle: "@aarav.s",
     initials: "AS",
     quote:
-      "Almost paid a consultant 40k. Did Phase 1 free and knew within an hour this was better.",
+      "delhi consultants quoted me 40k for visa prep 😭 nine. dollars. literally walked me through everything",
+    avatar: "peach",
     tint: "persimmon",
   },
   {
-    handle: "@tunde.o",
+    handle: "@tundeee",
     initials: "TO",
     quote:
-      "Lagos yesterday. Approved in four minutes. Officer said 'you're clearly prepared'.",
+      "lagos officer barely looked up. 4 mins. said 'you're prepared'. closest thing to a flex i've ever had",
+    avatar: "cream",
   },
   {
-    handle: "@mei.l",
+    handle: "@mei.lin",
     initials: "ML",
     quote:
-      "221(g) on attempt one. Approved on attempt two. Difference was the financial paperwork GetStamped flagged.",
+      "got 221(g) first try without this. got stamped second try WITH it. the difference was literally one financials section",
+    avatar: "persimmon",
     tint: "persimmon",
   },
   {
     handle: "@niran_v",
     initials: "NV",
     quote:
-      "Chennai officer asked what my father does. I gave the exact line from mock #3. Stamped.",
+      "chennai officer asked what my dad does. gave the EXACT answer from mock #3 word for word lmao. stamped 🫡",
+    avatar: "saffron",
   },
 ];
 
@@ -94,11 +107,11 @@ function Card({ t }: { t: Testimonial }) {
   const accent = t.tint === "persimmon";
   return (
     <figure className={`gs-tm-card${accent ? " is-accent" : ""}`}>
-      <span className="gs-tm-avatar" aria-hidden>
+      <span className={`gs-tm-avatar gs-tm-av-${t.avatar}`} aria-hidden>
         {t.initials}
       </span>
       <div className="gs-tm-body">
-        <blockquote className="gs-tm-quote">&ldquo;{t.quote}&rdquo;</blockquote>
+        <blockquote className="gs-tm-quote">{t.quote}</blockquote>
         <figcaption className="gs-tm-handle">{t.handle}</figcaption>
       </div>
     </figure>
@@ -259,11 +272,35 @@ export function Testimonials() {
           align-items: center;
           justify-content: center;
           font-family: var(--font-display-stack);
-          font-size: 16px;
-          letter-spacing: -0.02em;
-          color: ${PERSIMMON};
-          background: rgba(232, 98, 42, 0.14);
-          border: 1px solid rgba(232, 98, 42, 0.4);
+          font-size: 15px;
+          font-weight: 500;
+          letter-spacing: -0.01em;
+          box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
+        }
+        .gs-tm-av-persimmon {
+          background: rgba(232, 98, 42, 0.18);
+          color: #B85A15;
+          border: 1px solid rgba(232, 98, 42, 0.45);
+        }
+        .gs-tm-av-peach {
+          background: #FBE8D9;
+          color: #B85A15;
+          border: 1px solid rgba(232, 98, 42, 0.35);
+        }
+        .gs-tm-av-cream {
+          background: #F5F1E8;
+          color: #0B1E3F;
+          border: 1px solid rgba(11, 30, 63, 0.18);
+        }
+        .gs-tm-av-saffron {
+          background: rgba(232, 98, 42, 0.10);
+          color: #2A3F5F;
+          border: 1px solid rgba(11, 30, 63, 0.14);
+        }
+        .gs-tm-av-ink {
+          background: #FFFDF7;
+          color: #0B1E3F;
+          border: 1px solid rgba(11, 30, 63, 0.22);
         }
 
         .gs-tm-body {
@@ -277,10 +314,10 @@ export function Testimonials() {
           font-family: var(--font-sans-stack);
           font-size: 14px;
           line-height: 1.55;
-          color: rgba(11, 30, 63, 0.78);
+          color: rgba(11, 30, 63, 0.82);
           letter-spacing: -0.003em;
           display: -webkit-box;
-          -webkit-line-clamp: 3;
+          -webkit-line-clamp: 4;
           -webkit-box-orient: vertical;
           overflow: hidden;
         }
