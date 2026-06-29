@@ -3,6 +3,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getGroq, GROQ_MODEL } from "@/lib/groq";
 import { recomputeReadiness } from "@/lib/recompute-readiness";
+import { pushNotification } from "@/lib/notifications";
 
 type Turn = {
   question: string;
@@ -130,6 +131,22 @@ export async function POST(req: Request) {
 
       // Fire-and-forget readiness recompute.
       void recomputeReadiness();
+
+      // Notify the user with their score. Tone follows the verdict so
+      // a strong run reads as a win and a weak one reads as actionable.
+      const verdictBody =
+        verdict === "ready"
+          ? "Officer-ready. Save this score and walk in."
+          : verdict === "almost_ready"
+            ? "Almost there. One more mock to lock it in."
+            : "A few weak spots — review the fixes and run it again.";
+      void pushNotification({
+        userId,
+        kind: verdict === "ready" ? "step_complete" : "doc_attention",
+        title: `Mock interview · ${scores.overall}/100`,
+        body: verdictBody,
+        href: "/dashboard/mock-interview",
+      });
     }
   }
 

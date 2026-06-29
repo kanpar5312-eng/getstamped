@@ -6,6 +6,7 @@ import { LIMITS, tierFromPlan, utcDayStart } from "@/lib/documents/limits";
 import { checkDocument } from "@/lib/documents/vision";
 import { recomputeReadiness } from "@/lib/recompute-readiness";
 import { checkLimit, logUsage } from "@/lib/checkLimit";
+import { pushNotification } from "@/lib/notifications";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -229,6 +230,30 @@ export async function POST(req: Request) {
   // future analytics; free tier is already hard-blocked above so this
   // line only fires for paid users in practice).
   await logUsage(user.id, "document_review");
+
+  // Notify the user — passed docs get a green confirmation, failed docs
+  // get an attention notice with the first issue inlined. Fire-and-forget.
+  const docHref = `/dashboard/documents`;
+  if (passed) {
+    void pushNotification({
+      userId: user.id,
+      kind: "doc_checked",
+      title: `${item.display_name} cleared`,
+      body: "AI check passed. You're good to upload it at the consulate.",
+      href: docHref,
+    });
+  } else {
+    const firstIssue = feedback.issues[0]?.message;
+    void pushNotification({
+      userId: user.id,
+      kind: "doc_attention",
+      title: `${item.display_name} needs a fix`,
+      body: firstIssue
+        ? firstIssue
+        : "The AI flagged something on this document — open Documents to see what.",
+      href: docHref,
+    });
+  }
 
   return NextResponse.json({ ok: true, status, feedback });
 }
