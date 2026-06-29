@@ -178,8 +178,8 @@ export function Hero() {
         </div>
         <div className="gs-hero-teaser-frame">
           <div className="gs-hero-teaser-track">
-            {[...STEPS, ...STEPS].map((s, i) => (
-              <Row key={`${s.n}-${i}`} step={s} />
+            {STEPS.slice(0, 5).map((s) => (
+              <Row key={s.n} step={s} />
             ))}
           </div>
         </div>
@@ -268,22 +268,22 @@ export function Hero() {
           position: relative;
           height: 260px;
           overflow: hidden;
-          border-radius: 18px;
-          border: 1px solid rgba(11,30,63,0.10);
-          background:
-            linear-gradient(180deg, rgba(255,253,247,0.85), rgba(255,253,247,0.55));
+          border-radius: 20px;
+          border: 1px solid rgba(255,255,255,0.55);
+          background: rgba(255, 253, 247, 0.55);
+          backdrop-filter: blur(24px) saturate(180%);
+          -webkit-backdrop-filter: blur(24px) saturate(180%);
           box-shadow:
-            0 1px 0 rgba(255,255,255,0.6) inset,
-            0 24px 60px -32px rgba(11,30,63,0.25);
-          -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 14%, #000 60%, transparent 100%);
-                  mask-image: linear-gradient(180deg, transparent 0%, #000 14%, #000 60%, transparent 100%);
+            0 1px 0 rgba(255,255,255,0.85) inset,
+            0 0 0 1px rgba(11,30,63,0.06),
+            0 30px 60px -32px rgba(11,30,63,0.22);
+          -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 70%, transparent 100%);
+                  mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 70%, transparent 100%);
         }
         .gs-hero-teaser-track {
           display: flex;
           flex-direction: column;
           gap: 0;
-          animation: gs-hero-track 24s linear infinite;
-          will-change: transform;
         }
         .gs-hero-row {
           display: grid;

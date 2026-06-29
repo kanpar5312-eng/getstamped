@@ -98,10 +98,11 @@ export function Styles() {
         /* Heavier opaque tint + lighter blur — same premium look at a fraction
            of the per-frame paint cost. backdrop-filter is one of the most
            expensive properties in the browser. */
-        background: rgba(247, 243, 236, 0.92);
-        backdrop-filter: saturate(180%) blur(10px);
-        -webkit-backdrop-filter: saturate(180%) blur(10px);
-        border-bottom: 1px solid rgba(227, 221, 208, 0.6);
+        background: rgba(247, 243, 236, 0.72);
+        backdrop-filter: saturate(180%) blur(20px);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 1px 0 rgba(11, 30, 63, 0.04);
         transition: border-color 200ms var(--ease-soft), background-color 200ms var(--ease-soft);
         will-change: background-color;
       }
@@ -632,10 +633,15 @@ export function Styles() {
          highlight that catches the eye without screaming. */
       .v3-price-card {
         position: relative; display: flex; flex-direction: column;
-        background: rgba(255, 255, 255, 0.85);
-        border: 0.5px solid rgba(28,27,26,0.08);
+        background: rgba(255, 255, 255, 0.55);
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        border: 1px solid rgba(255,255,255,0.6);
         border-radius: 28px; padding: 32px 28px;
-        box-shadow: var(--gs-shadow-md);
+        box-shadow:
+          0 1px 0 rgba(255,255,255,0.9) inset,
+          0 0 0 1px rgba(11,30,63,0.05),
+          0 30px 60px -30px rgba(11,30,63,0.18);
         overflow: hidden;
         transform: translateZ(0);
         transition: transform 240ms var(--ease-soft),
@@ -647,11 +653,16 @@ export function Styles() {
         pointer-events: none;
       }
       /* Solo "most chosen" — soft peach-persimmon tint with a
-         persimmon halo. Stays warm and bright; readable ink text. */
+         persimmon halo + frosted glass. Stays warm and bright. */
       .v3-price-solo {
-        background: #FBE8D9;
-        border: 0.5px solid rgba(232,98,42,0.45);
-        box-shadow: var(--gs-shadow-lg), 0 0 0 1px rgba(232,98,42,0.35);
+        background: rgba(251, 232, 217, 0.72);
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        border: 1px solid rgba(232,98,42,0.45);
+        box-shadow:
+          0 1px 0 rgba(255,255,255,0.7) inset,
+          0 0 0 1px rgba(232,98,42,0.35),
+          0 30px 70px -28px rgba(232,98,42,0.28);
         color: var(--color-ink);
         overflow: visible;
       }
