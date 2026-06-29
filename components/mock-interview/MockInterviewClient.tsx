@@ -322,18 +322,31 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     // hanging here because a network stall or autoplay rejection could
     // wedge the await chain and leave the button stuck.
 
-    // 1) Audio unlock — fire and forget. The first user gesture is
-    //    enough to unlock the persistent <audio> for the session.
+    // 1) Audio unlock — synchronous, inside the user-gesture stack so
+    //    the persistent <audio> element is licensed to play later even
+    //    after awaited fetches. We load a tiny silent MP3 (data URI)
+    //    and play it muted; that satisfies the autoplay heuristic on
+    //    Safari/iOS and on Chrome's stricter user-activation model.
     try {
       const a = audioElRef.current;
       if (a) {
+        // 0.05s of silence — base64 MP3 small enough to inline.
+        const SILENT_MP3 =
+          "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQwAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAACAAACcQCAgICAgICAgICAgICAgICAgICAgICAgP////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAnHAhM6AAAAAAAAAAAAAAAAAAAAA//sQwAADwAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQwBOAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQwDOAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQwFODwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
         a.muted = true;
-        void a.play().then(() => {
-          a.pause();
-          a.muted = false;
-        }).catch(() => {
-          a.muted = false;
-        });
+        a.src = SILENT_MP3;
+        // Best-effort play; rejection is fine here — the .src assignment
+        // alone primes some browsers, and the muted attribute lets others
+        // through.
+        const p = a.play();
+        if (p && typeof p.then === "function") {
+          p.then(() => {
+            a.pause();
+            a.muted = false;
+          }).catch(() => {
+            a.muted = false;
+          });
+        }
       }
     } catch { /* ignore */ }
 
@@ -374,6 +387,16 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     setQuestions(picked);
     setPhase("cinematic");
     setStarting(false);
+
+    // Prefetch the first question's MP3 while the cinematic plays so the
+    // very first speak() in the room finds a cached blob URL and never
+    // races the autoplay window after the user gesture has lapsed. This
+    // is the main reason the officer was silent on the first turn for
+    // users where the gesture-unlock had already expired by the time
+    // /tts returned.
+    if (picked[0]) {
+      void fetchTtsUrl(picked[0]);
+    }
   };
 
   const enterRoom = () => {
