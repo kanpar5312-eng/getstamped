@@ -53,7 +53,7 @@ const TOS_SECTIONS: Section[] = [
   {
     heading: "Termination",
     body:
-      "We may suspend or terminate your access if you violate these terms, attempt to abuse the service, or use it to commit fraud. You may delete your account at any time by emailing founder@getstamped.app — your data is removed within 7 business days.",
+      "We may suspend or terminate your access if you violate these terms, attempt to abuse the service, or use it to commit fraud. You may delete your account at any time by emailing getstampedlegal@gmail.com — your data is removed within 7 business days.",
   },
   {
     heading: "Privacy and data handling",

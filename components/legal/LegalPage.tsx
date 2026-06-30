@@ -103,10 +103,10 @@ export function LegalPage({ title, effectiveDate, intro, sections }: Props) {
                 <div className="mt-16 border-t border-[var(--color-border)] pt-6 text-xs text-[var(--color-muted)]">
                   Questions? Email{" "}
                   <a
-                    href="mailto:getstamped.online@gmail.com"
+                    href="mailto:getstampedlegal@gmail.com"
                     className="text-[var(--color-ink)] hover:text-[var(--color-accent-deep)] transition-colors"
                   >
-                    getstamped.online@gmail.com
+                    getstampedlegal@gmail.com
                   </a>
                   .
                 </div>

@@ -13,5 +13,5 @@ export const SUPPORT_EMAIL_HREF = `mailto:${SUPPORT_EMAIL}`;
 /** Display name + email — used where we want the friendly form. */
 export const SUPPORT_FROM = `GetStamped <${SUPPORT_EMAIL}>`;
 
-/** Legal contact (kept on the domain — used for DPA / compliance only). */
-export const LEGAL_EMAIL = "legal@getstamped.app";
+/** Official legal / DPDP / data-rights contact. */
+export const LEGAL_EMAIL = "getstampedlegal@gmail.com";

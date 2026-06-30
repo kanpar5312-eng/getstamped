@@ -144,10 +144,10 @@ export default function PrivacyPage() {
                   You may request deletion of your account and all
                   associated data at any time by emailing{" "}
                   <a
-                    href="mailto:founder@getstamped.app"
+                    href="mailto:getstampedlegal@gmail.com"
                     className="underline underline-offset-2"
                   >
-                    founder@getstamped.app
+                    getstampedlegal@gmail.com
                   </a>
                   . Requests are actioned within 7 business days.
                 </li>

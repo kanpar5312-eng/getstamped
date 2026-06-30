@@ -201,10 +201,10 @@ export function ContactClient() {
               <li>
                 Legal &amp; data:{" "}
                 <a
-                  href="mailto:legal@getstamped.app"
+                  href="mailto:getstampedlegal@gmail.com"
                   className="text-[var(--color-accent-deep)] hover:text-[var(--color-accent)] transition-colors"
                 >
-                  legal@getstamped.app
+                  getstampedlegal@gmail.com
                 </a>
               </li>
             </ul>

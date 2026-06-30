@@ -133,10 +133,10 @@ export default function DPAPage() {
                 adding or replacing a Sub-processor; objections can be raised
                 by emailing{" "}
                 <a
-                  href="mailto:legal@getstamped.app"
+                  href="mailto:getstampedlegal@gmail.com"
                   className="text-[var(--color-accent-deep)] hover:text-[var(--color-accent)] transition-colors"
                 >
-                  legal@getstamped.app
+                  getstampedlegal@gmail.com
                 </a>
                 .
               </p>
@@ -183,7 +183,7 @@ export default function DPAPage() {
               <p className="mt-4 text-sm text-[var(--color-ink-soft)]">
                 GetStamped has executed each Sub-processor&rsquo;s standard DPA
                 or Article 28 terms where available. Copies can be requested
-                via legal@getstamped.app.
+                via getstampedlegal@gmail.com.
               </p>
             </>
           ),
@@ -325,10 +325,10 @@ export default function DPAPage() {
                 <li>
                   <strong>Restriction / objection</strong> — Email{" "}
                   <a
-                    href="mailto:legal@getstamped.app"
+                    href="mailto:getstampedlegal@gmail.com"
                     className="text-[var(--color-accent-deep)] hover:text-[var(--color-accent)] transition-colors"
                   >
-                    legal@getstamped.app
+                    getstampedlegal@gmail.com
                   </a>
                   ; we respond within 30 days.
                 </li>
@@ -387,10 +387,10 @@ export default function DPAPage() {
               <p>
                 Data protection contact:{" "}
                 <a
-                  href="mailto:legal@getstamped.app"
+                  href="mailto:getstampedlegal@gmail.com"
                   className="text-[var(--color-accent-deep)] hover:text-[var(--color-accent)] transition-colors"
                 >
-                  legal@getstamped.app
+                  getstampedlegal@gmail.com
                 </a>
                 .
               </p>
