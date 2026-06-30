@@ -89,10 +89,15 @@ export async function proxy(req: NextRequest) {
       const user = data.user;
       const path = req.nextUrl.pathname;
       const isProtected = path.startsWith("/dashboard") || path === "/onboarding";
+      // /sign-up/terms is intentionally accessible to signed-in users
+      // — the dashboard layout redirects them HERE when their stored
+      // tos_consent_version is stale. Excluding it from the
+      // "auth-route → /dashboard" bounce kills the infinite redirect
+      // loop the gate would otherwise create.
       const isAuthRoute =
         path === "/sign-in" ||
         path === "/sign-up" ||
-        path.startsWith("/sign-up/") ||
+        (path.startsWith("/sign-up/") && path !== "/sign-up/terms") ||
         path === "/forgot-password";
 
       if (isProtected && !user) {
