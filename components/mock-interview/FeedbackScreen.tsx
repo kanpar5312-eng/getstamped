@@ -216,6 +216,32 @@ export function FeedbackScreen({
         </div>
       </section>
 
+      {/* Honesty disclaimer — visible immediately after the verdict so
+          users see it without scrolling further into the breakdown. */}
+      <section
+        style={{
+          background: PAPER,
+          padding: "16px 24px",
+          borderBottom: "1px solid rgba(28,25,23,0.08)",
+        }}
+      >
+        <p
+          className="mx-auto"
+          style={{
+            maxWidth: 860,
+            fontFamily: "var(--font-sans-stack)",
+            fontSize: 12,
+            lineHeight: 1.55,
+            color: "var(--color-ink-soft, rgba(28,25,23,0.6))",
+            margin: 0,
+          }}
+        >
+          This is an automated practice tool to help you prepare. It does
+          not guarantee interview outcomes or reflect actual consular
+          officer judgment.
+        </p>
+      </section>
+
       {/* ───── SECTION 2 — AI SUMMARY ───── */}
       <section style={{ background: PAPER, padding: "32px 24px" }}>
         <div className="mx-auto max-w-[860px]">

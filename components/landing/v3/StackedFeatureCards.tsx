@@ -978,8 +978,9 @@ export function StackedFeatureCards() {
               Drop a document. Get an officer&rsquo;s verdict.
             </Headline>
             <Body ink="rgba(28,25,23,0.55)">
-              Our vision model reads every page in seconds — catches missing signatures,
-              expired dates, and wrong form versions before they cost you a reappointment.
+              Our vision model reads every page in seconds — checks for missing
+              signatures, expired dates, and wrong form versions before they cost
+              you a reappointment.
             </Body>
           </CardShell>
         </ScrollStackItem>

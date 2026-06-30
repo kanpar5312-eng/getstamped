@@ -35,7 +35,7 @@ const cardData: CardDatum[] = [
   {
     color: "#1C1917",
     title: "Document Vault",
-    description: "Vision-model checks every page — catches missing signatures, expired dates, wrong forms before a reappointment costs you weeks.",
+    description: "Vision-model checks every page for missing signatures, expired dates, and wrong forms before a reappointment costs you weeks.",
     label: "AI Review",
   },
   {

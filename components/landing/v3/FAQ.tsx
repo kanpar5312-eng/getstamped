@@ -25,7 +25,7 @@ const faqs: FaqItem[] = [
   {
     question: "What does the AI document check actually do?",
     answer:
-      "It reads each page you upload — passport bio, I-20, bank statements — and flags missing signatures, expired SEVIS receipts, wrong DS-160 confirmation numbers, and 14 other refusal patterns documented in 221(g) data.",
+      "It reads each page you upload — passport bio, I-20, bank statements — and flags missing signatures, expired SEVIS receipts, wrong DS-160 confirmation numbers, and checks for 14 common formatting issues documented in 221(g) refusal data. It is not a legal review.",
   },
   {
     question: "How is the mock interview scored?",

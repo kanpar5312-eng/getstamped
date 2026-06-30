@@ -40,7 +40,7 @@ const PANELS: Panel[] = [
     tag: "AI-powered",
     headline: "Your documents checked before the consulate does.",
     body:
-      "Upload once. Our vision model reads every page — catches a missing signature, expired date, or wrong form version before it costs you a reappointment.",
+      "Upload once. Our vision model reads every page — checks for missing signatures, expired dates, or wrong form versions before they cost you a reappointment.",
   },
   {
     id: "fc-mock",

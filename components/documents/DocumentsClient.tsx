@@ -554,6 +554,19 @@ function DocumentRowView({
         </p>
       )}
 
+      {/* Visible disclaimer below every AI check result, accepted or not.
+          Calmer than alarming, but explicit enough that the user knows
+          what this check is and isn't. */}
+      {(row.status === "accepted" ||
+        (row.status === "attention" && row.aiFeedback?.issues && row.aiFeedback.issues.length > 0)) && (
+        <p className="mt-2 ml-8 text-[11px] text-[var(--stone)] leading-relaxed max-w-prose">
+          This is an automated check for common formatting issues only.
+          It does not constitute legal advice or guarantee visa approval.
+          Always verify your documents with your DSO or an immigration
+          attorney before your interview.
+        </p>
+      )}
+
       {row.status === "uploading" && (
         <span
           aria-hidden
@@ -683,6 +696,20 @@ function DetailPanel({
             {row?.status === "accepted" && (
               <p className="text-[12px] text-[var(--stone)]">
                 Checked by AI — final judgment rests with the consulate.
+              </p>
+            )}
+
+            {/* DPDP / honesty disclaimer — same wording everywhere AI
+                check output appears. */}
+            {(row?.status === "accepted" ||
+              (row?.status === "attention" &&
+                row?.aiFeedback?.issues &&
+                row.aiFeedback.issues.length > 0)) && (
+              <p className="text-[12px] text-[var(--stone)] leading-relaxed">
+                This is an automated check for common formatting issues
+                only. It does not constitute legal advice or guarantee
+                visa approval. Always verify your documents with your DSO
+                or an immigration attorney before your interview.
               </p>
             )}
 

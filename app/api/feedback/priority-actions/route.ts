@@ -45,7 +45,7 @@ const FALLBACK_ACTIONS: PriorityAction[] = [
     priority: 2,
     title: "Verify your top 3 financial documents",
     description:
-      "Upload the latest bank statements, sponsor letter, and SEVIS receipt. The vault catches missing signatures and stale dates before the officer does.",
+      "Upload the latest bank statements, sponsor letter, and SEVIS receipt. The vault checks for missing signatures and stale dates before the officer sees them.",
     impact: "Document health",
     effort: "low",
     estimated_minutes: 20,

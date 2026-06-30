@@ -13,7 +13,7 @@ const FAQS = [
   },
   {
     q: "Do you guarantee my visa will be approved?",
-    a: "No, and no one honest can. Visa decisions are made by US consular officers. What we guarantee: you’ll walk into your interview prepared, with the right documents, having practiced the right questions.",
+    a: "No, and no one honest can. Visa decisions are made by US consular officers. What we help you do: walk into your interview prepared, with the right documents, having practiced the right questions.",
   },
   {
     q: "How is this different from a consultant?",

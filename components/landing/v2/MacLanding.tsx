@@ -1872,7 +1872,7 @@ function FAQWindow() {
     {
       tag: "Trust",
       q: "Do you guarantee my visa will be approved?",
-      a: "No tool can — the officer decides. What we guarantee: you'll walk in knowing every step, every document, every question.",
+      a: "No tool can — the officer decides. What we help you do: walk in knowing every step, every document, every question.",
     },
     {
       tag: "Pricing",

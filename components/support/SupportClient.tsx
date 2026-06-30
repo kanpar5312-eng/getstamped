@@ -43,7 +43,7 @@ const CATEGORIES: Category[] = [
     name: "The visa process",
     icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
     items: [
-      { q: "Do you guarantee my visa will be approved?", a: "No — and nobody honest can. Visa decisions are made solely by US consular officers. What we guarantee: you'll walk in fully prepared, with the right documents, having practiced the right questions. Preparation dramatically reduces avoidable rejections." },
+      { q: "Do you guarantee my visa will be approved?", a: "No — and nobody honest can. Visa decisions are made solely by US consular officers. What we help you do: walk in fully prepared, with the right documents, having practiced the right questions. Preparation reduces avoidable rejections." },
       { q: "Is the information up to date?", a: "Yes. We monitor State Department and USCIS policy changes and update affected steps. Each step shows official source links so you can verify everything yourself." },
       { q: "What is a 221(g) and does GetStamped help avoid it?", a: "A 221(g) is administrative processing — your case gets held, often for missing or mismatched paperwork, adding weeks of delay. Most 221(g)s are avoidable, and our document verification steps are designed specifically to catch those issues before your interview." },
       { q: "What's the DS-160 and why does everyone fear it?", a: "It's the 91-field online visa application form. One typo on your SEVIS number or a date mismatch with your I-20 can derail your application. GetStamped breaks it into 12 manageable stages with checks at each one." },
