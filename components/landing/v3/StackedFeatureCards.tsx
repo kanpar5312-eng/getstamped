@@ -74,18 +74,18 @@ function CardShell({
         width: "100%",
         height: "100%",
         display: "grid",
-        gridTemplateColumns: "1.05fr 1fr",
-        gap: "clamp(32px, 5vw, 80px)",
+        gridTemplateColumns: "1fr 1.1fr",
+        gap: "clamp(40px, 5vw, 80px)",
         alignItems: "center",
-        padding: "clamp(32px, 4vw, 56px) clamp(24px, 6vw, 80px)",
+        padding: "clamp(40px, 5vw, 72px) clamp(28px, 6vw, 88px)",
       }}
     >
-      <div className="gs-sc-copy" style={{ maxWidth: 560 }}>
+      <div className="gs-sc-copy" style={{ maxWidth: 620 }}>
         {children}
       </div>
       <div
         className="gs-sc-demo"
-        style={{ width: "100%", maxWidth: 620, justifySelf: "center" }}
+        style={{ width: "100%", maxWidth: 720, justifySelf: "center" }}
       >
         {demo}
       </div>
@@ -100,11 +100,11 @@ function Headline({ children, ink }: { children: React.ReactNode; ink: string })
       style={{
         fontFamily: "var(--font-display-stack)",
         fontWeight: 400,
-        fontSize: "clamp(36px, 4.4vw, 56px)",
-        lineHeight: 1.05,
-        letterSpacing: "-0.02em",
+        fontSize: "clamp(44px, 5.4vw, 72px)",
+        lineHeight: 1.04,
+        letterSpacing: "-0.022em",
         color: ink,
-        margin: "20px 0 0 0",
+        margin: "24px 0 0 0",
       }}
     >
       {children}
@@ -118,11 +118,11 @@ function Body({ children, ink }: { children: React.ReactNode; ink: string }) {
       className="gs-sc-body"
       style={{
         fontFamily: "var(--font-sans-stack)",
-        fontSize: 16,
-        lineHeight: 1.7,
+        fontSize: 19,
+        lineHeight: 1.65,
         color: ink,
-        maxWidth: 480,
-        margin: "20px 0 0 0",
+        maxWidth: 560,
+        margin: "26px 0 0 0",
       }}
     >
       {children}
@@ -228,6 +228,8 @@ function PlaybookMock() {
     { n: 13, label: "Complete DS-160 form",          date: "Mar 07", state: "done" },
     { n: 14, label: "Schedule visa appointment",     date: "Mar 10", state: "target" },
     { n: 15, label: "Prepare document bundle",       date: "Mar 12", state: "upcoming" },
+    { n: 16, label: "Mock interview, round 1",       date: "Mar 14", state: "upcoming" },
+    { n: 17, label: "Pay MRV fee",                    date: "Mar 16", state: "upcoming" },
   ] as const;
 
   return (
@@ -251,7 +253,7 @@ function PlaybookMock() {
               textTransform: "uppercase",
             }}
           >
-            After I-20 · steps 11–15
+            After I-20 · steps 11–17
           </p>
           <span
             className="gs-pb-counter"
@@ -297,14 +299,14 @@ function PlaybookMock() {
               data-state={r.state}
               style={{
                 display: "grid",
-                gridTemplateColumns: "26px 64px 1fr auto",
+                gridTemplateColumns: "28px 72px 1fr auto",
                 alignItems: "center",
-                gap: 12,
-                padding: "10px 6px",
+                gap: 14,
+                padding: "13px 6px",
                 borderBottom:
                   i < rows.length - 1 ? "0.5px solid rgba(250,248,244,0.06)" : "none",
                 fontFamily: "var(--font-sans-stack)",
-                fontSize: 13,
+                fontSize: 14,
                 color: "rgba(250,248,244,0.85)",
               }}
             >
@@ -424,8 +426,8 @@ function DocVaultMock() {
           className="gs-vt-zone"
           style={{
             marginTop: 56,
-            padding: "26px 18px 22px",
-            borderRadius: 12,
+            padding: "44px 22px 38px",
+            borderRadius: 14,
             border: `1.5px dashed rgba(232,98,42,0.42)`,
             background: "rgba(232,98,42,0.05)",
             textAlign: "center",
@@ -437,7 +439,7 @@ function DocVaultMock() {
             style={{
               margin: 0,
               fontFamily: "var(--font-display-stack)",
-              fontSize: 18,
+              fontSize: 22,
               color: "var(--color-ink)",
               letterSpacing: "-0.01em",
             }}
@@ -446,9 +448,9 @@ function DocVaultMock() {
           </p>
           <p
             style={{
-              margin: "6px 0 0",
+              margin: "8px 0 0",
               fontFamily: "var(--font-mono-stack, var(--font-sans-stack))",
-              fontSize: 10,
+              fontSize: 11,
               letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: "rgba(11,30,63,0.45)",
@@ -595,17 +597,29 @@ function InterviewMock() {
         >
           &ldquo;Why this university, and not a closer one back home?&rdquo;
         </p>
+        <p
+          style={{
+            margin: "8px 0 0",
+            fontFamily: "var(--font-mono-stack, var(--font-sans-stack))",
+            fontSize: 10,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            color: "rgba(250,248,244,0.45)",
+          }}
+        >
+          Question 3 of 5 · 00:42 elapsed
+        </p>
 
         {/* Waveform — bars pulse while the cursor "holds" Start */}
         <div
           className="gs-iv-wave"
           aria-hidden
           style={{
-            marginTop: 14,
+            marginTop: 18,
             display: "flex",
             alignItems: "center",
             gap: 3,
-            height: 36,
+            height: 56,
           }}
         >
           {Array.from({ length: 32 }).map((_, i) => (
@@ -643,10 +657,10 @@ function InterviewMock() {
           <span
             style={{
               fontFamily: "var(--font-display-stack)",
-              fontSize: 28,
+              fontSize: 36,
               letterSpacing: "-0.02em",
               color: PERSIMMON,
-              minWidth: 56,
+              minWidth: 70,
             }}
           >
             <span className="gs-iv-num" />/100
@@ -792,9 +806,9 @@ function ParentViewMock() {
         <div
           className="gs-pv-preview"
           style={{
-            marginTop: 14,
-            padding: "14px 14px 16px",
-            borderRadius: 12,
+            marginTop: 18,
+            padding: "20px 20px 24px",
+            borderRadius: 14,
             background: "var(--color-ink)",
             color: PAPER,
             opacity: 0,
@@ -815,11 +829,12 @@ function ParentViewMock() {
           </p>
           <p
             style={{
-              margin: "6px 0 0",
+              margin: "8px 0 0",
               fontFamily: "var(--font-display-stack)",
-              fontSize: 18,
-              lineHeight: 1.3,
+              fontSize: 22,
+              lineHeight: 1.25,
               color: PAPER,
+              letterSpacing: "-0.01em",
             }}
           >
             Your daughter&rsquo;s F-1 application
@@ -958,9 +973,9 @@ export function StackedFeatureCards() {
            checkbox at (8px, 162px), pauses, "clicks", then resets. */
         @keyframes gs-pb-cursor {
           0%, 6%    { transform: translate(380px, 220px); }
-          26%, 34%  { transform: translate(8px, 158px); }
-          36%       { transform: translate(8px, 158px) scale(0.85); }
-          40%, 86%  { transform: translate(8px, 158px); }
+          26%, 34%  { transform: translate(8px, 196px); }
+          36%       { transform: translate(8px, 196px) scale(0.85); }
+          40%, 86%  { transform: translate(8px, 196px); }
           100%      { transform: translate(380px, 220px); }
         }
         .gs-pb-cursor {
@@ -987,21 +1002,21 @@ export function StackedFeatureCards() {
           opacity: 0;
           animation: gs-pb-checkpop 5s cubic-bezier(0.45, 0, 0.25, 1) infinite;
         }
-        /* Progress bar slides 60% → 80% in sync with the click. */
+        /* Progress bar slides 43% → 57% (3/7 → 4/7) in sync with the click. */
         @keyframes gs-pb-progress {
-          0%, 38%   { width: 60%; }
-          50%, 96%  { width: 80%; }
-          100%      { width: 60%; }
+          0%, 38%   { width: 43%; }
+          50%, 96%  { width: 57%; }
+          100%      { width: 43%; }
         }
         .gs-pb-progress { animation: gs-pb-progress 5s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
 
         @keyframes gs-pb-counter {
-          0%, 38%   { content: "3 / 5"; }
-          50%, 96%  { content: "4 / 5"; }
-          100%      { content: "3 / 5"; }
+          0%, 38%   { content: "3 / 7"; }
+          50%, 96%  { content: "4 / 7"; }
+          100%      { content: "3 / 7"; }
         }
         .gs-pb-counter::after {
-          content: "3 / 5";
+          content: "3 / 7";
           animation: gs-pb-counter 5s cubic-bezier(0.45, 0, 0.25, 1) infinite;
         }
 
@@ -1163,8 +1178,8 @@ export function StackedFeatureCards() {
              demo so users still see what the feature does. */
           .gs-pb-target-mark { background: ${PERSIMMON} !important; border-color: ${PERSIMMON} !important; }
           .gs-pb-target-mark::after { opacity: 1 !important; }
-          .gs-pb-progress { width: 80% !important; }
-          .gs-pb-counter::after { content: "4 / 5" !important; }
+          .gs-pb-progress { width: 57% !important; }
+          .gs-pb-counter::after { content: "4 / 7" !important; }
           .gs-vt-result { opacity: 1 !important; transform: none !important; }
           .gs-vt-file { opacity: 0 !important; }
           .gs-iv-score { opacity: 1 !important; transform: none !important; }
