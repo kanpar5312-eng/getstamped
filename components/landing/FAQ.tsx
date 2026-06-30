@@ -17,7 +17,7 @@ const FAQS = [
   },
   {
     q: "How is this different from a consultant?",
-    a: "Consultants charge $300–$1,200 and manage a checklist. We’re $19 lifetime, available 24/7, and the information is structured for action, not for billable hours.",
+    a: "Traditional visa consultants typically work on scheduled appointments and deliver guidance in meetings you have to attend. GetStamped is available anytime, gives you the full 47-step playbook in writing, and lets you practice mock interviews as many times as you want. It's a different shape, not a replacement for legal advice from an immigration attorney.",
   },
   {
     q: "What happens after my visa is stamped?",
@@ -29,7 +29,7 @@ const FAQS = [
   },
   {
     q: "What if it doesn’t help me?",
-    a: "Full refund within 14 days, no questions. Email us, we process the refund.",
+    a: "Every paid plan includes a full refund within 14 days of purchase. Email us from your account email and we process it. Refunds are never tied to your visa outcome — that depends on factors no preparation tool can control.",
   },
   {
     q: "Are you actually 17?",

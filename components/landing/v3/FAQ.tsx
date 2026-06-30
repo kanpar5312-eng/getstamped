@@ -15,52 +15,57 @@ const faqs: FaqItem[] = [
   {
     question: "Is it really one payment forever?",
     answer:
-      "Yes. One charge unlocks every phase, every step, every tool until your visa is stamped. No renewal, no usage tier, no trial timer.",
+      "Yes. One charge unlocks every phase, every step, and every tool until your visa is stamped. No renewals, no usage tiers, no trial timer.",
   },
   {
     question: "Are you actual visa lawyers?",
     answer:
-      "No, and we say that everywhere. We are a structured prep tool built on the official DS-160, FAM 9, and SEVP guidance, with sources cited on every claim. For legal advice, talk to an immigration attorney.",
+      "No. GetStamped is a structured preparation tool built on the official DS-160, FAM 9, and SEVP guidance, with sources cited on every claim. We are not immigration attorneys and our checks are not legal advice. For legal questions, please consult a licensed immigration attorney or your DSO.",
   },
   {
     question: "What does the AI document check actually do?",
     answer:
-      "It reads each page you upload — passport bio, I-20, bank statements — and flags missing signatures, expired SEVIS receipts, wrong DS-160 confirmation numbers, and checks for 14 common formatting issues documented in 221(g) refusal data. It is not a legal review.",
+      "It reads each page you upload — passport bio, I-20, bank statements — and flags missing signatures, expired SEVIS receipts, wrong DS-160 confirmation numbers, and checks for 14 common formatting issues documented in 221(g) refusal data. It is an automated formatting check, not a legal review, and it does not guarantee visa approval.",
+  },
+  {
+    question: "What happens to my documents after the AI scan?",
+    answer:
+      "Your file is sent for an automated formatting check and then permanently deleted from our storage within 5 minutes. We only retain the structured checklist result (for example, \"signature: verified\") — never the image, never extracted text, never any personally identifying data beyond your account email and name. Our AI provider, Groq, has Zero Data Retention (ZDR) enabled on our account, so submitted content is not stored on their side either.",
   },
   {
     question: "How is the mock interview scored?",
     answer:
-      "Your voice is transcribed and graded on four axes officers actually weight: clarity (filler words, sentence length), confidence (response latency, hedging), specificity (named programs, dates), and financial story (sponsor consistency).",
+      "Your spoken answer is transcribed and graded on four axes consular officers commonly weight: clarity, confidence, specificity, and the consistency of your financial story. We store the transcript and scores so you can review your sessions; we do not store the raw audio, and our AI provider (Groq) does not retain the transcripts beyond the inference request.",
   },
   {
     question: "Do my parents need to install anything?",
     answer:
-      "No. The parent view is a read-only link you share. They open it in any browser and see progress, the next step, and what is blocking. No login, no app, no document downloads.",
+      "No. Parent Share is a read-only link you choose to share. They open it in any browser and see progress, the current phase, and the next step — no login, no app install, no access to your documents.",
   },
   {
     question: "What if I get refused — do I get my money back?",
     answer:
-      "Refunds in the first 14 days for any reason. After that, we don't refund based on visa outcome — that depends on factors no prep tool can guarantee. We're honest about that.",
+      "Every paid plan includes a full refund within 14 days of purchase if the product is not useful to you. Refunds are never tied to visa outcome — that depends on factors no preparation tool can control, and we will not promise otherwise.",
   },
   {
     question: "When should I actually start using this?",
     answer:
-      "Ideally the day your I-20 lands. Earlier than that you're still picking schools — Phase 1 is free, so feel free to poke around. The latest we'd recommend starting is 6 weeks before your appointment. Tighter than that and the mock interview prep gets rushed.",
+      "Ideally the day your I-20 arrives. Earlier than that you're still picking schools — Phase 1 is free, so feel free to explore. We recommend starting at least 6 weeks before your appointment; tighter than that and the mock interview practice gets rushed.",
   },
   {
     question: "Is my passport and bank info actually safe?",
     answer:
-      "Yes. Documents are encrypted at rest and never used to train AI models. Only you can see them — even our team can't unless you explicitly share access for support. Delete your account and everything is wiped within 24 hours.",
+      "Yes. Documents are deleted from our storage within 5 minutes of upload — only the structured checklist result is kept. Account data (name, email, progress, mock transcripts) is encrypted at rest, never used to train AI models, and never sold or shared with advertisers. You can request deletion of your account and all associated data at any time by emailing getstampedlegal@gmail.com — we action requests within 7 business days. We operate as a Data Fiduciary under India's Digital Personal Data Protection (DPDP) Act.",
   },
   {
     question: "Will this work for my consulate? (Mumbai, Lagos, Bogotá, etc.)",
     answer:
-      "Yes. The 47 steps are identical across every US consulate worldwide. The mock interview officer profiles are tuned per region — Mumbai officers ask different follow-ups than Lagos officers, and we've coded for that.",
+      "Yes. The 47 steps are identical across every US consulate worldwide. Mock interview officer profiles are tuned per region — officers at different posts tend to ask different follow-ups, and the practice content reflects that.",
   },
   {
     question: "What about UK / Canada / Australia visas?",
     answer:
-      "Coming, but not yet. Right now we cover US F-1 only — that's where we're sharpest. The same architecture (phased playbook, document vault, mock interview) ports cleanly to UK Student Route, Canadian Study Permit, and Australian subclass 500. Rolling out late 2026.",
+      "Not yet. Right now we cover US F-1 only — that's where we're sharpest. The same architecture (phased playbook, document checks, mock interview) is designed to extend to the UK Student Route, Canadian Study Permit, and Australian subclass 500. Targeted rollout late 2026.",
   },
 ];
 
