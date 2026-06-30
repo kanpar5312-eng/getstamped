@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePricing } from "@/lib/PricingContext";
 import { PRICES, type Currency } from "@/lib/pricing";
@@ -453,75 +453,230 @@ function PromoCodeBox() {
   const router = useRouter();
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<
-    | { tone: "ok"; text: string }
-    | { tone: "err"; text: string }
-    | null
-  >(null);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (busy || !code.trim()) return;
     setBusy(true);
-    setResult(null);
+    setError(null);
+    setSuccess(null);
     const r = await applyPromoCode(code);
     setBusy(false);
     if (r.ok) {
-      setResult({ tone: "ok", text: r.message });
-      // Pull fresh server data so currentPlan reflects the upgrade
-      // (the promo box hides + paid tiers re-render as current).
-      router.refresh();
+      // Success → celebratory popup. router.refresh() runs when the
+      // popup closes so the upgrade-state UI re-renders behind it.
+      setSuccess(r.message);
     } else {
-      setResult({ tone: "err", text: r.error });
+      setError(r.error);
     }
   };
 
+  const closeSuccess = () => {
+    setSuccess(null);
+    setCode("");
+    router.refresh();
+  };
+
   return (
-    <form
-      onSubmit={onSubmit}
-      className="w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper-soft)] p-4 sm:p-5"
-      aria-label="Promo code"
+    <>
+      <form
+        onSubmit={onSubmit}
+        className="w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper-soft)] p-4 sm:p-5"
+        aria-label="Promo code"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[12px] font-medium text-[var(--color-ink)]">
+            Have a promo code?
+          </span>
+          <span className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-muted)]">
+            Unlocks paid plan
+          </span>
+        </div>
+        <div className="mt-3 flex items-center gap-2">
+          <input
+            type="text"
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            placeholder="Enter your code"
+            autoCapitalize="characters"
+            autoComplete="off"
+            className="flex-1 rounded-lg border border-[var(--color-border)] bg-transparent px-3 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted)]/70 outline-none focus:border-[var(--color-persimmon)]"
+            disabled={busy}
+          />
+          <button
+            type="submit"
+            disabled={busy || !code.trim()}
+            className="inline-flex items-center justify-center rounded-lg bg-[var(--color-persimmon)] px-4 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-50"
+          >
+            {busy ? "Applying…" : "Apply"}
+          </button>
+        </div>
+        {error && (
+          <p
+            role="alert"
+            className="mt-3 text-[12px] text-red-600"
+          >
+            {error}
+          </p>
+        )}
+      </form>
+
+      <PromoSuccessPopup message={success} onClose={closeSuccess} />
+    </>
+  );
+}
+
+/* Modal popup confirming the code applied. Persimmon checkmark badge,
+   the server message in display serif, and a single CTA. Auto-closes
+   after 4s in case the user navigates away. */
+function PromoSuccessPopup({
+  message,
+  onClose,
+}: {
+  message: string | null;
+  onClose: () => void;
+}) {
+  // Auto-dismiss after 4s
+  useEffect(() => {
+    if (!message) return;
+    const t = window.setTimeout(onClose, 4000);
+    return () => window.clearTimeout(t);
+  }, [message, onClose]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!message) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [message, onClose]);
+
+  if (!message) return null;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Promo code applied"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 80,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "rgba(11, 30, 63, 0.42)",
+        backdropFilter: "blur(4px)",
+        WebkitBackdropFilter: "blur(4px)",
+        animation: "gs-promo-fade 220ms cubic-bezier(0.22, 1, 0.36, 1) both",
+      }}
+      onClick={onClose}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[12px] font-medium text-[var(--color-ink)]">
-          Have a promo code?
-        </span>
-        <span className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-muted)]">
-          Unlocks paid plan
-        </span>
-      </div>
-      <div className="mt-3 flex items-center gap-2">
-        <input
-          type="text"
-          value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
-          placeholder="Enter your code"
-          autoCapitalize="characters"
-          autoComplete="off"
-          className="flex-1 rounded-lg border border-[var(--color-border)] bg-transparent px-3 py-2.5 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted)]/70 outline-none focus:border-[var(--color-persimmon)]"
-          disabled={busy}
-        />
-        <button
-          type="submit"
-          disabled={busy || !code.trim()}
-          className="inline-flex items-center justify-center rounded-lg bg-[var(--color-persimmon)] px-4 py-2.5 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-50"
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "var(--color-paper)",
+          border: "1px solid var(--color-border)",
+          borderRadius: 18,
+          padding: "28px 28px 24px",
+          maxWidth: 380,
+          width: "calc(100% - 32px)",
+          textAlign: "center",
+          boxShadow:
+            "0 24px 60px -16px rgba(11,30,63,0.4), 0 6px 20px -6px rgba(11,30,63,0.2)",
+          animation: "gs-promo-pop 280ms cubic-bezier(0.22, 1, 0.36, 1) both",
+        }}
+      >
+        {/* Persimmon checkmark badge */}
+        <span
+          aria-hidden
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 56,
+            height: 56,
+            borderRadius: 999,
+            background: "var(--color-persimmon)",
+            color: "var(--color-paper-soft)",
+            boxShadow: "0 14px 28px -10px rgba(232,98,42,0.6)",
+            animation: "gs-promo-check 480ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both",
+          }}
         >
-          {busy ? "Applying…" : "Apply"}
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
+            <path
+              d="M5 12l5 5 9-11"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+
+        <p
+          style={{
+            margin: "18px 0 0",
+            fontFamily: "var(--font-display-stack)",
+            fontSize: 22,
+            lineHeight: 1.25,
+            letterSpacing: "-0.01em",
+            color: "var(--color-ink)",
+          }}
+        >
+          Code applied
+        </p>
+        <p
+          style={{
+            margin: "8px 0 0",
+            fontSize: 14,
+            lineHeight: 1.55,
+            color: "var(--color-ink-soft)",
+          }}
+        >
+          {message}
+        </p>
+
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            marginTop: 20,
+            padding: "10px 22px",
+            borderRadius: 999,
+            background: "var(--color-persimmon)",
+            color: "var(--color-paper-soft)",
+            border: "none",
+            fontFamily: "var(--font-sans-stack)",
+            fontSize: 13,
+            fontWeight: 600,
+            letterSpacing: "0.04em",
+            cursor: "pointer",
+          }}
+        >
+          Got it
         </button>
       </div>
-      {result && (
-        <p
-          role={result.tone === "err" ? "alert" : "status"}
-          className={
-            "mt-3 text-[12px] " +
-            (result.tone === "ok"
-              ? "text-[var(--color-persimmon-deep)]"
-              : "text-red-600")
-          }
-        >
-          {result.text}
-        </p>
-      )}
-    </form>
+
+      <style>{`
+        @keyframes gs-promo-fade {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes gs-promo-pop {
+          from { opacity: 0; transform: translateY(8px) scale(0.96); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes gs-promo-check {
+          0%   { opacity: 0; transform: scale(0.4); }
+          60%  { opacity: 1; transform: scale(1.12); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
+    </div>
   );
 }
