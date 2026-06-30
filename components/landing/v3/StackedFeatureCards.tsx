@@ -85,7 +85,7 @@ function CardShell({
       </div>
       <div
         className="gs-sc-demo"
-        style={{ width: "100%", maxWidth: 520, justifySelf: "center" }}
+        style={{ width: "100%", maxWidth: 620, justifySelf: "center" }}
       >
         {demo}
       </div>
@@ -964,7 +964,7 @@ export function StackedFeatureCards() {
           100%      { transform: translate(380px, 220px); }
         }
         .gs-pb-cursor {
-          animation: gs-pb-cursor 7s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+          animation: gs-pb-cursor 5s cubic-bezier(0.45, 0, 0.25, 1) infinite;
         }
         /* Step-14 row reacts: ring fills with persimmon at the click moment. */
         @keyframes gs-pb-target {
@@ -977,7 +977,7 @@ export function StackedFeatureCards() {
           42%, 96%  { opacity: 1; transform: scale(1); }
           100%      { opacity: 0; transform: scale(0.4); }
         }
-        .gs-pb-target-mark { animation: gs-pb-target 7s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
+        .gs-pb-target-mark { animation: gs-pb-target 5s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
         .gs-pb-target-mark::after {
           content: "";
           position: absolute;
@@ -985,7 +985,7 @@ export function StackedFeatureCards() {
           background:
             url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'><path d='M2.5 6.2 L5 8.6 L9.5 3.6' stroke='%23FAF8F4' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>") center / 9px no-repeat;
           opacity: 0;
-          animation: gs-pb-checkpop 7s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+          animation: gs-pb-checkpop 5s cubic-bezier(0.45, 0, 0.25, 1) infinite;
         }
         /* Progress bar slides 60% → 80% in sync with the click. */
         @keyframes gs-pb-progress {
@@ -993,7 +993,7 @@ export function StackedFeatureCards() {
           50%, 96%  { width: 80%; }
           100%      { width: 60%; }
         }
-        .gs-pb-progress { animation: gs-pb-progress 7s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
+        .gs-pb-progress { animation: gs-pb-progress 5s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
 
         @keyframes gs-pb-counter {
           0%, 38%   { content: "3 / 5"; }
@@ -1002,7 +1002,7 @@ export function StackedFeatureCards() {
         }
         .gs-pb-counter::after {
           content: "3 / 5";
-          animation: gs-pb-counter 7s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+          animation: gs-pb-counter 5s cubic-bezier(0.45, 0, 0.25, 1) infinite;
         }
 
         /* ── Card 2: Document Vault ─────────────────────────────────── */
@@ -1014,7 +1014,7 @@ export function StackedFeatureCards() {
           60%       { transform: translate(220px, 130px) scale(1); }
           100%      { transform: translate(90px, 12px); }
         }
-        .gs-vt-cursor { animation: gs-vt-cursor 8.5s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
+        .gs-vt-cursor { animation: gs-vt-cursor 6s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
         /* File follows the cursor with a tiny lag. */
         @keyframes gs-vt-file {
           0%, 18%   { transform: translate(0, 0) scale(1); opacity: 1; }
@@ -1022,7 +1022,7 @@ export function StackedFeatureCards() {
           58%       { transform: translate(150px, 90px) scale(0.1); opacity: 0; }
           70%, 100% { transform: translate(0, 0) scale(1); opacity: 1; }
         }
-        .gs-vt-file { animation: gs-vt-file 8.5s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
+        .gs-vt-file { animation: gs-vt-file 6s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
         /* Scanner sweep — only visible during the scanning window. */
         @keyframes gs-vt-scan {
           0%, 58%   { opacity: 0; transform: translateY(-30%); }
@@ -1035,7 +1035,7 @@ export function StackedFeatureCards() {
           height: 24px;
           background: linear-gradient(180deg, transparent, rgba(232,98,42,0.55), transparent);
           pointer-events: none;
-          animation: gs-vt-scan 8.5s ease-in-out infinite;
+          animation: gs-vt-scan 6s ease-in-out infinite;
         }
         /* Zone breathes when the file is being dragged onto it. */
         @keyframes gs-vt-zone {
@@ -1043,7 +1043,7 @@ export function StackedFeatureCards() {
           52%, 80%  { background: rgba(232,98,42,0.12); border-color: rgba(232,98,42,0.7); }
           100%      { background: rgba(232,98,42,0.05); border-color: rgba(232,98,42,0.42); }
         }
-        .gs-vt-zone { animation: gs-vt-zone 8.5s ease-in-out infinite; }
+        .gs-vt-zone { animation: gs-vt-zone 6s ease-in-out infinite; }
         /* Result panel appears at the end of the scan. */
         @keyframes gs-vt-result {
           0%, 80%   { opacity: 0; transform: translateY(6px); }
@@ -1060,7 +1060,7 @@ export function StackedFeatureCards() {
           30%       { transform: translate(340px, 10px) scale(0.85); }
           34%, 100% { transform: translate(30px, 180px); }
         }
-        .gs-iv-cursor { animation: gs-iv-cursor 8s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
+        .gs-iv-cursor { animation: gs-iv-cursor 5.5s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
         /* Start button presses, then fades to a "Listening…" disabled style. */
         @keyframes gs-iv-start {
           0%, 28%   { transform: scale(1); background: ${PERSIMMON}; }
@@ -1068,21 +1068,21 @@ export function StackedFeatureCards() {
           40%, 92%  { transform: scale(1); background: rgba(232,98,42,0.35); }
           100%      { transform: scale(1); background: ${PERSIMMON}; }
         }
-        .gs-iv-start { animation: gs-iv-start 8s ease-in-out infinite; }
+        .gs-iv-start { animation: gs-iv-start 5.5s ease-in-out infinite; }
         /* Waveform is muted before click, lively during, mutes again at end. */
         @keyframes gs-iv-wave-amp {
           0%, 30%   { opacity: 0.2; filter: saturate(0.4); }
           36%, 78%  { opacity: 1;   filter: saturate(1.1); }
           88%, 100% { opacity: 0.3; filter: saturate(0.5); }
         }
-        .gs-iv-wave { animation: gs-iv-wave-amp 8s ease-in-out infinite; }
+        .gs-iv-wave { animation: gs-iv-wave-amp 5.5s ease-in-out infinite; }
         /* Score row + number reveal after the wave settles. */
         @keyframes gs-iv-score-in {
           0%, 78%   { opacity: 0; transform: translateY(6px); }
           84%, 96%  { opacity: 1; transform: translateY(0); }
           100%      { opacity: 0; transform: translateY(6px); }
         }
-        .gs-iv-score { animation: gs-iv-score-in 8s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+        .gs-iv-score { animation: gs-iv-score-in 5.5s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
         /* The score number counts up by swapping content via keyframes. */
         @keyframes gs-iv-num {
           0%, 79%  { content: ""; }
@@ -1094,7 +1094,7 @@ export function StackedFeatureCards() {
         .gs-iv-num::after {
           content: "";
           font-variant-numeric: tabular-nums;
-          animation: gs-iv-num 8s steps(1, end) infinite;
+          animation: gs-iv-num 5.5s steps(1, end) infinite;
         }
         /* "live" dot pulses gently while wave is animating. */
         .gs-iv-live span:first-child { animation: gs-iv-live-pulse 1.4s ease-in-out infinite; }
@@ -1111,7 +1111,7 @@ export function StackedFeatureCards() {
           32%       { transform: translate(380px, 30px) scale(0.88); }
           40%, 100% { transform: translate(60px, 200px); }
         }
-        .gs-pv-cursor { animation: gs-pv-cursor 8s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
+        .gs-pv-cursor { animation: gs-pv-cursor 5.5s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
         /* Copy button presses, briefly turns deeper. */
         @keyframes gs-pv-copy {
           0%, 28%  { background: ${PERSIMMON}; }
@@ -1119,21 +1119,21 @@ export function StackedFeatureCards() {
           40%, 90% { transform: scale(1); background: ${PERSIMMON}; }
           100%     { background: ${PERSIMMON}; }
         }
-        .gs-pv-copy { animation: gs-pv-copy 8s ease-in-out infinite; }
+        .gs-pv-copy { animation: gs-pv-copy 5.5s ease-in-out infinite; }
         /* Toast slides down + holds. */
         @keyframes gs-pv-toast {
           0%, 30%  { opacity: 0; transform: translateY(4px); }
           36%, 60% { opacity: 1; transform: translateY(0); }
           70%, 100%{ opacity: 0; transform: translateY(-2px); }
         }
-        .gs-pv-toast { animation: gs-pv-toast 8s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+        .gs-pv-toast { animation: gs-pv-toast 5.5s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
         /* Parent preview card reveals after copy. */
         @keyframes gs-pv-preview {
           0%, 38%  { opacity: 0; transform: translateY(10px); }
           50%, 96% { opacity: 1; transform: translateY(0); }
           100%     { opacity: 0; transform: translateY(10px); }
         }
-        .gs-pv-preview { animation: gs-pv-preview 8s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+        .gs-pv-preview { animation: gs-pv-preview 5.5s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
 
         /* ── Layout — collapse to single column on tablet/mobile ──── */
         @media (max-width: 900px) {

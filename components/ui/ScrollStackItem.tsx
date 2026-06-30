@@ -31,9 +31,13 @@ export function ScrollStackItem({ children, className, style }: Props) {
     offset: ["end end", "end start"],
   });
 
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.96]);
-  const y = useTransform(scrollYProgress, [0, 1], [0, -20]);
-  const radius = useTransform(scrollYProgress, [0, 1], [0, 24]);
+  // Aggressive lift + shrink so when the next card slides over, the
+  // previous card's top edge peeks above the new one — that's the
+  // "visible deck" stack effect (multiple cards layered with corners
+  // showing) instead of a single full-bleed replace.
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.93]);
+  const y = useTransform(scrollYProgress, [0, 1], [0, -64]);
+  const radius = useTransform(scrollYProgress, [0, 1], [24, 28]);
 
   return (
     <div
@@ -44,14 +48,26 @@ export function ScrollStackItem({ children, className, style }: Props) {
         top: 0,
         height: "100vh",
         width: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "5vh 16px",
       }}
     >
       <motion.div
         className={[
-          "gs-scrollstack-card relative w-full h-full overflow-hidden",
+          "gs-scrollstack-card relative w-full overflow-hidden",
           className ?? "",
         ].join(" ")}
         style={{
+          // Card surface is shorter than the viewport so previous
+          // cards have room to peek above when they translate up.
+          height: "min(80vh, 760px)",
+          maxWidth: 1240,
+          margin: "0 auto",
+          borderRadius: 24,
+          boxShadow:
+            "0 32px 80px -40px rgba(11,30,63,0.35), 0 12px 28px -16px rgba(11,30,63,0.18)",
           scale,
           y,
           borderTopLeftRadius: radius,
