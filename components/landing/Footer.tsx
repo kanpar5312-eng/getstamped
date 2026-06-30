@@ -27,6 +27,7 @@ const COMPANY: LinkItem[] = [
 const LEGAL: LinkItem[] = [
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
+  { label: "DPA", href: "/dpa" },
   { label: "Refund Policy", href: "/refund" },
   { label: "Disclaimer", href: "/terms#disclaimer-of-warranty" },
 ];
