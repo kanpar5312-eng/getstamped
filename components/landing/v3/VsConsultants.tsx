@@ -46,7 +46,6 @@ const PEACH = "#FBE8D9";
 void CREAM;
 void PEACH;
 void PAPER;
-void INK_SOFT;
 
 export function VsConsultants() {
   const rootRef = useRef<HTMLElement>(null);
@@ -91,7 +90,10 @@ export function VsConsultants() {
       aria-label="GetStamped vs. consultants — cutscene"
       style={{
         position: "relative",
-        background: INK,
+        // Soothing warm-cream section bg so the arcade cabinet sits on
+        // the same tone as the rest of the landing — no more cold ink
+        // wall around it. The cabinet itself stays dark for contrast.
+        background: "#F5F1E8",
         padding: "clamp(64px, 8vw, 112px) clamp(16px, 4vw, 48px)",
         overflow: "hidden",
         isolation: "isolate",
@@ -129,7 +131,7 @@ export function VsConsultants() {
             fontSize: "clamp(40px, 6vw, 84px)",
             lineHeight: 1.02,
             letterSpacing: "-0.025em",
-            color: "#FFFDF7",
+            color: INK,
             textWrap: "balance" as "balance",
           }}
         >
@@ -144,7 +146,7 @@ export function VsConsultants() {
             fontFamily: "var(--font-sans-stack)",
             fontSize: 16,
             lineHeight: 1.55,
-            color: "rgba(250,248,244,0.7)",
+            color: INK_SOFT,
           }}
         >
           Press play. Twenty-plus seconds, four power-ups, one finish.
