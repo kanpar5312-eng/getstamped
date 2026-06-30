@@ -57,7 +57,15 @@ export function DocumentsClient({ plan, initialRows, consentGiven }: Props) {
   // current session has agreed to the active consent version. Initialised
   // from the server-rendered profile flag and flipped true after the
   // user confirms inside the modal.
+  //
+  // The ref MIRRORS the state because the consent-confirmed callback
+  // sets hasConsent + immediately re-invokes handleUpload — React
+  // batches the state update so the recursive call would otherwise
+  // read the stale closure (hasConsent === false) and re-open the
+  // modal, creating an infinite loop. Reading from the ref dodges the
+  // closure entirely.
   const [hasConsent, setHasConsent] = useState<boolean>(consentGiven);
+  const hasConsentRef = useRef<boolean>(consentGiven);
   const [consentOpen, setConsentOpen] = useState(false);
   const pendingUploadRef = useRef<{ slug: string; file: File } | null>(null);
 
@@ -98,8 +106,10 @@ export function DocumentsClient({ plan, initialRows, consentGiven }: Props) {
       }
       // DPDP Act compliance — affirmative consent gate. First-time
       // uploaders see the privacy modal; the actual upload runs after
-      // they confirm.
-      if (!hasConsent) {
+      // they confirm. Read the ref (not state) so the recursive call
+      // from onConsentConfirmed sees the just-flipped value instead of
+      // the stale closure.
+      if (!hasConsentRef.current) {
         pendingUploadRef.current = { slug, file };
         setConsentOpen(true);
         return;
@@ -207,13 +217,15 @@ export function DocumentsClient({ plan, initialRows, consentGiven }: Props) {
         });
       }
     },
-    [isLocked, updateRow, refreshRow, hasConsent],
+    [isLocked, updateRow, refreshRow],
   );
 
   // DPDP Act compliance — fired by DocumentConsentModal once the server
-  // has recorded the consent log row. Flip local state so subsequent
-  // uploads skip the modal, then drain the pending upload.
+  // has recorded the consent log row. Flip BOTH the state (for UI) and
+  // the ref (for the synchronous recursive call below), then drain the
+  // pending upload.
   const onConsentConfirmed = useCallback(() => {
+    hasConsentRef.current = true;
     setHasConsent(true);
     setConsentOpen(false);
     const pending = pendingUploadRef.current;

@@ -93,9 +93,11 @@ export function Hero() {
             margin: "24px 0 0",
             textAlign: "center",
             textWrap: "balance" as "balance",
-            /* Reserve two lines worth of height so cycling between
-               short and long phrases never reflows the page below. */
-            minHeight: "2.1em",
+            /* Reserve two-and-a-bit lines so cycling between short and
+               long phrases never reflows the page below, even when the
+               longest line wraps to 3 visual rows on the narrowest
+               mobile viewports. */
+            minHeight: "2.4em",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
