@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/supabase/server";
-import { getAdminSupabase, BUCKET } from "@/lib/documents/admin";
+import { getAdminSupabase, BUCKET, deleteFileOrQueue } from "@/lib/documents/admin";
 import { getChecklistItem } from "@/lib/documents/checklist";
 import { LIMITS, tierFromPlan, utcDayStart } from "@/lib/documents/limits";
 import { checkDocument } from "@/lib/documents/vision";
@@ -105,6 +105,13 @@ export async function POST(req: Request) {
         checked_at: new Date().toISOString(),
       })
       .eq("id", doc.id);
+    // DPDP Act compliance — data minimization. Drop the raw file even
+    // when we couldn't actually scan it; the rate-limit path will not
+    // get a second look at the bytes.
+    if (doc.file_path) {
+      await deleteFileOrQueue(doc.file_path, "rate_limited");
+      await admin.from("documents").update({ file_path: null }).eq("id", doc.id);
+    }
     return NextResponse.json({ ok: true, rateLimited: true, reason });
   }
 
@@ -130,6 +137,13 @@ export async function POST(req: Request) {
         checked_at: new Date().toISOString(),
       })
       .eq("id", doc.id);
+    // DPDP Act compliance — data minimization. Drop the raw file even
+    // on the sign-URL failure path so a broken bucket policy never
+    // leaves the bytes sitting indefinitely.
+    if (doc.file_path) {
+      await deleteFileOrQueue(doc.file_path, "sign_url_failed");
+      await admin.from("documents").update({ file_path: null }).eq("id", doc.id);
+    }
     return NextResponse.json({ ok: true, aiFailed: true });
   }
 
@@ -190,6 +204,13 @@ export async function POST(req: Request) {
         checked_at: new Date().toISOString(),
       })
       .eq("id", doc.id);
+    // DPDP Act compliance — data minimization. Vision call did not
+    // succeed (or PDF path) — still drop the raw file. The structured
+    // "attention" row is enough for the UI to render.
+    if (doc.file_path) {
+      await deleteFileOrQueue(doc.file_path, "vision_failed");
+      await admin.from("documents").update({ file_path: null }).eq("id", doc.id);
+    }
     return NextResponse.json({ ok: true, aiFailed: true });
   }
 
@@ -198,17 +219,29 @@ export async function POST(req: Request) {
   const status = hasBlocker || hasIssues ? "attention" : "accepted";
   const passed = status === "accepted";
 
+  // DPDP Act compliance — data minimization. Strip any PII the model
+  // pulled off the document (names, dates of birth, etc.) before
+  // persisting. Only the pass/fail + issue messages + per-issue fix
+  // text — i.e. the structured checklist output — are kept.
+  const minimisedFeedback = {
+    matches_expected: feedback.matches_expected,
+    issues: feedback.issues,
+    extracted: {} as Record<string, never>,
+  };
+
   await admin
     .from("documents")
     .update({
       status,
-      ai_feedback: feedback,
+      ai_feedback: minimisedFeedback,
       checked_at: new Date().toISOString(),
     })
     .eq("id", doc.id);
 
   // Persist the scored review to the new audit table so the Feedback
   // page can read pass/fail history without joining JSON columns.
+  // file_url is intentionally null — the signed URL would expire in
+  // 120s anyway, and we delete the underlying file immediately below.
   await admin
     .from("document_review_results")
     .insert({
@@ -220,7 +253,7 @@ export async function POST(req: Request) {
       issues: feedback.issues.map((i) => i.message),
       suggestions: [],
       ai_confidence: feedback.matches_expected ? 90 : 60,
-      file_url: signed.signedUrl,
+      file_url: null,
     });
 
   // Fire-and-forget readiness recompute. Failure is non-fatal.
@@ -255,5 +288,16 @@ export async function POST(req: Request) {
     });
   }
 
-  return NextResponse.json({ ok: true, status, feedback });
+  // DPDP Act compliance — data minimization. The raw file has now
+  // served its only purpose (a one-shot vision read). Delete it from
+  // Storage and null the file_path so the row can no longer point at
+  // any blob. Failures go to public.pending_deletions and the
+  // /api/cron/storage-cleanup sweep retries (and also TTL-purges any
+  // file older than 5 minutes regardless of whether it was queued).
+  if (doc.file_path) {
+    await deleteFileOrQueue(doc.file_path, "post_scan");
+    await admin.from("documents").update({ file_path: null }).eq("id", doc.id);
+  }
+
+  return NextResponse.json({ ok: true, status, feedback: minimisedFeedback });
 }
