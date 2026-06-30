@@ -89,16 +89,25 @@ export default function PrivacyPage() {
         {
           heading: "Third-party AI providers",
           body: (
-            <p>
-              We use{" "}
-              <strong className="font-medium text-ink">Groq</strong> for
-              document scanning and mock interview features. Groq&rsquo;s
-              enterprise API does not use submitted data to train their
-              models. We send Groq only the minimum content needed for the
-              feature — a single document image (which we delete within
-              minutes) or an interview transcript — and we do not share your
-              account identity with them.
-            </p>
+            <>
+              <p>
+                We use{" "}
+                <strong className="font-medium text-ink">Groq</strong> for
+                AI-powered document scanning and mock interview features. By
+                default, Groq does not retain customer data for inference
+                requests, and we have enabled{" "}
+                <strong className="font-medium text-ink">
+                  Zero Data Retention (ZDR)
+                </strong>{" "}
+                on our account for additional protection.
+              </p>
+              <p>
+                We also send Groq only the minimum content needed for each
+                feature — a single document image (which we delete from our
+                own storage within minutes) or an interview transcript — and
+                never your account identity.
+              </p>
+            </>
           ),
         },
         {

@@ -163,7 +163,11 @@ export default function DPAPage() {
                     </tr>
                     <tr>
                       <td className="px-3 py-2.5 font-medium">Groq</td>
-                      <td className="px-3 py-2.5">AI inference for the Ask product and mock interview scoring</td>
+                      <td className="px-3 py-2.5">
+                        AI inference for document scanning, the Ask product, and mock interview scoring.
+                        Zero Data Retention (ZDR) is enabled on our account — Groq does not retain
+                        submitted content beyond the inference request.
+                      </td>
                       <td className="px-3 py-2.5">US</td>
                     </tr>
                     <tr>
