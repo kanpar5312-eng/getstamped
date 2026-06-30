@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CHECKLIST, PHASES, PHASE_TITLES, getChecklistItem } from "@/lib/documents/checklist";
 import { CountUp } from "@/components/dashboard/CountUp";
 import { ExampleModal } from "@/components/documents/ExampleModal";
+import { DocumentConsentModal } from "@/components/documents/DocumentConsentModal";
 import { getDocumentExample } from "@/components/documents/examples";
 import { notifyNetworkError } from "@/components/NetworkToast";
 
@@ -38,16 +39,27 @@ export type DocRow = {
 type Props = {
   plan: Plan;
   initialRows: DocRow[];
+  /** True if the user has already confirmed the current document-upload
+   *  privacy consent version. When false, the first upload attempt
+   *  pops the DocumentConsentModal. DPDP Act compliance. */
+  consentGiven: boolean;
 };
 
 const ACCEPTED_INPUT = ".pdf,.jpg,.jpeg,.png,.webp";
 const MAX_BYTES = 10 * 1024 * 1024;
 
-export function DocumentsClient({ plan, initialRows }: Props) {
+export function DocumentsClient({ plan, initialRows, consentGiven }: Props) {
   const [rows, setRows] = useState<DocRow[]>(initialRows);
   const [openPhase, setOpenPhase] = useState<number>(1);
   const [detailDocId, setDetailDocId] = useState<string | null>(null);
   const [paywallOpen, setPaywallOpen] = useState(false);
+  // DPDP Act compliance — affirmative consent gate. Tracks whether the
+  // current session has agreed to the active consent version. Initialised
+  // from the server-rendered profile flag and flipped true after the
+  // user confirms inside the modal.
+  const [hasConsent, setHasConsent] = useState<boolean>(consentGiven);
+  const [consentOpen, setConsentOpen] = useState(false);
+  const pendingUploadRef = useRef<{ slug: string; file: File } | null>(null);
 
   const isLocked = useCallback((phase: number) => plan === "free" && phase > 1, [plan]);
 
@@ -82,6 +94,14 @@ export function DocumentsClient({ plan, initialRows }: Props) {
       if (!item) return;
       if (isLocked(item.phase)) {
         setPaywallOpen(true);
+        return;
+      }
+      // DPDP Act compliance — affirmative consent gate. First-time
+      // uploaders see the privacy modal; the actual upload runs after
+      // they confirm.
+      if (!hasConsent) {
+        pendingUploadRef.current = { slug, file };
+        setConsentOpen(true);
         return;
       }
       if (file.size > MAX_BYTES) {
@@ -187,8 +207,26 @@ export function DocumentsClient({ plan, initialRows }: Props) {
         });
       }
     },
-    [isLocked, updateRow, refreshRow],
+    [isLocked, updateRow, refreshRow, hasConsent],
   );
+
+  // DPDP Act compliance — fired by DocumentConsentModal once the server
+  // has recorded the consent log row. Flip local state so subsequent
+  // uploads skip the modal, then drain the pending upload.
+  const onConsentConfirmed = useCallback(() => {
+    setHasConsent(true);
+    setConsentOpen(false);
+    const pending = pendingUploadRef.current;
+    pendingUploadRef.current = null;
+    if (pending) {
+      void handleUpload(pending.slug, pending.file);
+    }
+  }, [handleUpload]);
+
+  const onConsentCancelled = useCallback(() => {
+    setConsentOpen(false);
+    pendingUploadRef.current = null;
+  }, []);
 
   return (
     <div className="mx-auto w-full max-w-[1140px] py-8">
@@ -326,6 +364,13 @@ export function DocumentsClient({ plan, initialRows }: Props) {
 
       {/* Paywall modal */}
       {paywallOpen && <PaywallModal onClose={() => setPaywallOpen(false)} />}
+
+      {/* DPDP Act compliance — first-upload privacy consent. */}
+      <DocumentConsentModal
+        open={consentOpen}
+        onCancel={onConsentCancelled}
+        onConfirmed={onConsentConfirmed}
+      />
     </div>
   );
 }
