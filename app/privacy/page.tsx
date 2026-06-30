@@ -14,8 +14,8 @@ export default function PrivacyPage() {
       intro={
         <p>
           GetStamped is built by one person who cares deeply about not abusing
-          your data. This policy describes what we collect, why, and what
-          you can do about it.
+          your data. This policy describes what we collect, why, what we
+          deliberately do not keep, and what you can do about it.
         </p>
       }
       sections={[
@@ -23,18 +23,49 @@ export default function PrivacyPage() {
           heading: "What we collect",
           body: (
             <>
-              <p>
-                When you join the waitlist, we collect your email address.
-                Optional fields — country of origin, intended intake term,
-                and university name — are collected only if you choose to
-                share them.
-              </p>
-              <p>
-                Once GetStamped launches, we will additionally store the
-                progress data you create inside the product (which steps you
-                have completed, notes you add, documents you upload). This
-                policy will be updated before that data is collected.
-              </p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>
+                  <strong className="font-medium text-ink">Account info</strong> —
+                  your name and email address.
+                </li>
+                <li>
+                  <strong className="font-medium text-ink">Document scan results</strong> —
+                  a structured checklist only (e.g. &ldquo;signature: verified&rdquo;).
+                  Never the document image, never the extracted text.
+                </li>
+                <li>
+                  <strong className="font-medium text-ink">Mock interview transcripts and scores</strong> —
+                  the words you spoke during a practice interview and the
+                  numeric scores our model produced from them.
+                </li>
+                <li>
+                  <strong className="font-medium text-ink">Usage data</strong> —
+                  anonymous product-improvement metrics (which screens were
+                  used, error rates, performance). Not joined to your identity.
+                </li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          heading: "What we don't store",
+          body: (
+            <>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>
+                  <strong className="font-medium text-ink">Raw document images or PDFs</strong> —
+                  deleted within 5 minutes of upload, per our data
+                  minimization policy.
+                </li>
+                <li>
+                  <strong className="font-medium text-ink">OCR or extracted text</strong> from
+                  documents — never persisted to our database.
+                </li>
+                <li>
+                  <strong className="font-medium text-ink">Any personally identifiable information</strong> beyond
+                  your account email and name.
+                </li>
+              </ul>
             </>
           ),
         },
@@ -42,12 +73,10 @@ export default function PrivacyPage() {
           heading: "Why we collect it",
           body: (
             <>
-              <p>Your email is used for three things, and only three:</p>
+              <p>Your data is used for three things, and only three:</p>
               <ul className="list-disc pl-5 space-y-2">
-                <li>Confirming your spot on the waitlist.</li>
-                <li>
-                  Notifying you once when GetStamped opens for early access.
-                </li>
+                <li>Running the product features you signed up for.</li>
+                <li>Notifying you about your account and product updates.</li>
                 <li>Responding to messages you send us directly.</li>
               </ul>
               <p>
@@ -58,7 +87,22 @@ export default function PrivacyPage() {
           ),
         },
         {
-          heading: "Who we share it with",
+          heading: "Third-party AI providers",
+          body: (
+            <p>
+              We use{" "}
+              <strong className="font-medium text-ink">Groq</strong> for
+              document scanning and mock interview features. Groq&rsquo;s
+              enterprise API does not use submitted data to train their
+              models. We send Groq only the minimum content needed for the
+              feature — a single document image (which we delete within
+              minutes) or an interview transcript — and we do not share your
+              account identity with them.
+            </p>
+          ),
+        },
+        {
+          heading: "Who we share data with",
           body: (
             <>
               <p>
@@ -67,17 +111,21 @@ export default function PrivacyPage() {
               </p>
               <ul className="list-disc pl-5 space-y-2">
                 <li>
-                  <strong className="font-medium text-ink">Convex</strong> —
-                  database hosting for waitlist records.
+                  <strong className="font-medium text-ink">Supabase</strong> —
+                  database + authenticated storage.
                 </li>
                 <li>
                   <strong className="font-medium text-ink">Resend</strong> —
-                  transactional email delivery for the welcome and launch
-                  notifications.
+                  transactional email delivery.
                 </li>
                 <li>
                   <strong className="font-medium text-ink">Vercel</strong> —
                   web hosting for the site itself.
+                </li>
+                <li>
+                  <strong className="font-medium text-ink">Groq</strong> —
+                  AI inference for document checks and mock interviews (see
+                  &ldquo;Third-party AI providers&rdquo; above).
                 </li>
               </ul>
               <p>
@@ -90,11 +138,58 @@ export default function PrivacyPage() {
         {
           heading: "Your rights",
           body: (
+            <>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>
+                  You may request deletion of your account and all
+                  associated data at any time by emailing{" "}
+                  <a
+                    href="mailto:founder@getstamped.app"
+                    className="underline underline-offset-2"
+                  >
+                    founder@getstamped.app
+                  </a>
+                  . Requests are actioned within 7 business days.
+                </li>
+                <li>
+                  You may request a copy of the data we hold about you. Send
+                  the request to the same address and we will reply within 7
+                  business days.
+                </li>
+                <li>
+                  You may ask us to correct anything inaccurate.
+                </li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          heading: "Data retention",
+          body: (
+            <ul className="list-disc pl-5 space-y-2">
+              <li>
+                <strong className="font-medium text-ink">Documents</strong> —
+                deleted within 5 minutes of upload.
+              </li>
+              <li>
+                <strong className="font-medium text-ink">Account data</strong> —
+                retained until account deletion is requested.
+              </li>
+              <li>
+                <strong className="font-medium text-ink">Mock interview data</strong> —
+                retained until account deletion is requested.
+              </li>
+            </ul>
+          ),
+        },
+        {
+          heading: "Compliance",
+          body: (
             <p>
-              You can request a copy of your data, request deletion, or ask
-              us to correct anything inaccurate by emailing
-              getstamped.online@gmail.com. We will respond within seven days.
-              Deletion requests are honored within fourteen days.
+              We comply with India&rsquo;s Digital Personal Data Protection
+              Act (DPDP Act) as a Data Fiduciary. Our document handling
+              follows the Act&rsquo;s data minimization principle: raw
+              document files are processed transiently and never retained.
             </p>
           ),
         },
@@ -102,9 +197,9 @@ export default function PrivacyPage() {
           heading: "Cookies and tracking",
           body: (
             <p>
-              The landing page uses no analytics cookies and no third-party
+              The site uses no analytics cookies and no third-party
               trackers. The only cookies set by this site are essential
-              cookies required for the waitlist form to function. If we add
+              cookies required for the product to function. If we add
               analytics in the future, this policy will be updated and you
               will be notified.
             </p>
@@ -114,10 +209,12 @@ export default function PrivacyPage() {
           heading: "Children",
           body: (
             <p>
-              GetStamped is designed for prospective university students,
-              who are typically 17 and older. We do not knowingly collect
-              data from anyone under 13. If you believe we have, email us
-              and we will delete it.
+              GetStamped is designed for prospective university students.
+              Users must be 18 or older, or using the service with the
+              consent and supervision of a parent or guardian (we confirm
+              this at signup). We do not knowingly collect data from anyone
+              under 13. If you believe we have, email us and we will delete
+              it.
             </p>
           ),
         },
@@ -125,8 +222,8 @@ export default function PrivacyPage() {
           heading: "Changes to this policy",
           body: (
             <p>
-              If we change anything material, we will email everyone on the
-              waitlist before the change takes effect. The effective date at
+              If we change anything material, we will email all account
+              holders before the change takes effect. The effective date at
               the top of this page will be updated.
             </p>
           ),

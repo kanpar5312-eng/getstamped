@@ -107,6 +107,9 @@ export function SignUpForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  // DPDP Act compliance — affirmative age confirmation. Separate from
+  // the Terms/Privacy/DPA agreement so the user actively ticks both.
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [success, setSuccess] = useState<{ email: string } | null>(null);
@@ -121,7 +124,7 @@ export function SignUpForm() {
   // CAPTCHA requirement: when the site key is set we wait for a token; when
   // it's absent (dev), we don't gate the submit on it.
   const captchaPassed = TURNSTILE_SITE_KEY ? Boolean(turnstileToken) : true;
-  const canSubmit = nameValid && emailValid && passwordValid && agreed && captchaPassed && !pending;
+  const canSubmit = nameValid && emailValid && passwordValid && agreed && ageConfirmed && captchaPassed && !pending;
 
   const onTurnstileVerify = useCallback((token: string) => setTurnstileToken(token), []);
   const onTurnstileExpire = useCallback(() => setTurnstileToken(null), []);
@@ -131,6 +134,7 @@ export function SignUpForm() {
     if (!canSubmit) return;
     const fd = new FormData(e.currentTarget);
     fd.set("fullName", name);
+    fd.set("ageConfirmed", ageConfirmed ? "true" : "false");
     if (turnstileToken) fd.set("turnstileToken", turnstileToken);
     setError(null);
     startTransition(async () => {
@@ -331,6 +335,22 @@ export function SignUpForm() {
           <Link href="/privacy" className="text-[var(--color-ink)] underline underline-offset-2 hover:text-[var(--color-tg-deep)] transition-colors">Privacy</Link>{" "}
           &amp;{" "}
           <Link href="/dpa" className="text-[var(--color-ink)] underline underline-offset-2 hover:text-[var(--color-tg-deep)] transition-colors">DPA</Link>.
+        </span>
+      </label>
+
+      {/* Age confirmation — DPDP Act compliance. Required, separate from
+          the Terms checkbox so the user explicitly affirms each. */}
+      <label className="field-rise field-rise-4 flex items-start gap-2 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={ageConfirmed}
+          onChange={(e) => setAgeConfirmed(e.target.checked)}
+          className="mt-0.5 h-4 w-4 accent-[var(--color-ink)] focus:ring-4 focus:ring-[var(--color-tg)]/10 rounded shrink-0"
+        />
+        <span className="text-[11px] text-[var(--color-ink-soft)] leading-snug">
+          I confirm that I am 18 years of age or older, or that I am using
+          this service with the consent and supervision of a parent or
+          guardian.
         </span>
       </label>
 

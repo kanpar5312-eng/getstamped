@@ -6,6 +6,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { attachReferralFromCookie } from "@/lib/referrals";
+import { getAdminSupabase } from "@/lib/documents/admin";
 
 export type AuthResult =
   | { ok: true; redirectTo?: string }
@@ -21,10 +22,17 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   const password = String(formData.get("password") ?? "");
   const fullName = String(formData.get("fullName") ?? "").trim();
   const turnstileToken = String(formData.get("turnstileToken") ?? "");
+  const ageConfirmed = String(formData.get("ageConfirmed") ?? "") === "true";
 
   if (!reasonableEmail(email)) return { ok: false, error: "Enter a valid email." };
   if (password.length < 8) return { ok: false, error: "Password must be at least 8 characters." };
   if (fullName.length < 2) return { ok: false, error: "Tell us your full legal name." };
+  // DPDP Act compliance — affirmative age confirmation is required at
+  // signup. The client checkbox already gates submit, but a manually
+  // crafted POST must not bypass it.
+  if (!ageConfirmed) {
+    return { ok: false, error: "Please confirm you are 18+ or using the service with parental consent." };
+  }
 
   // CAPTCHA gate — accepts all submissions in dev (no TURNSTILE_SECRET_KEY)
   const human = await verifyTurnstile(turnstileToken);
@@ -67,6 +75,25 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
       await attachReferralFromCookie(signUpData.user.id);
     } catch (err) {
       console.error("[signUp] referral attach failed:", err);
+    }
+
+    // DPDP Act compliance — append-only record of the affirmative age
+    // confirmation that gated this signup. Best-effort: a failure here
+    // must not block account creation, but it WILL be logged loudly so
+    // a missed write is recoverable in operations.
+    try {
+      const admin = getAdminSupabase();
+      if (admin) {
+        const h = await headers();
+        const xff = h.get("x-forwarded-for");
+        const ip = xff ? xff.split(",")[0]?.trim() : h.get("x-real-ip");
+        await admin.from("age_confirmation_log").insert({
+          user_id: signUpData.user.id,
+          ip_address: ip ?? null,
+        });
+      }
+    } catch (err) {
+      console.error("[signUp] age_confirmation_log insert failed:", err);
     }
   }
 
