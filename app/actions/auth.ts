@@ -151,7 +151,10 @@ export async function verifyEmailCode(
     }
     return { ok: false, error: error.message };
   }
-  return { ok: true, redirectTo: "/onboarding" };
+  // Every fresh verification must pass through the forced-scroll ToS
+  // step before onboarding — the consent page short-circuits straight
+  // to /onboarding for anyone who has already consented.
+  return { ok: true, redirectTo: "/sign-up/terms" };
 }
 
 /** Re-send the verification email for an unconfirmed account. */

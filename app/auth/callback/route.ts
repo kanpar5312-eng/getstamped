@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { sendMail } from "@/lib/email";
 import { buildSignupWelcome } from "@/lib/email-templates";
+import { TOS_VERSION } from "@/lib/legal/tos";
 
 /**
  * Supabase email-verification + password-recovery landing.
@@ -47,7 +48,7 @@ export async function GET(req: Request) {
   if (userData.user) {
     const { data: profile } = await sb
       .from("profiles")
-      .select("first_name, onboarding_completed, welcome_sent_at")
+      .select("first_name, onboarding_completed, welcome_sent_at, tos_consent_version")
       .eq("id", userData.user.id)
       .maybeSingle();
 
@@ -62,6 +63,13 @@ export async function GET(req: Request) {
           .update({ welcome_sent_at: new Date().toISOString() })
           .eq("id", userData.user!.id);
       });
+    }
+
+    // DPDP Act compliance — forced-scroll ToS gate. Every fresh
+    // verification / OAuth callback must pass through the consent
+    // step before reaching the rest of the app.
+    if (profile?.tos_consent_version !== TOS_VERSION) {
+      return NextResponse.redirect(new URL("/sign-up/terms", url.origin));
     }
 
     if (!profile?.onboarding_completed) {
