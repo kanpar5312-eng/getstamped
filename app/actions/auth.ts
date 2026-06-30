@@ -7,6 +7,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { attachReferralFromCookie } from "@/lib/referrals";
 import { getAdminSupabase } from "@/lib/documents/admin";
+import { TOS_VERSION } from "@/lib/legal/tos";
 
 export type AuthResult =
   | { ok: true; redirectTo?: string }
@@ -102,7 +103,7 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   // detour. If the toggle is ON (current state, pending email-template
   // fix), session is null and we fall through to the verify page.
   if (signUpData.session) {
-    return { ok: true, redirectTo: "/onboarding" };
+    return { ok: true, redirectTo: "/sign-up/terms" };
   }
 
   // Fallback: try a password sign-in to obtain a session anyway. Works
@@ -110,7 +111,7 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
   // it fails (email-confirm-required policy), we send them to verify.
   const signIn = await sb.auth.signInWithPassword({ email, password });
   if (signIn.data.session) {
-    return { ok: true, redirectTo: "/onboarding" };
+    return { ok: true, redirectTo: "/sign-up/terms" };
   }
 
   return { ok: true, redirectTo: `/sign-up/verify?email=${encodeURIComponent(email)}` };
@@ -196,13 +197,17 @@ export async function signIn(formData: FormData): Promise<AuthResult> {
     return { ok: false, error: "Email or password is incorrect." };
   }
 
-  // Send incomplete profiles into onboarding
+  // Send users without ToS consent through the forced-scroll step,
+  // then incomplete profiles into onboarding, otherwise dashboard.
   if (data.user) {
     const { data: profile } = await sb
       .from("profiles")
-      .select("onboarding_completed")
+      .select("onboarding_completed, tos_consent_version")
       .eq("id", data.user.id)
       .maybeSingle();
+    if (profile?.tos_consent_version !== TOS_VERSION) {
+      return { ok: true, redirectTo: "/sign-up/terms" };
+    }
     if (!profile?.onboarding_completed) {
       return { ok: true, redirectTo: "/onboarding" };
     }
