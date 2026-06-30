@@ -36,6 +36,7 @@ import { StampedCloser } from "./StampedCloser";
 import { ScrollTransitions } from "./ScrollTransitions";
 import { Styles } from "./Styles";
 import { StackedFeatureCards } from "./StackedFeatureCards";
+import { VsConsultants } from "./VsConsultants";
 
 type Props = {
   currency: Currency;
@@ -53,6 +54,7 @@ export function MarketingLanding({ currency }: Props) {
             full Playbook / Document Vault / Mock Interview / Parent Share
             story right after the hero. */}
         <StackedFeatureCards />
+        <VsConsultants />
         <Pricing currency={currency} />
         <Testimonials />
         {/* Reviews hidden for MVP — fictional testimonials replaced when
