@@ -78,7 +78,7 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
       ? pathname === "/dashboard"
       : pathname.startsWith(href);
 
-  const planLabel = plan === "free" ? "Free" : plan === "solo" ? "Solo" : "Family";
+  const planLabel = plan === "free" ? "Upgrade" : plan === "solo" ? "Solo" : "Family";
 
   const tabClass = (active: boolean) =>
     [
