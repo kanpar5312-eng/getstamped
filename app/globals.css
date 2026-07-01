@@ -698,10 +698,21 @@ body {
 .upgrade-page .upg-banner-light { display: block; }
 .upgrade-page .upg-banner-dark  { display: none;  }
 
-/* Card surface: keep Wavly cream in light, warm charcoal in dark */
+/* Card surface — same recipe as the landing pricing cards
+   (.v3-price-card): bigger radius, soft elevated shadow, hairline
+   border. Free + Family sit on plain cream; Solo (the recommended
+   tier) gets the landing's peach-glass treatment so the two pages
+   read as the same product. */
 .upgrade-page .upg-card {
   background: var(--color-cream-soft);
   border-color: var(--color-border-soft);
+  border-radius: 28px;
+  box-shadow: 0 24px 60px -30px rgba(11,30,63,0.18);
+  transition: transform 240ms cubic-bezier(0.22,1,0.36,1), box-shadow 240ms cubic-bezier(0.22,1,0.36,1);
+}
+.upgrade-page .upg-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 30px 70px -28px rgba(11,30,63,0.24);
 }
 
 /* Solo (primary) accent */
@@ -718,16 +729,18 @@ body {
 }
 .upgrade-page .upg-cta-family:hover { background: var(--color-accent-deep); }
 
-/* "Most popular" ring + banner — pink in dark, forest in light */
+/* "Most popular" — peach-glass card + persimmon halo, same recipe as
+   the landing page's recommended pricing tier. */
 .upgrade-page .upg-popular-ring {
-  box-shadow: 0 0 0 2px var(--color-forest);
+  background: var(--color-persimmon-tint);
+  box-shadow: 0 0 0 1px var(--color-accent), 0 30px 70px -28px rgba(232,98,42,0.30);
 }
 .upgrade-page .upg-popular-banner {
   background: var(--color-forest);
   color: var(--color-cream-soft);
 }
 
-/* "Best value" ring + banner — accent in light, blue in dark */
+/* "Best value" ring + banner */
 .upgrade-page .upg-value-ring {
   box-shadow: 0 0 0 1px var(--color-accent);
 }

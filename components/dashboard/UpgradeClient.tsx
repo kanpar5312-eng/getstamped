@@ -198,19 +198,19 @@ function PromoPill() {
     <div
       className="inline-flex items-center gap-2.5 rounded-full pl-4 pr-1.5 py-1.5"
       style={{
-        background: "#14211c",
-        boxShadow: "0 4px 14px -4px rgba(20,33,28,0.35), inset 0 1px 0 rgba(255,255,255,0.08)",
+        background: "var(--color-ink)",
+        boxShadow: "0 4px 14px -4px rgba(11,30,63,0.35), inset 0 1px 0 rgba(255,255,255,0.08)",
       }}
     >
       <span
         className="text-[13px] font-semibold"
-        style={{ color: "var(--surface)", letterSpacing: "-0.005em" }}
+        style={{ color: "var(--color-paper)", letterSpacing: "-0.005em" }}
       >
         One-time payment · lifetime access
       </span>
       <span
         className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider font-semibold"
-        style={{ background: "#229ed9", color: "#ffffff" }}
+        style={{ background: "var(--color-persimmon)", color: "var(--color-paper)" }}
       >
         {DISCOUNT_PCT}% OFF
       </span>
@@ -380,14 +380,14 @@ export function UpgradeClient({ currentPlan, earlyBirdRemaining }: Props) {
           onClick={toggle}
           className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors"
           style={{
-            background: "#14211c",
-            color: "var(--surface)",
-            boxShadow: "0 4px 14px -4px rgba(20,33,28,0.35), inset 0 1px 0 rgba(255,255,255,0.08)",
+            background: "var(--color-ink)",
+            color: "var(--color-paper)",
+            boxShadow: "0 4px 14px -4px rgba(11,30,63,0.35), inset 0 1px 0 rgba(255,255,255,0.08)",
           }}
         >
-          <span className="font-mono" style={{ color: "var(--surface)" }}>{currency}</span>
-          <span style={{ color: "rgba(250,246,237,0.5)" }}>·</span>
-          <span style={{ color: "var(--surface)" }}>switch to {currency === "USD" ? "INR" : "USD"}</span>
+          <span className="font-mono" style={{ color: "var(--color-paper)" }}>{currency}</span>
+          <span style={{ color: "rgba(250,248,244,0.5)" }}>·</span>
+          <span style={{ color: "var(--color-paper)" }}>switch to {currency === "USD" ? "INR" : "USD"}</span>
         </button>
       </div>
 
