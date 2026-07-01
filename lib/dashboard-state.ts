@@ -7,6 +7,7 @@
  */
 
 import { STEPS, TOTAL_STEPS, type Step } from "@/lib/steps";
+import type { HomeCountryCode } from "@/lib/home-countries";
 
 export type DashboardState = "A" | "B" | "C" | "D" | "E" | "F";
 
@@ -24,6 +25,9 @@ export type UserProfile = {
   lastActivityAt: Date;
   mockInterviewsCompleted: number;
   documentsOrganizedPct: number;
+  /** Origin country (where the applicant is FROM), used to resolve
+   *  country-specific playbook content. Null when unknown/unmapped. */
+  homeCountry: HomeCountryCode | null;
 };
 
 export type StepProgress = {

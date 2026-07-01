@@ -22,7 +22,8 @@ import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { buildSystemPrompt, getGroq } from "@/lib/groq";
-import { stepByNumber } from "@/lib/steps";
+import { stepByNumber, stepInstructionsText, stepMistakesText } from "@/lib/steps";
+import { homeCodeFromCountryName } from "@/lib/home-countries";
 import { AGENT_TOOLS, buildAction, type AgentAction } from "@/lib/agent/tools";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -102,10 +103,13 @@ export async function POST(req: Request) {
   const step = body.pageContext?.stepNumber
     ? stepByNumber(body.pageContext.stepNumber)
     : null;
+  const homeCountry = homeCodeFromCountryName(profileRow?.country);
   const baseSystem = buildSystemPrompt({
     scope: body.pageContext?.stepNumber ? "step" : "general",
     stepNumber: body.pageContext?.stepNumber,
     stepTitle: step?.title,
+    stepInstructions: step ? stepInstructionsText(step, homeCountry) : undefined,
+    stepMistakes: step ? stepMistakesText(step, homeCountry) : undefined,
     profile: profileRow ?? undefined,
   });
 

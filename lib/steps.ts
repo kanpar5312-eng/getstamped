@@ -10,6 +10,9 @@
  * Free tier = Phase 1 (steps 1-6). Steps 7+ require a paid plan.
  */
 
+import type { HomeCountryCode } from "@/lib/home-countries";
+import { resolveStepContent } from "@/lib/resolveStepContent";
+
 export type Step = {
   number: number; // 1..47
   phase: number; // 1..5
@@ -84,7 +87,7 @@ export const STEPS: Step[] = [
         {
           title: "Verify SEVP certification for every school",
           body:
-            "Search each school on the official SEVP school finder before you spend a rupee on application fees. If a school isn't SEVP-certified, it cannot issue an I-20, period. Many community colleges and almost all fully-online programs aren't certified — don't assume.",
+            "Search each school on the official SEVP school finder before you spend any money on application fees. If a school isn't SEVP-certified, it cannot issue an I-20, period. Many community colleges and almost all fully-online programs aren't certified — don't assume.",
           link: {
             label: "SEVP school finder",
             url: "https://studyinthestates.dhs.gov/school-search",
@@ -112,11 +115,11 @@ export const STEPS: Step[] = [
         {
           title: "Map every school to the consulate you'd interview at",
           body:
-            "Where you interview depends on your home country, not the school — but knowing the consulate's interview patterns helps you prep. Indian Chennai, Mumbai, and Delhi consulates show different historical approval patterns for STEM applicants. Use that data when comparing fit.",
+            "Where you interview depends on your home country, not the school — but knowing your consulate's interview patterns helps you prep. Approval patterns for STEM applicants can vary between consulates in the same country. Use that data when comparing fit.",
         },
       ],
       outro:
-        "Spend a full work-week on this list. The cost of a bad shortlist is months of your life and tens of thousands of rupees in application + test fees.",
+        "Spend a full work-week on this list. The cost of a bad shortlist is months of your life and a meaningful amount of money in application + test fees.",
     },
     documents: [],
     commonMistakes: [
@@ -171,7 +174,7 @@ export const STEPS: Step[] = [
         {
           title: "Register 2-3 months ahead in major cities",
           body:
-            "TOEFL iBT slots fill 2-3 months out in Mumbai, Delhi, Bangalore, Hyderabad, Chennai. GRE has more availability but premium slots still fill. Book the slot BEFORE you start prep — the deadline forces the schedule.",
+            "TOEFL iBT slots fill 2-3 months out in major cities. GRE has more availability but premium slots still fill. Book the slot BEFORE you start prep — the deadline forces the schedule.",
           link: {
             label: "TOEFL registration (ETS)",
             url: "https://www.ets.org/toefl",
@@ -736,7 +739,7 @@ export const STEPS: Step[] = [
         {
           title: "Renew immediately if expiring within 12 months",
           body:
-            "Indian passport renewal is 30-45 days normal, 7-10 days tatkal. Other countries vary. If your passport expires within a year, renew now — going to the interview with a fresh passport is far better than carrying both.",
+            "Passport renewal timelines vary widely by country — some offer an expedited service for an extra fee. Check your home country's process now. If your passport expires within a year, renew now — going to the interview with a fresh passport is far better than carrying both.",
         },
         {
           title: "Locate every old passport with US visas",
@@ -746,12 +749,12 @@ export const STEPS: Step[] = [
         {
           title: "Pull a clean national ID for backup",
           body:
-            "Aadhaar, national ID card, or driver's license — bring one as secondary identity proof. Some consulates ask, most don't, but it's a one-minute prep.",
+            "A national ID card, or driver's license — bring one as secondary identity proof. Some consulates ask, most don't, but it's a one-minute prep.",
         },
         {
           title: "Take photos meeting US State Dept specs",
           body:
-            "2x2 inches, white background, taken within last 6 months, no glasses, no smile, no head covering except religious. Indian/Asian photo studios usually don't know US specs — show them the official spec sheet.",
+            "2x2 inches, white background, taken within last 6 months, no glasses, no smile, no head covering except religious. Many local photo studios don't know US visa photo specs — show them the official spec sheet before paying.",
           link: {
             label: "US visa photo requirements",
             url: "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/photos.html",
@@ -777,7 +780,7 @@ export const STEPS: Step[] = [
         key: "national_id",
         name: "National ID or driver's license",
         description:
-          "Secondary identity proof. Aadhaar card, national ID, or country-issued driver's license. Original or attested copy.",
+          "Secondary identity proof. National ID card or country-issued driver's license. Original or attested copy.",
       },
     ],
     commonMistakes: [
@@ -922,7 +925,7 @@ export const STEPS: Step[] = [
     hasCriticalTip: false,
     instructions: {
       intro:
-        "Academic documents prove the qualifications your admission was based on. Most consulates don't ask for them — but the ones that do (Chennai, Mumbai for high-volume STEM) expect them in a clean stack.",
+        "Academic documents prove the qualifications your admission was based on. Most consulates don't ask for them — but high-volume STEM consulates that do expect them in a clean stack.",
       steps: [
         {
           title: "Pull official transcripts from your most recent institution",
@@ -1094,7 +1097,7 @@ export const STEPS: Step[] = [
     hasCriticalTip: true,
     instructions: {
       intro:
-        "US visa photos are NOT the same as Indian/Asian passport photos. Different aspect ratio, different head-size rules, different background requirements. Most studios get it wrong unless you show them the spec.",
+        "US visa photos are NOT the same as your home country's standard passport photos. Different aspect ratio, different head-size rules, different background requirements. Most studios get it wrong unless you show them the spec.",
       steps: [
         {
           title: "Take the photo at a US-spec-aware studio",
@@ -1142,8 +1145,8 @@ export const STEPS: Step[] = [
     ],
     commonMistakes: [
       {
-        title: "Wrong dimensions (Indian passport size instead of US)",
-        body: "Indian passport photos are 35x45mm. US visa photos are 51x51mm (2x2 inches). Wrong size = photo rejected at the consulate window OR DS-160 upload failure.",
+        title: "Wrong dimensions (home-country passport size instead of US)",
+        body: "Many countries' passport photos use different dimensions than the US standard. US visa photos are 51x51mm (2x2 inches). Wrong size = photo rejected at the consulate window OR DS-160 upload failure.",
       },
       {
         title: "Wearing glasses in the photo",
@@ -1261,7 +1264,7 @@ export const STEPS: Step[] = [
         {
           title: "Surname = SURNAME on passport, exactly",
           body:
-            "Copy from the passport bio page character-by-character. If your passport says 'KUMAR' write 'KUMAR' — not 'Kumar'. If your passport's surname field is empty (common for South Indian names), enter 'FNU' (First Name Unknown) per State Dept guidance.",
+            "Copy from the passport bio page character-by-character, matching capitalization exactly. If your passport's surname field is empty (common in some naming conventions where only a given name is used), enter 'FNU' (First Name Unknown) per State Dept guidance.",
         },
         {
           title: "Given names = all given names, all of them",
@@ -1410,7 +1413,7 @@ export const STEPS: Step[] = [
         {
           title: "Parents: full names matching their IDs",
           body:
-            "Father's full name (matching his passport/Aadhaar), date of birth, country of birth. Same for mother. If a parent is deceased, indicate that — there's a separate option.",
+            "Father's full name (matching his passport or national ID), date of birth, country of birth. Same for mother. If a parent is deceased, indicate that — there's a separate option.",
         },
         {
           title: "Parents' US status — full disclosure",
@@ -1744,7 +1747,7 @@ export const STEPS: Step[] = [
     phaseDescription: PHASE_DESC[3],
     title: "Create profile on US visa service site",
     shortDescription:
-      "ustraveldocs.com for most countries (India, etc.). Profile lets you pay MRV fee and book the interview slot.",
+      "Most countries use a dedicated visa service site. Profile lets you pay MRV fee and book the interview slot.",
     estimatedMinutes: 20,
     documentsNeeded: 0,
     isFree: false,
@@ -1756,10 +1759,10 @@ export const STEPS: Step[] = [
         {
           title: "Find the right visa service site for your country",
           body:
-            "India and many others: ustraveldocs.com. Specific Indian portal: ustraveldocs.com/in. Different countries use different vendors (CGI Federal in some regions). Check the US Embassy's website for your country to confirm the right one.",
+            "Most countries use ustraveldocs.com; some regions use CGI Federal or another vendor. Check the US Embassy's website for your country to confirm the right one.",
           link: {
-            label: "USTravelDocs (India)",
-            url: "https://www.ustraveldocs.com/in/",
+            label: "US visa appointment service (find your country)",
+            url: "https://www.ustraveldocs.com/",
           },
         },
         {
@@ -1795,8 +1798,8 @@ export const STEPS: Step[] = [
     relatedSteps: [22, 24, 26],
     officialSources: [
       {
-        label: "USTravelDocs (India)",
-        url: "https://www.ustraveldocs.com/in/",
+        label: "US visa appointment service (find your country)",
+        url: "https://www.ustraveldocs.com/",
       },
     ],
   },
@@ -1828,12 +1831,12 @@ export const STEPS: Step[] = [
         {
           title: "Choose the right payment method for your country",
           body:
-            "India: NEFT, IMPS, or cash at AXIS Bank/Citi Bank branches. UK: online card. Many others: online card via the service site. The site shows which methods are valid for your country.",
+            "Payment methods vary by country — bank transfer, cash at partner bank branches, or online card are the most common. The site shows which methods are valid for your country.",
         },
         {
           title: "Generate the fee reference number first",
           body:
-            "On ustraveldocs.com (or equivalent), click 'Pay MRV fee'. The site generates a unique reference number (CGI number in India). Use this exact number for the payment — paying without it = unattributable transfer.",
+            "On ustraveldocs.com (or equivalent), click 'Pay MRV fee'. The site generates a unique reference number specific to your country's portal. Use this exact number for the payment — paying without it = unattributable transfer.",
         },
         {
           title: "Save the receipt for 1 year",
@@ -1926,8 +1929,8 @@ export const STEPS: Step[] = [
     relatedSteps: [24, 26, 40],
     officialSources: [
       {
-        label: "USTravelDocs (India)",
-        url: "https://www.ustraveldocs.com/in/",
+        label: "US visa appointment service (find your country)",
+        url: "https://www.ustraveldocs.com/",
       },
     ],
   },
@@ -1996,8 +1999,8 @@ export const STEPS: Step[] = [
     relatedSteps: [24, 25, 27, 36],
     officialSources: [
       {
-        label: "USTravelDocs (India)",
-        url: "https://www.ustraveldocs.com/in/",
+        label: "US visa appointment service (find your country)",
+        url: "https://www.ustraveldocs.com/",
       },
     ],
   },
@@ -2112,7 +2115,7 @@ export const STEPS: Step[] = [
         {
           title: "Connect the program to your post-graduation career",
           body:
-            "'This MS in materials science will let me lead R&D at my family's battery firm in Mumbai' is a complete arc. Officers look for: degree → specific career step → home country. Missing any link = follow-up.",
+            "'This MS in materials science will let me lead R&D at my family's manufacturing business back home' is a complete arc. Officers look for: degree → specific career step → home country. Missing any link = follow-up.",
         },
         {
           title: "Prepare for 'why not a higher-ranked school?'",
@@ -2251,7 +2254,7 @@ export const STEPS: Step[] = [
         {
           title: "Know your sponsor's profession and income source",
           body:
-            "If asked 'what does your father do?' — 'He runs a textile export business in Mumbai earning approximately INR 40 lakhs annually.' Specific income, specific business. Vague = follow-up.",
+            "If asked 'what does your father do?' — 'He runs an export business earning approximately $50,000 annually.' Specific income, specific business. Vague = follow-up.",
         },
         {
           title: "Prepare for the loan question",
@@ -2328,7 +2331,7 @@ export const STEPS: Step[] = [
         {
           title: "Practice the return story in one paragraph",
           body:
-            "'After my MS, I'll return to Mumbai to lead R&D at my family's textile firm. My parents depend on me as the eldest son. We own property in Bandra. My current employer has offered me a senior role after graduation.' Three ties, one paragraph.",
+            "'After my MS, I'll return home to lead R&D at my family's manufacturing firm. My parents depend on me as the eldest child. We own property back home. My current employer has offered me a senior role after graduation.' Three ties, one paragraph.",
         },
         {
           title: "Avoid weakest answers",
@@ -2764,8 +2767,8 @@ export const STEPS: Step[] = [
     relatedSteps: [26, 36],
     officialSources: [
       {
-        label: "USTravelDocs (India)",
-        url: "https://www.ustraveldocs.com/in/",
+        label: "US visa appointment service (find your country)",
+        url: "https://www.ustraveldocs.com/",
       },
     ],
   },
@@ -2791,9 +2794,9 @@ export const STEPS: Step[] = [
             "Light-color button-down, dark trousers, closed-toe leather shoes. Tucked-in shirt. No tie needed. Avoid: jeans, T-shirts, sneakers, sandals.",
         },
         {
-          title: "Women: blouse or kurti + trousers/skirt/salwar",
+          title: "Women: modest top + trousers or skirt",
           body:
-            "Conservative top + bottoms or traditional Indian formal wear (kurta, salwar). Closed-toe shoes. Avoid: clubwear, exposed midriff, flashy jewelry.",
+            "Conservative top and bottoms, or traditional formal wear appropriate to your culture. Closed-toe shoes. Avoid: clubwear, exposed midriff, flashy jewelry.",
         },
         {
           title: "No full business suits",
@@ -2972,8 +2975,8 @@ export const STEPS: Step[] = [
     relatedSteps: [25, 41],
     officialSources: [
       {
-        label: "USTravelDocs",
-        url: "https://www.ustraveldocs.com/in/",
+        label: "US visa appointment service (find your country)",
+        url: "https://www.ustraveldocs.com/",
       },
     ],
   },
@@ -3118,8 +3121,8 @@ export const STEPS: Step[] = [
     relatedSteps: [41, 43],
     officialSources: [
       {
-        label: "USTravelDocs",
-        url: "https://www.ustraveldocs.com/in/",
+        label: "US visa appointment service (find your country)",
+        url: "https://www.ustraveldocs.com/",
       },
     ],
   },
@@ -3190,8 +3193,8 @@ export const STEPS: Step[] = [
     relatedSteps: [42, 44, 45],
     officialSources: [
       {
-        label: "USTravelDocs",
-        url: "https://www.ustraveldocs.com/in/",
+        label: "US visa appointment service (find your country)",
+        url: "https://www.ustraveldocs.com/",
       },
     ],
   },
@@ -3219,7 +3222,7 @@ export const STEPS: Step[] = [
         {
           title: "Valid from date and validity period",
           body:
-            "Valid-from date is when you can first travel on this visa. Validity period varies — Indian F-1 visas typically valid 5 years. Travel up to the validity-end date.",
+            "Valid-from date is when you can first travel on this visa. Validity period varies significantly by home country — check your visa sticker for the exact validity window. Travel up to the validity-end date.",
         },
         {
           title: "Entries: should be 'M' (multiple)",
@@ -3300,7 +3303,7 @@ export const STEPS: Step[] = [
         {
           title: "Notify your bank of international travel",
           body:
-            "Call your Indian/home bank to flag international travel for your credit/debit cards. Without notification, cards get auto-blocked on first US transaction.",
+            "Call your home-country bank to flag international travel for your credit/debit cards. Without notification, cards get auto-blocked on first US transaction.",
         },
         {
           title: "Set up international health insurance for travel days",
@@ -3322,7 +3325,7 @@ export const STEPS: Step[] = [
       },
       {
         title: "Bank cards blocked on arrival",
-        body: "Indian bank sees a Walmart transaction at 2 AM IST, auto-blocks the card thinking it's fraud. Call the bank before travel to whitelist US.",
+        body: "Your home bank sees an unusual overseas transaction and assumes fraud, auto-blocking the card. Call the bank before travel to whitelist US.",
       },
       {
         title: "No cash buffer for first 24 hours",
@@ -3519,22 +3522,28 @@ export function stepByNumber(n: number): Step | undefined {
 
 /* ============================================================
    Legacy adapters — derive the old string-shape fields from the
-   rich Step structure so existing consumers keep working.
+   rich Step structure so existing consumers keep working. Passing
+   homeCountry resolves any country-specific overrides on top of the
+   universal text (see lib/resolveStepContent.ts); omitting it keeps
+   the original universal-only behavior.
    ============================================================ */
 
-export function stepInstructionsText(s: Step): string {
-  const lines: string[] = [s.instructions.intro];
-  s.instructions.steps.forEach((step, i) => {
-    lines.push(`${i + 1}. ${step.title}: ${step.body}`);
+export function stepInstructionsText(s: Step, homeCountry?: HomeCountryCode | null): string {
+  const resolved = resolveStepContent(s, homeCountry ?? null);
+  const lines: string[] = [resolved.instructions.intro.text];
+  resolved.instructions.steps.forEach((step, i) => {
+    lines.push(`${i + 1}. ${step.title}: ${step.body.text}`);
   });
-  if (s.instructions.outro) lines.push(s.instructions.outro);
+  if (resolved.instructions.outro) lines.push(resolved.instructions.outro.text);
   return lines.join("\n\n");
 }
 
-export function stepMistakesText(s: Step): string[] {
-  return s.commonMistakes.map((m) => `${m.title}: ${m.body}`);
+export function stepMistakesText(s: Step, homeCountry?: HomeCountryCode | null): string[] {
+  const resolved = resolveStepContent(s, homeCountry ?? null);
+  return resolved.commonMistakes.map((m) => `${m.title}: ${m.body.text}`);
 }
 
-export function stepTipsText(s: Step): string[] {
-  return [s.whyItMatters, ...s.commonMistakes.map((m) => m.title)];
+export function stepTipsText(s: Step, homeCountry?: HomeCountryCode | null): string[] {
+  const resolved = resolveStepContent(s, homeCountry ?? null);
+  return [resolved.whyItMatters, ...resolved.commonMistakes.map((m) => m.title)];
 }

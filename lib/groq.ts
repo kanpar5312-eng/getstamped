@@ -28,6 +28,8 @@ export function buildSystemPrompt(opts: {
   scope?: "general" | "step" | "documents" | "interview";
   stepNumber?: number;
   stepTitle?: string;
+  stepInstructions?: string;
+  stepMistakes?: string[];
   profile?: {
     country?: string | null;
     university?: string | null;
@@ -57,6 +59,12 @@ export function buildSystemPrompt(opts: {
       `The student is asking about Step ${opts.stepNumber}${opts.stepTitle ? ` — ${opts.stepTitle}` : ""}. ` +
         `Scope your answer to that specific step.`,
     );
+    if (opts.stepInstructions) {
+      parts.push(`Step content (already resolved for this student's home country):\n${opts.stepInstructions}`);
+    }
+    if (opts.stepMistakes?.length) {
+      parts.push(`Common mistakes on this step:\n${opts.stepMistakes.join("\n")}`);
+    }
   } else if (opts.scope === "documents") {
     parts.push(`The student is asking about documents required for the F-1 process. Focus on document specs, formats, and what officers actually verify.`);
   } else if (opts.scope === "interview") {

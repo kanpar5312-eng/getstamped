@@ -190,6 +190,7 @@ export function Block2NextStep({ data }: Props) {
         open={panelOpen}
         onClose={() => setPanelOpen(false)}
         step={nextStep}
+        homeCountry={data.profile.homeCountry}
       />
     </>
   );

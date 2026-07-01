@@ -2,6 +2,7 @@ import "server-only";
 import { getServerSupabase, getSessionUser } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getMock, isValidState } from "@/lib/mock-user";
+import { homeCodeFromCountryName } from "@/lib/home-countries";
 import type {
   Plan,
   StepProgress,
@@ -49,6 +50,7 @@ export async function getCurrentUser(stateParam?: string): Promise<{
             : new Date(),
           mockInterviewsCompleted: 0,
           documentsOrganizedPct: 0,
+          homeCountry: homeCodeFromCountryName(profileRow?.country),
         };
 
         type ProgressRow = { step_number: number; status: string };

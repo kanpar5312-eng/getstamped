@@ -40,6 +40,7 @@ const BASE_PROFILE: Omit<UserProfile, "id" | "firstName"> = {
   lastActivityAt: daysAgo(1),
   mockInterviewsCompleted: 2,
   documentsOrganizedPct: 78,
+  homeCountry: "IN",
 };
 
 export const MOCKS: Record<DashboardState, Mock> = {

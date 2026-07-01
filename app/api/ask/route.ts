@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { buildSystemPrompt, getGroq, GROQ_MODEL } from "@/lib/groq";
-import { stepByNumber } from "@/lib/steps";
+import { stepByNumber, stepInstructionsText, stepMistakesText } from "@/lib/steps";
 import { checkLimit, logUsage } from "@/lib/checkLimit";
+import { homeCodeFromCountryName } from "@/lib/home-countries";
 
 type AskPayload = {
   question: string;
@@ -122,10 +123,13 @@ export async function POST(req: Request) {
 
   /* ---------- Call Groq ---------- */
   const step = stepNumber ? stepByNumber(stepNumber) : null;
+  const homeCountry = homeCodeFromCountryName(profileRow?.country);
   const system = buildSystemPrompt({
     scope: body.scope,
     stepNumber: stepNumber ?? undefined,
     stepTitle: step?.title,
+    stepInstructions: step ? stepInstructionsText(step, homeCountry) : undefined,
+    stepMistakes: step ? stepMistakesText(step, homeCountry) : undefined,
     profile: profileRow ?? undefined,
   });
 

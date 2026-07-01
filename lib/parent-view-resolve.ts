@@ -4,6 +4,7 @@ import { getSupabaseAnonKey, getSupabaseUrl, isSupabaseConfigured } from "@/lib/
 import { computeDashboard } from "@/lib/dashboard-state";
 import { getMock } from "@/lib/mock-user";
 import { resolveToken as resolveMockToken } from "@/lib/parent-view";
+import { homeCodeFromCountryName } from "@/lib/home-countries";
 
 /**
  * Server-side resolver for /parent/[token] public route.
@@ -73,6 +74,7 @@ export async function resolveParentToken(token: string): Promise<Resolved> {
     lastActivityAt: profileRow.last_active_at ? new Date(profileRow.last_active_at) : new Date(),
     mockInterviewsCompleted: 0,
     documentsOrganizedPct: 0,
+    homeCountry: homeCodeFromCountryName(profileRow.country),
   };
 
   type ProgressRow = { step_number: number; status: string };

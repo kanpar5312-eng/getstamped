@@ -21,7 +21,7 @@ type Props = {
 const COUNTRIES = [
   "India", "China", "Vietnam", "South Korea", "Nigeria", "Brazil", "Bangladesh",
   "Mexico", "Nepal", "Pakistan", "Indonesia", "Taiwan", "Japan", "Colombia",
-  "Ghana", "Kenya", "Philippines", "Turkey", "Saudi Arabia", "Other",
+  "Ghana", "Kenya", "Philippines", "Turkey", "Saudi Arabia", "Canada", "Other",
 ];
 const INTAKES = ["Fall 2026", "Spring 2027", "Fall 2027", "Not sure yet"];
 const PROGRAMS = ["Bachelor's", "Master's", "PhD", "Other"];
