@@ -234,6 +234,7 @@ export async function POST(req: Request) {
     .update({
       status,
       ai_feedback: minimisedFeedback,
+      verification_method: "ai",
       checked_at: new Date().toISOString(),
     })
     .eq("id", doc.id);

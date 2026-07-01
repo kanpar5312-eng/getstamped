@@ -9,8 +9,19 @@ import { markStep } from "@/app/actions/step-progress";
 import type { Step } from "@/lib/steps";
 import type { StepRichContent } from "@/lib/step-content";
 import type { StepStatus } from "@/lib/timeline-data";
+import { getChecklistItem } from "@/lib/documents/checklist";
+import { getDocumentExample } from "@/components/documents/examples";
+import { ManualVerifyModal } from "@/components/documents/ManualVerifyModal";
 
 type DocState = { name: string; description: string; required: boolean; uploadedAt: Date | null };
+
+/** Real Document Vault status for a Timeline doc item that resolved to
+ *  a canonical checklist slug. Same {status, verificationMethod}
+ *  shape as DocRow in DocumentsClient, kept minimal here. */
+export type DocLiveStatus = {
+  status: "missing" | "uploading" | "checking" | "attention" | "accepted";
+  verificationMethod: "ai" | "manual" | null;
+};
 
 type Props = {
   step: Step;
@@ -20,6 +31,12 @@ type Props = {
   nextStep: Step | null;
   phaseCompleted: number;
   phaseTotal: number;
+  /** content.documents[i] → resolved Document Vault slug, or null if
+   *  this item doesn't map to one of the 14 canonical documents (stays
+   *  on the old decorative local-only toggle, unchanged). */
+  docSlugBySlot?: (string | null)[];
+  /** Real status for each resolved slug, fetched server-side. */
+  docLiveStatus?: Record<string, DocLiveStatus>;
 };
 
 function CheckIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
@@ -75,12 +92,21 @@ export function StepDetailClient({
   nextStep,
   phaseCompleted,
   phaseTotal,
+  docSlugBySlot,
+  docLiveStatus,
 }: Props) {
   const router = useRouter();
   const [status, setStatus] = useState<StepStatus>(initialStatus);
   const [docs, setDocs] = useState<DocState[]>(() =>
     content.documents.map((d) => ({ ...d, uploadedAt: null })),
   );
+  // Local mirror of docLiveStatus so a manual-verify confirmation can
+  // flip a slot's badge immediately without a full page reload. Keyed
+  // by slug (not slot index) since a slug is stable identity.
+  const [liveStatus, setLiveStatus] = useState<Record<string, DocLiveStatus>>(
+    () => docLiveStatus ?? {},
+  );
+  const [manualVerifySlug, setManualVerifySlug] = useState<string | null>(null);
   const [askOpen, setAskOpen] = useState(false);
   const [showCelebrate, setShowCelebrate] = useState(false);
   const [paywallHit, setPaywallHit] = useState(false);
@@ -110,7 +136,12 @@ export function StepDetailClient({
     return () => window.removeEventListener("scroll", onScroll);
   }, [status, isLocked, step.number]);
 
-  const uploadedCount = docs.filter((d) => d.uploadedAt).length;
+  const isDocDone = (i: number) => {
+    const slug = docSlugBySlot?.[i];
+    if (slug) return liveStatus[slug]?.status === "accepted";
+    return Boolean(docs[i]?.uploadedAt);
+  };
+  const uploadedCount = docs.filter((_, i) => isDocDone(i)).length;
   const docPercent = docs.length ? Math.round((uploadedCount / docs.length) * 100) : 0;
 
   const handleUpload = (i: number) => {
@@ -189,6 +220,9 @@ export function StepDetailClient({
             setAskOpen={() => {}}
             phaseCompleted={phaseCompleted}
             phaseTotal={phaseTotal}
+            docSlugBySlot={docSlugBySlot}
+            liveStatus={liveStatus}
+            onVerifyManually={() => {}}
           />
         </div>
 
@@ -251,6 +285,9 @@ export function StepDetailClient({
         setAskOpen={setAskOpen}
         phaseCompleted={phaseCompleted}
         phaseTotal={phaseTotal}
+        docSlugBySlot={docSlugBySlot}
+        liveStatus={liveStatus}
+        onVerifyManually={setManualVerifySlug}
       />
       <AskPanel
         open={askOpen}
@@ -264,6 +301,25 @@ export function StepDetailClient({
           fromStep={step.number}
         />
       )}
+      {/* Manual verification — same modal Document Vault uses, so the
+          checklist/example/warning/confirm behaviour is identical in
+          both places. No file is ever selected or sent from here. */}
+      <ManualVerifyModal
+        slug={manualVerifySlug ?? ""}
+        displayName={
+          manualVerifySlug ? getChecklistItem(manualVerifySlug)?.display_name ?? "" : ""
+        }
+        isOpen={Boolean(manualVerifySlug)}
+        onClose={() => setManualVerifySlug(null)}
+        onVerified={() => {
+          if (!manualVerifySlug) return;
+          setLiveStatus((prev) => ({
+            ...prev,
+            [manualVerifySlug]: { status: "accepted", verificationMethod: "manual" },
+          }));
+          setManualVerifySlug(null);
+        }}
+      />
     </>
   );
 }
@@ -289,6 +345,9 @@ type MainProps = {
   setAskOpen: (b: boolean) => void;
   phaseCompleted: number;
   phaseTotal: number;
+  docSlugBySlot?: (string | null)[];
+  liveStatus: Record<string, DocLiveStatus>;
+  onVerifyManually: (slug: string) => void;
 };
 
 function StepDetailMain({
@@ -305,6 +364,9 @@ function StepDetailMain({
   onSaveForLater,
   showCelebrate,
   prevStep,
+  docSlugBySlot,
+  liveStatus,
+  onVerifyManually,
   nextStep,
   askOpen,
   setAskOpen,
@@ -423,34 +485,106 @@ function StepDetailMain({
               </div>
 
               <ul className="mt-6 divide-y divide-[var(--color-border-soft)] rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-paper-soft)] overflow-hidden">
-                {docs.map((d, i) => (
-                  <li key={i} className="flex items-center gap-3 px-4 sm:px-5 py-4">
-                    <span aria-hidden className={[
-                      "inline-flex h-5 w-5 items-center justify-center rounded-md transition-colors",
-                      d.uploadedAt ? "bg-[var(--color-persimmon)] text-[var(--color-paper-soft)]" : "border border-[var(--color-border)] bg-[var(--color-surface)]",
-                    ].join(" ")}>
-                      {d.uploadedAt && <CheckIcon className="h-3 w-3" />}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2 flex-wrap">
-                        <span className="text-sm font-medium text-[var(--color-ink)]">{d.name}</span>
-                        {d.required && <span className="text-[9px] uppercase tracking-wider text-[var(--color-accent-deep)] font-medium">Required</span>}
+                {docs.map((d, i) => {
+                  const slug = docSlugBySlot?.[i];
+                  const live = slug ? liveStatus[slug] : undefined;
+
+                  // Matched to a real Document Vault slug — show live
+                  // status + the same Option A/B pattern as the vault,
+                  // instead of the fake local-only toggle.
+                  if (slug) {
+                    const done = live?.status === "accepted";
+                    const isManual = live?.verificationMethod === "manual";
+                    return (
+                      <li key={i} className="flex items-center gap-3 px-4 sm:px-5 py-4">
+                        <span
+                          aria-hidden
+                          className={[
+                            "inline-flex h-5 w-5 items-center justify-center rounded-md transition-colors shrink-0",
+                            done
+                              ? isManual
+                                ? "border-2 border-[var(--color-accent)] text-[var(--color-accent)] bg-transparent"
+                                : "bg-[var(--color-persimmon)] text-[var(--color-paper-soft)]"
+                              : "border border-[var(--color-border)] bg-[var(--color-surface)]",
+                          ].join(" ")}
+                        >
+                          {done && <CheckIcon className="h-3 w-3" />}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline gap-2 flex-wrap">
+                            <span className="text-sm font-medium text-[var(--color-ink)]">{d.name}</span>
+                            {d.required && <span className="text-[9px] uppercase tracking-wider text-[var(--color-accent-deep)] font-medium">Required</span>}
+                            {done && (
+                              <span className="text-[9px] uppercase tracking-wider font-medium text-[var(--color-accent-deep)]">
+                                {isManual ? "Self-verified" : "AI-verified"}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-0.5 text-xs text-[var(--color-muted)] leading-relaxed">{d.description}</p>
+                        </div>
+                        {done ? (
+                          <Link
+                            href="/dashboard/documents"
+                            className="text-[11px] text-[var(--color-ink)] shrink-0 hover:text-[var(--color-accent-deep)] transition-colors"
+                          >
+                            View
+                          </Link>
+                        ) : (
+                          <span className="flex items-center gap-2 shrink-0">
+                            <Link
+                              href="/dashboard/documents"
+                              title="Upload for AI check"
+                              className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink-soft)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-deep)] transition-colors"
+                            >
+                              <UploadIcon /> Upload
+                            </Link>
+                            {getDocumentExample(slug) && (
+                              <button
+                                type="button"
+                                onClick={() => onVerifyManually(slug)}
+                                title="Review your document yourself — nothing is uploaded"
+                                className="inline-flex items-center gap-1 rounded-md border border-dashed border-[var(--color-border)] bg-transparent px-3 py-1.5 text-xs font-medium text-[var(--color-ink-soft)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-deep)] transition-colors"
+                              >
+                                Verify manually
+                              </button>
+                            )}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  }
+
+                  // Unmatched — original decorative, local-only behaviour.
+                  // Untouched per spec ("do not change other functionality").
+                  return (
+                    <li key={i} className="flex items-center gap-3 px-4 sm:px-5 py-4">
+                      <span aria-hidden className={[
+                        "inline-flex h-5 w-5 items-center justify-center rounded-md transition-colors",
+                        d.uploadedAt ? "bg-[var(--color-persimmon)] text-[var(--color-paper-soft)]" : "border border-[var(--color-border)] bg-[var(--color-surface)]",
+                      ].join(" ")}>
+                        {d.uploadedAt && <CheckIcon className="h-3 w-3" />}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-[var(--color-ink)]">{d.name}</span>
+                          {d.required && <span className="text-[9px] uppercase tracking-wider text-[var(--color-accent-deep)] font-medium">Required</span>}
+                        </div>
+                        <p className="mt-0.5 text-xs text-[var(--color-muted)] leading-relaxed">{d.description}</p>
                       </div>
-                      <p className="mt-0.5 text-xs text-[var(--color-muted)] leading-relaxed">{d.description}</p>
-                    </div>
-                    {d.uploadedAt ? (
-                      <span className="text-[11px] text-[var(--color-ink)] shrink-0">Uploaded</span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => onUpload(i)}
-                        className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink-soft)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-deep)] transition-colors shrink-0"
-                      >
-                        <UploadIcon /> Upload
-                      </button>
-                    )}
-                  </li>
-                ))}
+                      {d.uploadedAt ? (
+                        <span className="text-[11px] text-[var(--color-ink)] shrink-0">Uploaded</span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onUpload(i)}
+                          className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink-soft)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-deep)] transition-colors shrink-0"
+                        >
+                          <UploadIcon /> Upload
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           )}

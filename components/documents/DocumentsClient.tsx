@@ -6,8 +6,11 @@ import { CHECKLIST, PHASES, PHASE_TITLES, getChecklistItem } from "@/lib/documen
 import { CountUp } from "@/components/dashboard/CountUp";
 import { ExampleModal } from "@/components/documents/ExampleModal";
 import { DocumentConsentModal } from "@/components/documents/DocumentConsentModal";
+import { ManualVerifyModal } from "@/components/documents/ManualVerifyModal";
 import { getDocumentExample } from "@/components/documents/examples";
 import { notifyNetworkError } from "@/components/NetworkToast";
+
+export type VerificationMethod = "ai" | "manual" | null;
 
 type Plan = "free" | "solo" | "family";
 
@@ -34,6 +37,9 @@ export type DocRow = {
   } | null;
   uploadedAt: string | null;
   checkedAt: string | null;
+  /** How this document was cleared — 'ai' (vision scan), 'manual' (self
+   *  review, no upload), or null (not yet cleared / pre-feature row). */
+  verificationMethod: VerificationMethod;
 };
 
 type Props = {
@@ -220,6 +226,23 @@ export function DocumentsClient({ plan, initialRows, consentGiven }: Props) {
     [isLocked, updateRow, refreshRow],
   );
 
+  // Manual-verify — privacy-conscious alternative to AI upload. Row id
+  // for the active modal; slug is enough since ManualVerifyModal only
+  // needs the slug + displayName to render.
+  const [manualVerifySlug, setManualVerifySlug] = useState<string | null>(null);
+  const onManualVerified = useCallback(
+    (slug: string) => {
+      updateRow(slug, {
+        status: "accepted",
+        verificationMethod: "manual",
+        aiFeedback: null,
+        checkedAt: new Date().toISOString(),
+      });
+      setManualVerifySlug(null);
+    },
+    [updateRow],
+  );
+
   // DPDP Act compliance — fired by DocumentConsentModal once the server
   // has recorded the consent log row. Flip BOTH the state (for UI) and
   // the ref (for the synchronous recursive call below), then drain the
@@ -329,6 +352,7 @@ export function DocumentsClient({ plan, initialRows, consentGiven }: Props) {
                           onUpload={(f) => handleUpload(c.slug, f)}
                           onLocked={() => setPaywallOpen(true)}
                           onOpenDetail={() => row.id && setDetailDocId(row.id)}
+                          onVerifyManually={() => setManualVerifySlug(c.slug)}
                         />
                       );
                     })}
@@ -368,6 +392,7 @@ export function DocumentsClient({ plan, initialRows, consentGiven }: Props) {
               aiFeedback: null,
               uploadedAt: null,
               checkedAt: null,
+              verificationMethod: null,
             });
             setDetailDocId(null);
           }}
@@ -382,6 +407,18 @@ export function DocumentsClient({ plan, initialRows, consentGiven }: Props) {
         open={consentOpen}
         onCancel={onConsentCancelled}
         onConfirmed={onConsentConfirmed}
+      />
+
+      {/* Manual verification — privacy-conscious alternative to upload.
+          No consent gate needed here: no file is ever selected or sent. */}
+      <ManualVerifyModal
+        slug={manualVerifySlug ?? ""}
+        displayName={
+          manualVerifySlug ? getChecklistItem(manualVerifySlug)?.display_name ?? "" : ""
+        }
+        isOpen={Boolean(manualVerifySlug)}
+        onClose={() => setManualVerifySlug(null)}
+        onVerified={() => manualVerifySlug && onManualVerified(manualVerifySlug)}
       />
     </div>
   );
@@ -400,6 +437,7 @@ function DocumentRowView({
   onUpload,
   onLocked,
   onOpenDetail,
+  onVerifyManually,
 }: {
   displayName: string;
   why: string;
@@ -409,6 +447,9 @@ function DocumentRowView({
   onUpload: (f: File) => void;
   onLocked: () => void;
   onOpenDetail: () => void;
+  /** Opens the manual-verification modal for this document — the
+   *  privacy-conscious alternative to uploading a file. */
+  onVerifyManually: () => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -463,7 +504,7 @@ function DocumentRowView({
         onChange={(e) => onFileChosen(e.target.files?.[0])}
       />
       <div className="flex items-start gap-4">
-        <StatusIcon status={row.status} />
+        <StatusIcon status={row.status} verificationMethod={row.verificationMethod} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[15px] font-medium text-[var(--ink)]">{displayName}</span>
@@ -474,7 +515,7 @@ function DocumentRowView({
           <p className="mt-1 text-[13px] text-[var(--ink-soft)] leading-snug">{why}</p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <StatusChip status={row.status} />
+          <StatusChip status={row.status} verificationMethod={row.verificationMethod} />
           {/* Example trigger — only render when we actually have a mockup
               for this slug; otherwise the button would just be a dead-end
               "Example coming soon" pop-up. */}
@@ -489,13 +530,29 @@ function DocumentRowView({
             </button>
           )}
           {row.status === "missing" || row.status === "attention" ? (
-            <button
-              type="button"
-              onClick={trigger}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 py-[6px] text-[12px] font-medium text-[var(--ink)] hover:border-[var(--line-hover)] transition-colors"
-            >
-              {row.status === "attention" ? "Replace" : "Upload"}
-            </button>
+            <span className="inline-flex items-center gap-2">
+              <button
+                type="button"
+                onClick={trigger}
+                title="Upload for AI check"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 py-[6px] text-[12px] font-medium text-[var(--ink)] hover:border-[var(--line-hover)] transition-colors"
+              >
+                {row.status === "attention" ? "Replace" : "Upload for AI check"}
+              </button>
+              {/* Option B — privacy-conscious alternative. Only worth
+                  offering when we actually have an example + checklist
+                  for this slug to review against. */}
+              {getDocumentExample(row.slug) && (
+                <button
+                  type="button"
+                  onClick={onVerifyManually}
+                  title="Review your document yourself — nothing is uploaded"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-[var(--line)] bg-transparent px-3 py-[6px] text-[12px] font-medium text-[var(--ink-soft)] hover:border-[var(--ember)] hover:text-[var(--ember)] transition-colors"
+                >
+                  I&rsquo;ll verify manually
+                </button>
+              )}
+            </span>
           ) : row.id ? (
             <button
               type="button"
@@ -816,9 +873,27 @@ function PaywallModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function StatusIcon({ status }: { status: DocStatus }) {
+function StatusIcon({
+  status,
+  verificationMethod,
+}: {
+  status: DocStatus;
+  verificationMethod?: VerificationMethod;
+}) {
   const base = "mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full";
-  if (status === "accepted")
+  if (status === "accepted") {
+    // Self-verified gets a distinct outline + eye glyph so it never
+    // reads as an AI pass at a glance — different icon, not just a
+    // different label.
+    if (verificationMethod === "manual")
+      return (
+        <span
+          className={`${base} border-2 border-[var(--ember)] text-[var(--ember)] bg-transparent`}
+          aria-hidden
+        >
+          <EyeGlyph />
+        </span>
+      );
     return (
       <span
         className={`${base} bg-[var(--ember-soft)] text-[var(--ember-hover)]`}
@@ -827,6 +902,7 @@ function StatusIcon({ status }: { status: DocStatus }) {
         <CheckGlyph />
       </span>
     );
+  }
   if (status === "attention")
     return (
       <span
@@ -848,15 +924,30 @@ function StatusIcon({ status }: { status: DocStatus }) {
   return <span className={`${base} border border-[var(--line-hover)]`} aria-hidden />;
 }
 
-function StatusChip({ status }: { status: DocStatus }) {
+function StatusChip({
+  status,
+  verificationMethod,
+}: {
+  status: DocStatus;
+  verificationMethod?: VerificationMethod;
+}) {
   const cls =
     "inline-flex items-center gap-1.5 rounded-full px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em]";
-  if (status === "accepted")
+  if (status === "accepted") {
+    // Different badge for the two verification methods, per spec —
+    // ghost/outline persimmon for self-verified vs the filled AI chip.
+    if (verificationMethod === "manual")
+      return (
+        <span className={`${cls} border border-dashed border-[var(--ember)] text-[var(--ember)] bg-transparent`}>
+          <EyeGlyph small /> Self-verified
+        </span>
+      );
     return (
       <span className={`${cls} bg-[var(--ember-soft)] text-[var(--ember-hover)]`}>
         Checked by AI
       </span>
     );
+  }
   if (status === "attention")
     return (
       <span className={`${cls} border border-[var(--ember)] text-[var(--ember-hover)]`}>
@@ -935,6 +1026,28 @@ function CheckGlyph() {
       aria-hidden
     >
       <path d="M5 12l5 5L20 7" />
+    </svg>
+  );
+}
+
+/** Eye glyph — distinguishes "self-verified" from the AI checkmark so
+ *  the two verification methods never look alike at a glance. */
+function EyeGlyph({ small }: { small?: boolean }) {
+  const s = small ? 11 : 12;
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={s}
+      height={s}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+      <circle cx="12" cy="12" r="3" />
     </svg>
   );
 }

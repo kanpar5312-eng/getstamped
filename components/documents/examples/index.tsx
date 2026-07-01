@@ -743,6 +743,224 @@ function EnglishMockup() {
   );
 }
 
+/* ────────────────────────── MARKSHEETS / TRANSCRIPTS ────────────────────────── */
+
+function MarksheetMockup({ grade }: { grade: "10" | "12" }) {
+  return (
+    <MockShell>
+      <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", margin: 0, color: "#1C1B1A" }}>
+          CENTRAL BOARD OF EXAMINATION
+        </p>
+        <p style={{ fontSize: 9, color: "rgba(28,27,26,0.5)", margin: "2px 0 0" }}>
+          Statement of Marks — Class {grade}
+        </p>
+      </div>
+      <div style={{ position: "relative", zIndex: 1, marginTop: 14 }}>
+        <Field label="Candidate" value="ALEX JOHNSON" />
+        <Field label="Roll Number" value="7 7 4 4 1 9 2" />
+        <Field label="School" value="Delhi Public School" />
+        <Field label="Year of Issue" value={grade === "10" ? "2019" : "2021"} accent="ok" />
+        <Field label="Subjects" value="5 listed with marks" />
+        <Field label="Result" value="PASS" accent="ok" />
+      </div>
+      <CheckCallout tone="ok">Board seal or hologram visible bottom-right of the original.</CheckCallout>
+    </MockShell>
+  );
+}
+
+/* ────────────────────────── DEGREE TRANSCRIPT ────────────────────────── */
+
+function DegreeTranscriptMockup() {
+  return (
+    <MockShell>
+      <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", margin: 0, color: "#1C1B1A" }}>
+          UNIVERSITY OF DELHI
+        </p>
+        <p style={{ fontSize: 9, color: "rgba(28,27,26,0.5)", margin: "2px 0 0" }}>
+          Official Academic Transcript
+        </p>
+      </div>
+      <div style={{ position: "relative", zIndex: 1, marginTop: 14 }}>
+        <Field label="Student" value="ALEX JOHNSON" />
+        <Field label="Program" value="B.Tech, Computer Science" />
+        <Field label="Duration" value="2019 – 2023" />
+        <Field label="CGPA" value="8.7 / 10" accent="ok" />
+        <Field label="Courses" value="42 listed, semester-wise" />
+        <Field label="Registrar seal" value="Present" accent="ok" />
+      </div>
+      <CheckCallout tone="ok">Sealed/stamped copies travel better than plain printouts.</CheckCallout>
+    </MockShell>
+  );
+}
+
+/* ────────────────────────── ADMISSION LETTER ────────────────────────── */
+
+function AdmissionLetterMockup() {
+  return (
+    <MockShell>
+      <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", margin: 0, color: "#1C1B1A" }}>
+          NORTHFIELD STATE UNIVERSITY
+        </p>
+        <p style={{ fontSize: 9, color: "rgba(28,27,26,0.5)", margin: "2px 0 0" }}>
+          Office of Graduate Admissions
+        </p>
+      </div>
+      <div style={{ position: "relative", zIndex: 1, marginTop: 14 }}>
+        <Field label="Addressed to" value="Alex Johnson" />
+        <Field label="Program" value="M.S. Computer Science" />
+        <Field label="Term of Admission" value="Fall 2026" accent="ok" />
+        <Field label="Status" value="Unconditional Admit" accent="ok" />
+        <Field label="Signed by" value="Dean of Admissions" />
+      </div>
+      <CheckCallout tone="ok">University letterhead + a real signature or seal, not just a PDF export.</CheckCallout>
+    </MockShell>
+  );
+}
+
+/* ────────────────────────── VISA FEE (MRV) RECEIPT ────────────────────────── */
+
+function VisaFeeReceiptMockup() {
+  return (
+    <MockShell>
+      <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", margin: 0, color: "#1C1B1A" }}>
+          MRV FEE RECEIPT
+        </p>
+        <p style={{ fontSize: 9, color: "rgba(28,27,26,0.5)", margin: "2px 0 0" }}>
+          U.S. Nonimmigrant Visa Application Fee
+        </p>
+      </div>
+      <div style={{ position: "relative", zIndex: 1, marginTop: 14 }}>
+        <Field label="Reference No." value="AA00 7712 3390" />
+        <Field label="Applicant" value="ALEX JOHNSON" />
+        <Field label="Amount Paid" value="$185.00" accent="ok" />
+        <Field label="Payment Date" value="04 MAR 2026" />
+        <Field label="Status" value="CONFIRMED" accent="ok" />
+      </div>
+      <CheckCallout tone="ok">Bring the printed receipt — officers cross-check it against your appointment.</CheckCallout>
+    </MockShell>
+  );
+}
+
+/* ────────────────────────── US VISA PHOTO ────────────────────────── */
+
+function UsVisaPhotoMockup() {
+  return (
+    <MockShell>
+      <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "center" }}>
+        <div
+          aria-hidden
+          style={{
+            width: 110,
+            height: 110,
+            background: "rgba(28,27,26,0.05)",
+            border: "2px solid rgba(28,27,26,0.18)",
+            borderRadius: 4,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "rgba(28,27,26,0.4)",
+            fontSize: 9,
+            letterSpacing: "0.12em",
+            fontWeight: 600,
+            textAlign: "center",
+            lineHeight: 1.4,
+          }}
+        >
+          2×2 in
+          <br />
+          WHITE BG
+        </div>
+      </div>
+      <div style={{ position: "relative", zIndex: 1, marginTop: 16 }}>
+        <Field label="Aspect ratio" value="1:1 square" accent="ok" />
+        <Field label="Background" value="Plain white / off-white" accent="ok" />
+        <Field label="Expression" value="Neutral, both eyes open" />
+        <Field label="Eyewear" value="None" />
+        <Field label="Taken within" value="Last 6 months" accent="ok" />
+      </div>
+      <CheckCallout tone="ok">Face centered, ears visible, no shadows on the background.</CheckCallout>
+    </MockShell>
+  );
+}
+
+/* ────────────────────────── LOAN / SCHOLARSHIP LETTER ────────────────────────── */
+
+function LoanScholarshipMockup() {
+  return (
+    <MockShell>
+      <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", margin: 0, color: "#1C1B1A" }}>
+          STATE BANK — EDUCATION LOAN CELL
+        </p>
+        <p style={{ fontSize: 9, color: "rgba(28,27,26,0.5)", margin: "2px 0 0" }}>
+          Loan Sanction Letter
+        </p>
+      </div>
+      <div style={{ position: "relative", zIndex: 1, marginTop: 14 }}>
+        <Field label="Borrower" value="Alex Johnson" />
+        <Field label="Sanctioned Amount" value="$45,000" accent="ok" />
+        <Field label="Disbursement" value="Semester-wise, on tuition invoice" />
+        <Field label="Sanction Date" value="18 FEB 2026" />
+        <Field label="Bank seal" value="Present" accent="ok" />
+      </div>
+      <CheckCallout tone="ok">Sanction letter, not just the application — officers want proof it's approved.</CheckCallout>
+    </MockShell>
+  );
+}
+
+/* ────────────────────────── SPONSOR DOCS (ITR / CA CERTIFICATE) ────────────────────────── */
+
+function SponsorDocsMockup() {
+  return (
+    <MockShell>
+      <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", margin: 0, color: "#1C1B1A" }}>
+          INCOME TAX RETURN — ACKNOWLEDGEMENT
+        </p>
+        <p style={{ fontSize: 9, color: "rgba(28,27,26,0.5)", margin: "2px 0 0" }}>
+          Assessment Year 2025–26
+        </p>
+      </div>
+      <div style={{ position: "relative", zIndex: 1, marginTop: 14 }}>
+        <Field label="Sponsor Name" value="Rajesh Johnson" />
+        <Field label="Relationship" value="Father" />
+        <Field label="Gross Annual Income" value="$38,000" accent="ok" />
+        <Field label="Assessment Year" value="2025–26" />
+        <Field label="Issuing Authority" value="Income Tax Dept. / CA seal" accent="ok" />
+      </div>
+      <CheckCallout tone="ok">Three years of ITRs (or one CA net-worth certificate) is the usual ask.</CheckCallout>
+    </MockShell>
+  );
+}
+
+/* ────────────────────────── TIES TO HOME ────────────────────────── */
+
+function TiesToHomeMockup() {
+  return (
+    <MockShell>
+      <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", margin: 0, color: "#1C1B1A" }}>
+          PROPERTY / FAMILY BUSINESS RECORD
+        </p>
+        <p style={{ fontSize: 9, color: "rgba(28,27,26,0.5)", margin: "2px 0 0" }}>
+          Evidence of ties to home country
+        </p>
+      </div>
+      <div style={{ position: "relative", zIndex: 1, marginTop: 14 }}>
+        <Field label="Document type" value="Property deed / GST registration" />
+        <Field label="Linked to" value="Alex Johnson (family member)" />
+        <Field label="Issue date" value="Within last 12 months" accent="ok" />
+        <Field label="Seal / signature" value="Present" accent="ok" />
+      </div>
+      <CheckCallout tone="ok">Anything concrete — property, a running business, a job offer back home.</CheckCallout>
+    </MockShell>
+  );
+}
+
 /* ────────────────────────── MAP ────────────────────────── */
 
 const passport: DocumentExample = {
@@ -853,6 +1071,162 @@ const englishProof: DocumentExample = {
   ],
 };
 
+const marksheet10: DocumentExample = {
+  title: "10th Grade Marksheet",
+  subtitle: SUBTITLE_DEFAULT,
+  mockup: <MarksheetMockup grade="10" />,
+  aiChecks: [
+    "Student name is present and legible",
+    "School or board name is visible",
+    "Subject-wise marks or grades are listed",
+    "Year/date of issue is visible",
+  ],
+  commonMistakes: [
+    "Scan is cropped and cuts off the board seal",
+    "Photocopy of a photocopy — text too faint to read",
+    "Wrong document uploaded (12th marksheet instead of 10th)",
+  ],
+};
+
+const marksheet12: DocumentExample = {
+  title: "12th Grade Marksheet",
+  subtitle: SUBTITLE_DEFAULT,
+  mockup: <MarksheetMockup grade="12" />,
+  aiChecks: [
+    "Student name is present and legible",
+    "School or board name is visible",
+    "Subject-wise marks or grades are listed",
+    "Year/date of issue is visible",
+  ],
+  commonMistakes: [
+    "Scan is cropped and cuts off the board seal",
+    "Provisional marksheet uploaded instead of the final one",
+    "Name spelling differs from the passport",
+  ],
+};
+
+const degreeTranscript: DocumentExample = {
+  title: "Degree / University Transcript",
+  subtitle: SUBTITLE_DEFAULT,
+  mockup: <DegreeTranscriptMockup />,
+  aiChecks: [
+    "Student name matches passport exactly",
+    "University name is visible",
+    "Course list with grades or GPA is present",
+    "Registrar signature or seal is visible",
+  ],
+  commonMistakes: [
+    "Unofficial transcript (no seal) submitted where an official one is required",
+    "Cumulative GPA missing from the printout",
+    "Pages out of order or missing the final semester",
+  ],
+};
+
+const admissionLetter: DocumentExample = {
+  title: "Admission / Acceptance Letter",
+  subtitle: SUBTITLE_DEFAULT,
+  mockup: <AdmissionLetterMockup />,
+  aiChecks: [
+    "University letterhead is visible",
+    "Student name matches your other documents",
+    "Program and term of admission are stated",
+    "Signature or official seal is present",
+  ],
+  commonMistakes: [
+    "Uploading a conditional offer instead of the final unconditional letter",
+    "Program name doesn't match the I-20",
+    "Missing signature — some portals export unsigned drafts",
+  ],
+};
+
+const visaFeeReceipt: DocumentExample = {
+  title: "Visa Fee (MRV) Receipt",
+  subtitle: SUBTITLE_DEFAULT,
+  mockup: <VisaFeeReceiptMockup />,
+  aiChecks: [
+    "Reference or receipt number is visible",
+    "Amount paid is shown clearly",
+    "Payment date is visible",
+    "Applicant name matches your passport",
+  ],
+  commonMistakes: [
+    "Screenshot of a pending transaction, not the confirmed receipt",
+    "Receipt paid in the wrong currency shows a mismatched amount",
+    "Applicant name entered differently than on the passport",
+  ],
+};
+
+const usVisaPhoto: DocumentExample = {
+  title: "US Visa Photo (2×2 in)",
+  subtitle: SUBTITLE_DEFAULT,
+  mockup: <UsVisaPhotoMockup />,
+  aiChecks: [
+    "Square 1:1 aspect ratio",
+    "Plain white or off-white background",
+    "Face centered and unobstructed, ears visible",
+    "No eyeglasses, neutral expression",
+    "Taken within the last 6 months",
+  ],
+  commonMistakes: [
+    "Background has shadows or isn't plain white",
+    "Photo is older than 6 months (visible haircut/appearance change)",
+    "Glasses worn, or a smiling/non-neutral expression",
+  ],
+};
+
+const loanOrScholarship: DocumentExample = {
+  title: "Loan / Scholarship Letter",
+  subtitle: SUBTITLE_DEFAULT,
+  mockup: <LoanScholarshipMockup />,
+  aiChecks: [
+    "Lender or sponsor letterhead is visible",
+    "Student name is present",
+    "Sanctioned or awarded amount is stated",
+    "Terms (duration, disbursement) are listed",
+    "Official signature or stamp is present",
+  ],
+  commonMistakes: [
+    "Loan application uploaded instead of the sanction letter",
+    "Amount sanctioned doesn't cover the I-20's estimated cost",
+    "Missing bank seal or authorized signatory",
+  ],
+};
+
+const sponsorDocs: DocumentExample = {
+  title: "Sponsor Docs (ITR / CA Certificate)",
+  subtitle: SUBTITLE_DEFAULT,
+  mockup: <SponsorDocsMockup />,
+  aiChecks: [
+    "Sponsor's full name is visible",
+    "Assessment year or certificate date is present",
+    "Income or net-worth figures are stated",
+    "Issuing authority (tax dept or CA firm) is named",
+    "Signature or seal is present",
+  ],
+  commonMistakes: [
+    "Only one year of ITR when three years is expected",
+    "Sponsor's relationship to the student isn't documented anywhere",
+    "CA certificate missing the CA's registration/seal",
+  ],
+};
+
+const tiesToHome: DocumentExample = {
+  title: "Ties to Home Country Evidence",
+  subtitle: SUBTITLE_DEFAULT,
+  mockup: <TiesToHomeMockup />,
+  aiChecks: [
+    "Document title or letterhead is visible",
+    "Student's name or a clear family link is shown",
+    "Issue date is within the last 12 months",
+    "Official stamp or signature is present",
+  ],
+  commonMistakes: [
+    "Document is several years old with no recent proof attached",
+    "No clear link between the document and the student",
+    "Photocopy is too faint to read the stamp or signature",
+  ],
+};
+
 /* Both checklist slugs and spec-friendly aliases resolve to the same
    example so callers don't have to translate. */
 export const DOCUMENT_EXAMPLES: Record<string, DocumentExample> = {
@@ -866,6 +1240,15 @@ export const DOCUMENT_EXAMPLES: Record<string, DocumentExample> = {
   bank_statement: bankStatement,
   "bank-statement": bankStatement,
   english_proof: englishProof,
+  "marksheet-10": marksheet10,
+  "marksheet-12": marksheet12,
+  "degree-transcript": degreeTranscript,
+  "admission-letter": admissionLetter,
+  "visa-fee-receipt": visaFeeReceipt,
+  "us-visa-photo": usVisaPhoto,
+  "loan-or-scholarship": loanOrScholarship,
+  "sponsor-docs": sponsorDocs,
+  "ties-to-home": tiesToHome,
 };
 
 export function getDocumentExample(key: string): DocumentExample | null {

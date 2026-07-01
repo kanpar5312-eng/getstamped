@@ -15,7 +15,7 @@ export async function GET(req: Request) {
 
   const { data } = await sb
     .from("documents")
-    .select("id, slug, status, file_size, mime_type, ai_feedback, uploaded_at, checked_at")
+    .select("id, slug, status, file_size, mime_type, ai_feedback, uploaded_at, checked_at, verification_method")
     .eq("user_id", user.id)
     .eq("slug", slug)
     .is("deleted_at", null)
@@ -33,6 +33,7 @@ export async function GET(req: Request) {
       aiFeedback: data.ai_feedback,
       uploadedAt: data.uploaded_at,
       checkedAt: data.checked_at,
+      verificationMethod: data.verification_method ?? (data.status === "accepted" ? "ai" : null),
     },
   });
 }

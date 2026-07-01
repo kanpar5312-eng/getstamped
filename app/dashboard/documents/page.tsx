@@ -29,7 +29,7 @@ export default async function DocumentsPage({
     const [{ data: docsData }, { data: profileRow }] = await Promise.all([
       sb
         .from("documents")
-        .select("id, slug, status, file_size, mime_type, ai_feedback, uploaded_at, checked_at")
+        .select("id, slug, status, file_size, mime_type, ai_feedback, uploaded_at, checked_at, verification_method")
         .eq("user_id", user.id)
         .is("deleted_at", null),
       sb
@@ -49,6 +49,9 @@ export default async function DocumentsPage({
           aiFeedback: r.ai_feedback,
           uploadedAt: r.uploaded_at,
           checkedAt: r.checked_at,
+          // Legacy rows accepted before this feature shipped have no
+          // verification_method — they were all AI-scanned, so infer 'ai'.
+          verificationMethod: r.verification_method ?? (r.status === "accepted" ? "ai" : null),
         };
       }
     }
@@ -68,6 +71,7 @@ export default async function DocumentsPage({
         aiFeedback: null,
         uploadedAt: null,
         checkedAt: null,
+        verificationMethod: null,
       },
   );
 
