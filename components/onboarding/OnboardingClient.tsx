@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { completeOnboarding } from "@/app/actions/profile";
 import { BrandMark } from "@/components/ui/BrandMark";
@@ -10,6 +10,7 @@ import {
   type CountryCode,
 } from "@/lib/visa-countries";
 import { PersonalizationCurtain } from "@/components/onboarding/PersonalizationCurtain";
+import { US_UNIVERSITIES } from "@/lib/university-list";
 
 type Props = {
   firstName: string;
@@ -245,9 +246,10 @@ export function OnboardingClient({ firstName: initialFirstName, initialCountry }
           <>
             <p className="ob-eyebrow">YOUR ADMISSION</p>
             <h1 className="ob-title">Where are you headed?</h1>
-            <Field label="University" value={f.university} autoFocus
+            <UniversityField
+              value={f.university}
               onChange={(v) => set("university", v)}
-              placeholder="University of California, Los Angeles" />
+            />
             <p className="ob-label">Program type</p>
             <div className="ob-chips">
               {PROGRAMS.map((p) => (
@@ -632,6 +634,203 @@ function Field({ label, value, onChange, placeholder, autoFocus }: {
           e.currentTarget.style.boxShadow = "none";
         }}
       />
+    </div>
+  );
+}
+
+/**
+ * UniversityField — search-as-you-type picker, same interaction shape
+ * as a Google Places Autocomplete box: type a few letters, a ranked
+ * list of matches drops below, click (or arrow+Enter) to select.
+ * Backed by a curated list (lib/university-list.ts) rather than a
+ * live Places API — no Google Maps billing/API key required. Typing
+ * a name that isn't in the list is still accepted as free text so
+ * students at schools we haven't listed aren't blocked.
+ */
+function UniversityField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const matches = useMemo(() => {
+    const q = value.trim().toLowerCase();
+    if (!q) return US_UNIVERSITIES.slice(0, 8);
+    return US_UNIVERSITIES.filter((u) => u.toLowerCase().includes(q)).slice(0, 8);
+  }, [value]);
+
+  const select = (name: string) => {
+    onChange(name);
+    setOpen(false);
+  };
+
+  return (
+    <div
+      ref={wrapRef}
+      style={{ position: "relative", display: "flex", flexDirection: "column" }}
+      onBlur={(e) => {
+        // Close only when focus leaves the whole widget (input + list).
+        if (!wrapRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
+      }}
+    >
+      <label
+        style={{
+          fontSize: 12, fontWeight: 500,
+          color: "var(--color-ink-soft)",
+          marginBottom: 8,
+        }}
+      >
+        University
+      </label>
+
+      <div style={{ position: "relative" }}>
+        <span
+          aria-hidden
+          style={{
+            position: "absolute",
+            left: 14,
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "var(--color-ink-soft)",
+            pointerEvents: "none",
+          }}
+        >
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+        </span>
+
+        <input
+          value={value}
+          placeholder="Search for your university"
+          autoFocus
+          autoComplete="off"
+          role="combobox"
+          aria-expanded={open}
+          aria-controls="university-listbox"
+          aria-autocomplete="list"
+          onChange={(e) => {
+            onChange(e.target.value);
+            setOpen(true);
+            setActiveIdx(0);
+          }}
+          onFocus={(e) => {
+            setOpen(true);
+            e.currentTarget.style.borderColor = "var(--color-persimmon)";
+            e.currentTarget.style.boxShadow = "0 0 0 4px rgba(255,91,46,0.10)";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = "var(--color-border)";
+            e.currentTarget.style.boxShadow = "none";
+          }}
+          onKeyDown={(e) => {
+            if (!open || matches.length === 0) return;
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              setActiveIdx((i) => Math.min(i + 1, matches.length - 1));
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              setActiveIdx((i) => Math.max(i - 1, 0));
+            } else if (e.key === "Enter") {
+              e.preventDefault();
+              select(matches[activeIdx]);
+            } else if (e.key === "Escape") {
+              setOpen(false);
+            }
+          }}
+          style={{
+            width: "100%",
+            borderRadius: 12,
+            border: "1px solid var(--color-border)",
+            background: "var(--color-paper-soft)",
+            padding: "11px 14px 11px 38px",
+            fontSize: 14,
+            color: "var(--color-ink)",
+            outline: "none",
+          }}
+        />
+
+        {open && matches.length > 0 && (
+          <ul
+            id="university-listbox"
+            role="listbox"
+            style={{
+              position: "absolute",
+              top: "calc(100% + 6px)",
+              left: 0,
+              right: 0,
+              zIndex: 20,
+              margin: 0,
+              padding: 6,
+              listStyle: "none",
+              background: "var(--color-paper)",
+              border: "1px solid var(--color-border)",
+              borderRadius: 12,
+              boxShadow: "0 16px 40px -12px rgba(11,30,63,0.25)",
+              maxHeight: 260,
+              overflowY: "auto",
+            }}
+          >
+            {matches.map((name, idx) => (
+              <li key={name} role="option" aria-selected={idx === activeIdx}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => select(name)}
+                  onMouseEnter={() => setActiveIdx(idx)}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "9px 10px",
+                    borderRadius: 8,
+                    border: "none",
+                    background: idx === activeIdx ? "var(--color-paper-soft)" : "transparent",
+                    color: "var(--color-ink)",
+                    fontSize: 13.5,
+                    cursor: "pointer",
+                  }}
+                >
+                  <svg
+                    aria-hidden
+                    viewBox="0 0 24 24"
+                    width="14"
+                    height="14"
+                    fill="none"
+                    stroke="var(--color-persimmon)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ flexShrink: 0 }}
+                  >
+                    <path d="M12 21s-7-6.4-7-11a7 7 0 0 1 14 0c0 4.6-7 11-7 11z" />
+                    <circle cx="12" cy="10" r="2.6" />
+                  </svg>
+                  {name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <p
+        style={{
+          marginTop: 8,
+          fontSize: 11.5,
+          color: "var(--color-muted, var(--color-ink-soft))",
+        }}
+      >
+        Don&rsquo;t see it listed? Keep typing — your entry is still saved.
+      </p>
     </div>
   );
 }
