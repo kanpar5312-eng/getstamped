@@ -204,7 +204,7 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
           className="inline-flex items-center gap-2 shrink-0 text-[var(--ink)]"
         >
           <BrandMark size={26} priority />
-          <span className="font-display text-[19px] leading-none tracking-tight text-[var(--ink)]">
+          <span className="hidden sm:inline font-display text-[19px] leading-none tracking-tight text-[var(--ink)]">
             GetStamped
           </span>
         </Link>
@@ -297,8 +297,8 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
             <span>{planLabel}</span>
             {plan === "free" && (
               <>
-                <span aria-hidden className="text-[var(--stone)]">·</span>
-                <span className="text-[var(--ember-hover)]">30% off</span>
+                <span aria-hidden className="hidden sm:inline text-[var(--stone)]">·</span>
+                <span className="hidden sm:inline text-[var(--ember-hover)]">30% off</span>
               </>
             )}
           </Link>

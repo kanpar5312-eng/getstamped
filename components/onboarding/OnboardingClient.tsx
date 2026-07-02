@@ -492,7 +492,7 @@ export function OnboardingClient({ firstName: initialFirstName, initialCountry }
           border: 1px solid var(--color-border);
           background: var(--color-paper-soft);
           padding: 11px 14px;
-          font-size: 14px;
+          font-size: 16px;
           color: var(--color-ink);
           outline: none;
           transition: border 0.2s, box-shadow 0.2s;
@@ -621,7 +621,7 @@ function Field({ label, value, onChange, placeholder, autoFocus }: {
           border: "1px solid var(--color-border)",
           background: "var(--color-paper-soft)",
           padding: "11px 14px",
-          fontSize: 14,
+          fontSize: 16,
           color: "var(--color-ink)",
           outline: "none",
         }}
@@ -750,7 +750,7 @@ function UniversityField({
             border: "1px solid var(--color-border)",
             background: "var(--color-paper-soft)",
             padding: "11px 14px 11px 38px",
-            fontSize: 14,
+            fontSize: 16,
             color: "var(--color-ink)",
             outline: "none",
           }}
