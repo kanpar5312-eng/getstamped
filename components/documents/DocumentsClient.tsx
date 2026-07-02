@@ -503,18 +503,20 @@ function DocumentRowView({
         className="sr-only"
         onChange={(e) => onFileChosen(e.target.files?.[0])}
       />
-      <div className="flex items-start gap-4">
-        <StatusIcon status={row.status} verificationMethod={row.verificationMethod} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[15px] font-medium text-[var(--ink)]">{displayName}</span>
-            <span className="text-[11px] text-[var(--stone)] uppercase tracking-[0.08em]">
-              {fmtList}
-            </span>
+      <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+        <div className="flex items-start gap-4 min-w-0">
+          <StatusIcon status={row.status} verificationMethod={row.verificationMethod} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[15px] font-medium text-[var(--ink)]">{displayName}</span>
+              <span className="text-[11px] text-[var(--stone)] uppercase tracking-[0.08em]">
+                {fmtList}
+              </span>
+            </div>
+            <p className="mt-1 text-[13px] text-[var(--ink-soft)] leading-snug">{why}</p>
           </div>
-          <p className="mt-1 text-[13px] text-[var(--ink-soft)] leading-snug">{why}</p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-3 pl-9 sm:pl-0 sm:shrink-0">
           <StatusChip status={row.status} verificationMethod={row.verificationMethod} />
           {/* Example trigger — only render when we actually have a mockup
               for this slug; otherwise the button would just be a dead-end
@@ -530,7 +532,7 @@ function DocumentRowView({
             </button>
           )}
           {row.status === "missing" || row.status === "attention" ? (
-            <span className="inline-flex items-center gap-2">
+            <span className="inline-flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={trigger}
