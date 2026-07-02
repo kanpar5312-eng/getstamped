@@ -504,7 +504,7 @@ function DocumentRowView({
         onChange={(e) => onFileChosen(e.target.files?.[0])}
       />
       <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
-        <div className="flex items-start gap-4 min-w-0">
+        <div className="flex items-start gap-4 min-w-0 sm:flex-1">
           <StatusIcon status={row.status} verificationMethod={row.verificationMethod} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
