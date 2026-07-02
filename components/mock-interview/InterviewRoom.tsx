@@ -145,6 +145,7 @@ export function InterviewRoom({
                 fill
                 sizes="880px"
                 className="object-cover"
+                style={{ objectPosition: "50% 18%" }}
                 priority
               />
             </div>

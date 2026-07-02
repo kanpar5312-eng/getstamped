@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { SetupScreen, type Difficulty, type Interviewer, type Length } from "./SetupScreen";
 import { InterviewRoom, type RoomState } from "./InterviewRoom";
@@ -1121,16 +1122,25 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     const consulateLabel = consulate
       ? `U.S. CONSULATE · ${consulate.toUpperCase()}`
       : "U.S. CONSULATE · MUMBAI";
-    return (
+    // Portaled to <body> — this is a fullscreen takeover, but nested inside
+    // the dashboard layout's <main className="relative z-10">, its fixed
+    // inset-0 would be capped inside that stacking context and paint BELOW
+    // the dashboard nav (z-40) despite its own higher z-index. Escaping to
+    // <body> guarantees it actually covers the header, not just visually
+    // intends to.
+    if (typeof document === "undefined") return null;
+    return createPortal(
       <FirstPersonEntry
         consulate={consulateLabel}
         onComplete={enterRoom}
-      />
+      />,
+      document.body,
     );
   }
 
   if (phase === "room") {
-    return (
+    if (typeof document === "undefined") return null;
+    return createPortal(
       <InterviewRoom
         interviewer={interviewer}
         difficulty={difficulty}
@@ -1167,7 +1177,8 @@ export function MockInterviewClient({ plan, consulate }: Props) {
         }}
         silenceCountdown={silenceCountdown}
         noMic={noMic}
-      />
+      />,
+      document.body,
     );
   }
 
