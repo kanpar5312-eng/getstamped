@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { signOut } from "@/app/actions/auth";
+import { ThemeToggle } from "@/components/dashboard/ThemeToggle";
 
 type Props = {
   initials: string;
@@ -116,6 +117,9 @@ export function AccountMenu({ initials, email }: Props) {
           >
             Upgrade plan
           </Link>
+          <div className="mt-1 border-t border-[var(--color-border-soft)] pt-1">
+            <ThemeToggle />
+          </div>
           <form action={signOut} className="mt-1 border-t border-[var(--color-border-soft)] pt-1">
             <button
               type="submit"

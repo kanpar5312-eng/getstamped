@@ -54,6 +54,7 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={[
         instrumentSerif.variable,
         GeistSans.variable,
@@ -62,6 +63,16 @@ export default async function RootLayout({
       ].join(" ")}
     >
       <body className="min-h-full flex flex-col bg-[var(--color-paper)] text-[var(--color-ink)] overflow-x-hidden">
+        {/* Anti-flash: applies the stored dashboard theme class before
+            paint. Only ever adds/removes `dark` on <html> — inert outside
+            [data-surface="dashboard"] (see app/globals.css), so it can't
+            affect landing/marketing/auth pages. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(localStorage.getItem('gs-theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}",
+          }}
+        />
         <PricingProvider initial={initialCurrency}>
           <CountryProvider>
             <Suspense fallback={null}>

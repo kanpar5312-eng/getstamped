@@ -883,6 +883,36 @@ body {
   --color-accent-tint:  var(--ember-soft);
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   DASHBOARD DARK MODE — toggled via `dark` class on <html> (see
+   components/dashboard/ThemeToggle.tsx + the inline anti-flash script in
+   app/layout.tsx). Scoped to [data-surface="dashboard"] only, so nothing
+   on the landing/marketing/auth surfaces is affected — this block only
+   redefines the same token names the light block above sets, so every
+   dashboard component that already reads var(--bg)/var(--ink)/etc. picks
+   this up automatically with zero per-component edits.
+   ───────────────────────────────────────────────────────────────────── */
+html.dark [data-surface="dashboard"] {
+  --bg:             #050505;
+  --surface:        #121110;
+  --surface-sunken: #0A0908;
+  --line:           #2A2825;
+  --line-hover:     #3A3733;
+  --ink:            #F5F1E8;
+  --ink-soft:       #B8B2A6;
+  --stone:          #7A756C;
+  --ember:          #FF5B2E;
+  --ember-hover:    #FF7A4D;
+  --ember-soft:     rgba(255, 91, 46, 0.16);
+  --glow:           #FF9E78;
+  --success:        #4ADE80;
+  --warning:        #FBBF24;
+  --error:          #F87171;
+
+  --color-ink-deep:    #FFFFFF;
+  --color-forest-deep: #FFFFFF;
+}
+
 /* Page canvas — warm stone gray with a 2% noise overlay */
 [data-surface="dashboard"] {
   background-color: var(--bg);
