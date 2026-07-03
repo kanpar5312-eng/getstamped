@@ -328,6 +328,43 @@ export function Testimonials() {
         @media (prefers-reduced-motion: reduce) {
           .gs-tm-ltr, .gs-tm-rtl { animation: none; }
         }
+
+        /* Dark mode — collapses every avatar's distinct light-mode tint
+           down to black + persimmon, per brand rule (no other colors). */
+        html.dark .gs-tm-section {
+          background: var(--color-cream);
+          color: var(--color-ink);
+        }
+        html.dark .gs-tm-title { color: var(--color-ink); }
+        html.dark .gs-tm-marquee {
+          -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+        }
+        html.dark .gs-tm-card {
+          background: var(--color-cream-soft);
+          border-color: rgba(232, 98, 42, 0.22);
+          box-shadow: 0 12px 24px -20px rgba(0, 0, 0, 0.6);
+        }
+        html.dark .gs-tm-card:hover { border-color: rgba(232, 98, 42, 0.55); }
+        html.dark .gs-tm-card.is-accent {
+          background: var(--color-persimmon-tint);
+          border-color: rgba(232, 98, 42, 0.4);
+        }
+        html.dark .gs-tm-avatar { box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset; }
+        html.dark .gs-tm-av-persimmon,
+        html.dark .gs-tm-av-peach,
+        html.dark .gs-tm-av-saffron {
+          background: rgba(232, 98, 42, 0.18);
+          color: var(--color-persimmon-deep);
+          border-color: rgba(232, 98, 42, 0.45);
+        }
+        html.dark .gs-tm-av-cream,
+        html.dark .gs-tm-av-ink {
+          background: var(--color-cream-deep);
+          color: var(--color-ink);
+          border-color: rgba(245, 241, 232, 0.18);
+        }
+        html.dark .gs-tm-quote { color: var(--color-ink-soft); }
       `}</style>
     </section>
   );

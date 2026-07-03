@@ -21,11 +21,11 @@ import { useEffect, useRef, useState } from "react";
      • No pricing.
    ═════════════════════════════════════════════════════════════════════════ */
 
-const PERSIMMON = "#E8622A";
-const PERSIMMON_DEEP = "#B85A15";
-const INK = "#0B1E3F";
-const INK_SOFT = "#2A3F5F";
-const CREAM = "#F5F1E8";
+const PERSIMMON = "var(--color-persimmon)";
+const PERSIMMON_DEEP = "var(--color-persimmon-deep)";
+const INK = "var(--color-ink)";
+const INK_SOFT = "var(--color-ink-soft)";
+const CREAM = "var(--color-cream)";
 const STONE = "rgba(11, 30, 63, 0.10)";
 
 type Row = {
@@ -169,7 +169,7 @@ export function VsConsultants() {
             border: `1px solid ${STONE}`,
             borderRadius: 18,
             overflow: "hidden",
-            background: "#FFFDF7",
+            background: "var(--color-cream-soft)",
             boxShadow: "0 24px 60px -32px rgba(11,30,63,0.18)",
           }}
         >
@@ -434,6 +434,17 @@ export function VsConsultants() {
           }
           .gs-vs-mark { opacity: 1 !important; transform: scale(1) !important; }
           .gs-vs-em { background-size: 100% 2px !important; }
+        }
+
+        /* Dark mode — the constants above already flip via var(). These
+           are the spots that hardcoded an ink-tinted rgba() (STONE)
+           directly, which can't respond to a CSS class on its own. */
+        html.dark .gs-vs-grid { border-color: rgba(245, 241, 232, 0.12); }
+        html.dark .gs-vs-row { border-bottom-color: rgba(245, 241, 232, 0.10); }
+        html.dark .gs-vs-cell--consult::before { color: rgba(245, 241, 232, 0.65); }
+        html.dark .gs-vs-cell--us {
+          background: rgba(232, 98, 42, 0.14) !important;
+          border-color: rgba(232, 98, 42, 0.3) !important;
         }
       `}</style>
     </section>

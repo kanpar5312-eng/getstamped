@@ -34,8 +34,8 @@ export function Header() {
     return (
       <BubbleMenu
         useFixedPosition
-        menuBg="#FAF8F4"
-        menuContentColor="#1C1917"
+        menuBg="var(--color-cream-soft)"
+        menuContentColor="var(--color-ink)"
         menuAriaLabel="Toggle navigation"
         animationEase="back.out(1.5)"
         animationDuration={0.5}
@@ -46,7 +46,7 @@ export function Header() {
               display: "inline-flex",
               alignItems: "center",
               gap: 8,
-              color: "#1C1917",
+              color: "var(--color-ink)",
               fontFamily: "var(--font-display-stack)",
               fontSize: 18,
               fontWeight: 500,
@@ -61,8 +61,11 @@ export function Header() {
           ...item,
           rotation: i % 2 === 0 ? -8 : 8,
           hoverStyles: {
-            bgColor: i % 2 === 0 ? "#E8622A" : "#1C1917",
-            textColor: "#FAF8F4",
+            // Alternates persimmon / persimmon-deep for variety — NOT ink,
+            // since --color-ink inverts to a light color in dark mode and
+            // would render as a near-white hover background there.
+            bgColor: i % 2 === 0 ? "var(--color-persimmon)" : "var(--color-persimmon-deep)",
+            textColor: "var(--color-cream-soft)",
           },
         }))}
       />
@@ -77,7 +80,7 @@ export function Header() {
             display: "inline-flex",
             alignItems: "center",
             gap: 8,
-            color: "#1C1917",
+            color: "var(--color-ink)",
             fontFamily: "var(--font-display-stack)",
             fontSize: 18,
             fontWeight: 500,
@@ -89,13 +92,16 @@ export function Header() {
         </span>
       }
       logoAlt="GetStamped"
-      logoBg="#FAF8F4"
+      logoBg="var(--color-cream-soft)"
       items={NAV_ITEMS}
-      baseColor="#1C1917"
-      pillColor="#FAF8F4"
+      baseColor="var(--color-ink)"
+      pillColor="var(--color-cream-soft)"
+      /* Always shown against the persimmon accent hover, which doesn't
+         change between themes — kept as a literal light color rather
+         than a token that would flip dark in dark mode. */
       hoveredPillTextColor="#FAF8F4"
-      pillTextColor="#1C1917"
-      accentColor="#E8622A"
+      pillTextColor="var(--color-ink)"
+      accentColor="var(--color-persimmon)"
       ease="power3.out"
       initialLoadAnimation
     />

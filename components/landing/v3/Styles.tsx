@@ -632,7 +632,7 @@ export function Styles() {
          highlight that catches the eye without screaming. */
       .v3-price-card {
         position: relative; display: flex; flex-direction: column;
-        background: #FFFDF7;
+        background: var(--color-cream-soft);
         border: 1px solid rgba(11,30,63,0.08);
         border-radius: 28px; padding: 32px 28px;
         box-shadow: 0 24px 48px -28px rgba(11,30,63,0.18);
@@ -640,6 +640,7 @@ export function Styles() {
         transition: transform 240ms var(--ease-soft),
           box-shadow 240ms var(--ease-soft);
       }
+      html.dark .v3-price-card { border-color: rgba(245,241,232,0.10); }
       .v3-price-card::before {
         content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
         background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.85) 20%, rgba(255,255,255,0.85) 80%, transparent 100%);
@@ -647,7 +648,7 @@ export function Styles() {
       }
       /* Solo "most chosen" — soft peach with a persimmon halo. */
       .v3-price-solo {
-        background: #FBE8D9;
+        background: var(--color-persimmon-tint);
         border: 1px solid rgba(232,98,42,0.40);
         box-shadow:
           0 0 0 1px rgba(232,98,42,0.30),

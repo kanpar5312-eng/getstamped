@@ -17,10 +17,10 @@ const fadeUp = {
 };
 const ease = [0.22, 1, 0.36, 1] as const;
 
-const CREAM = "#F5F1E8";
-const INK = "#0B1E3F";
-const INK_SOFT = "#2A3F5F";
-const PERSIMMON = "#E8622A";
+const CREAM = "var(--color-cream)";
+const INK = "var(--color-ink)";
+const INK_SOFT = "var(--color-ink-soft)";
+const PERSIMMON = "var(--color-persimmon)";
 
 type StepStatus = "done" | "current" | "upcoming";
 type Step = { n: number; label: string; date: string; status: StepStatus };
@@ -400,6 +400,22 @@ export function Hero() {
           .gs-hero-mark.is-current::after { animation: none !important; }
           .gs-hero-scrollcue::after { animation: none !important; }
         }
+
+        /* Dark mode — the constants above (CREAM/INK/INK_SOFT/PERSIMMON)
+           already resolve through CSS vars and flip automatically. These
+           are the remaining spots that hardcoded an ink-tinted rgba()
+           directly instead of going through a constant. */
+        html.dark .gs-hero-teaser-meta,
+        html.dark .gs-hero-row-step,
+        html.dark .gs-hero-row-date { color: rgba(245, 241, 232, 0.55); }
+        html.dark .gs-hero-row { border-bottom-color: rgba(245, 241, 232, 0.10); }
+        html.dark .gs-hero-row-label.is-upcoming { color: rgba(245, 241, 232, 0.55); }
+        html.dark .gs-hero-mark.is-upcoming { border-color: rgba(245, 241, 232, 0.24); }
+        html.dark .gs-hero-teaser-frame {
+          background: var(--color-cream-soft);
+          border-color: rgba(245, 241, 232, 0.10);
+        }
+        html.dark .gs-hero-scrollcue { background: rgba(245, 241, 232, 0.22); }
       `}</style>
 
       <span aria-hidden className="gs-hero-scrollcue" />
