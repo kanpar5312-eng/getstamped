@@ -1,453 +1,564 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "motion/react";
-import TextType from "@/components/ui/TextType";
+import { useEffect, useRef, useState } from "react";
 
 /* ════════════════════════════════════════════════════════════════════════
-   Hero — warm editorial. Cream bg, ink serif headline (TextType cycling),
-   persimmon CTA, and a continuously-scrolling Playbook teaser below the
-   CTA that fades into the next section — the visual cliffhanger that
-   pulls the user down.
+   Hero — scroll-through-the-playbook.
+
+   A ~450vh runway with a sticky 100vh stage. Scroll drives three acts:
+
+     ACT 1 (p 0 → 0.24)   Headline stack fades up and away while the
+                          playbook card — rendered full-viewport but
+                          clipped down to a small centered card via
+                          clip-path — expands to fill the screen.
+     ACT 2 (p 0.24 → 0.84) You scroll *through* the playbook: rows rise
+                          past a fixed "now" line and tick off with a
+                          persimmon check, the phase label flips
+                          (02 → 05), dates advance, progress bar fills.
+     ACT 3 (p 0.84 → 1)   The final step ticks and an F-1 stamp presses
+                          onto the screen. Page releases into the
+                          feature sections.
+
+   Mechanics per house rules:
+     • ONE rAF-throttled scroll listener, zero React state per frame —
+       direct style/class writes only (same pattern as ScrollTransitions).
+     • clip-path + transform + opacity only. No layout writes per frame.
+     • Click anywhere (except links) skips to the end of the runway.
+     • prefers-reduced-motion → a static hero, no runway, no pin.
+     • All colors via var(--color-*) so dark mode flips automatically.
    ═════════════════════════════════════════════════════════════════════════ */
 
-const fadeUp = {
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0 },
-};
-const ease = [0.22, 1, 0.36, 1] as const;
+type PlayRow = { n: number; label: string; date: string; phase: string };
 
-const CREAM = "var(--color-cream)";
-const INK = "var(--color-ink)";
-const INK_SOFT = "var(--color-ink-soft)";
-const PERSIMMON = "var(--color-persimmon)";
+const PHASE_2 = "PHASE 02 · AFTER I-20";
+const PHASE_3 = "PHASE 03 · DS-160 & FEES";
+const PHASE_4 = "PHASE 04 · INTERVIEW PREP";
+const PHASE_5 = "PHASE 05 · POST-APPROVAL";
 
-type StepStatus = "done" | "current" | "upcoming";
-type Step = { n: number; label: string; date: string; status: StepStatus };
-
-const STEPS: Step[] = [
-  { n: 11, label: "Receive I-20 from school", date: "Feb 28", status: "done" },
-  { n: 12, label: "Pay SEVIS I-901 fee", date: "Mar 03", status: "done" },
-  { n: 13, label: "Complete DS-160 form", date: "Mar 07", status: "done" },
-  { n: 14, label: "Schedule visa appointment", date: "Mar 10", status: "current" },
-  { n: 15, label: "Prepare document bundle", date: "Mar 12", status: "upcoming" },
-  { n: 16, label: "Mock interview, round 1", date: "Mar 14", status: "upcoming" },
-  { n: 17, label: "Pay MRV fee", date: "Mar 16", status: "upcoming" },
-  { n: 18, label: "Confirm appointment letter", date: "Mar 18", status: "upcoming" },
+const ROWS: PlayRow[] = [
+  { n: 12, label: "Pay SEVIS I-901 fee", date: "Mar 03", phase: PHASE_2 },
+  { n: 13, label: "Complete DS-160 form", date: "Mar 07", phase: PHASE_2 },
+  { n: 14, label: "Schedule visa appointment", date: "Mar 10", phase: PHASE_2 },
+  { n: 15, label: "Prepare document bundle", date: "Mar 12", phase: PHASE_2 },
+  { n: 16, label: "US-spec visa photos", date: "Mar 14", phase: PHASE_2 },
+  { n: 20, label: "Upload DS-160 photo", date: "Mar 21", phase: PHASE_3 },
+  { n: 21, label: "Personal info — passport match", date: "Mar 24", phase: PHASE_3 },
+  { n: 23, label: "Create visa service profile", date: "Mar 29", phase: PHASE_3 },
+  { n: 24, label: "Pay the MRV fee", date: "Apr 02", phase: PHASE_3 },
+  { n: 26, label: "Book the interview slot", date: "Apr 08", phase: PHASE_3 },
+  { n: 30, label: "Financial story, to the dollar", date: "Apr 18", phase: PHASE_4 },
+  { n: 31, label: "Return-intent answers", date: "Apr 22", phase: PHASE_4 },
+  { n: 33, label: "Mock interview, round one", date: "Apr 26", phase: PHASE_4 },
+  { n: 36, label: "Route + consulate day plan", date: "May 06", phase: PHASE_4 },
+  { n: 37, label: "Final document check", date: "May 09", phase: PHASE_4 },
+  { n: 40, label: "Track passport return", date: "May 16", phase: PHASE_5 },
+  { n: 43, label: "Flights, bank, insurance", date: "May 24", phase: PHASE_5 },
+  { n: 44, label: "Verify visa details", date: "May 28", phase: PHASE_5 },
+  { n: 45, label: "Pre-departure essentials", date: "Jun 02", phase: PHASE_5 },
+  { n: 47, label: "Port of entry — SEVIS validated", date: "Jun 14", phase: PHASE_5 },
 ];
 
+const ROW_H = 64; // px, fixed — lets per-frame math avoid rect reads
+
+const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
+const sub = (v: number, a: number, b: number) => clamp01((v - a) / (b - a));
+const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
 export function Hero() {
+  const runwayRef = useRef<HTMLElement>(null);
+  const headRef = useRef<HTMLDivElement>(null);
+  const bookRef = useRef<HTMLDivElement>(null);
+  const chromeRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const phaseRef = useRef<HTMLSpanElement>(null);
+  const barRef = useRef<HTMLSpanElement>(null);
+  const pctRef = useRef<HTMLSpanElement>(null);
+  const stampRef = useRef<HTMLDivElement>(null);
+  const handoffRef = useRef<HTMLDivElement>(null);
+  const nowlineRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef(0);
+  const [reduced, setReduced] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => setReduced(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    if (reduced) return;
+    const runway = runwayRef.current;
+    const head = headRef.current;
+    const book = bookRef.current;
+    const chrome = chromeRef.current;
+    const track = trackRef.current;
+    const phaseEl = phaseRef.current;
+    const bar = barRef.current;
+    const pct = pctRef.current;
+    const stamp = stampRef.current;
+    const handoff = handoffRef.current;
+    const nowline = nowlineRef.current;
+    if (!runway || !head || !book || !track) return;
+
+    const rows = Array.from(track.querySelectorAll<HTMLElement>(".gs-hx-row"));
+    let lastDone = -1;
+    let ticking = false;
+
+    const frame = () => {
+      ticking = false;
+      const vh = window.innerHeight;
+      const vw = window.innerWidth;
+      const rect = runway.getBoundingClientRect();
+      const total = rect.height - vh;
+      if (total <= 0) return;
+      const p = clamp01(-rect.top / total);
+      progressRef.current = p;
+
+      /* ACT 1 — headline out, card expands to fullscreen */
+      const hOut = easeOut(sub(p, 0, 0.14));
+      head.style.opacity = (1 - hOut).toFixed(3);
+      head.style.transform = `translateY(${(-44 * hOut).toFixed(1)}px)`;
+      head.style.pointerEvents = p > 0.1 ? "none" : "";
+
+      const k = easeOut(sub(p, 0.03, 0.26));
+      const isMobile = vw < 768;
+      const sideStart = isMobile ? vw * 0.05 : Math.max((vw - 760) / 2, vw * 0.04);
+      const topStart = vh * (isMobile ? 0.56 : 0.6);
+      const botStart = vh * 0.05;
+      const inTop = lerp(topStart, 0, k);
+      const inSide = lerp(sideStart, 0, k);
+      const inBot = lerp(botStart, 0, k);
+      const rad = lerp(20, 0, k);
+      book.style.clipPath = `inset(${inTop.toFixed(1)}px ${inSide.toFixed(1)}px ${inBot.toFixed(1)}px ${inSide.toFixed(1)}px round ${rad.toFixed(1)}px)`;
+
+      if (chrome) chrome.style.opacity = easeOut(sub(p, 0.16, 0.28)).toFixed(3);
+      if (nowline) nowline.style.opacity = easeOut(sub(p, 0.2, 0.3)).toFixed(3);
+
+      /* ACT 2 — travel through the playbook */
+      const t = sub(p, 0.26, 0.84);
+      const padTop = vh * 0.62;
+      const trackLen = padTop + ROWS.length * ROW_H;
+      const maxT = trackLen - vh * 0.42;
+      const translate = -easeInOutQuad(t) * maxT;
+      track.style.transform = `translate3d(0, ${translate.toFixed(1)}px, 0)`;
+
+      // A row is "done" once its center rises past the now-line (50vh).
+      const done = Math.max(
+        0,
+        Math.min(
+          ROWS.length,
+          Math.floor((vh * 0.5 - padTop - ROW_H / 2 - translate) / ROW_H + 1),
+        ),
+      );
+      if (done !== lastDone) {
+        lastDone = done;
+        rows.forEach((r, i) => r.classList.toggle("is-done", i < done));
+        if (phaseEl) {
+          const idx = Math.min(Math.max(done, 1) - 1, ROWS.length - 1);
+          phaseEl.textContent = ROWS[idx].phase;
+        }
+        if (pct) pct.textContent = `${Math.round((done / ROWS.length) * 47)} / 47`;
+        if (bar) bar.style.transform = `scaleX(${(done / ROWS.length).toFixed(3)})`;
+      }
+
+      /* ACT 3 — the stamp */
+      if (stamp) {
+        const s = easeOut(sub(p, 0.85, 0.94));
+        stamp.style.opacity = s.toFixed(3);
+        stamp.style.transform = `translate(-50%, -50%) scale(${lerp(1.9, 1, s).toFixed(3)}) rotate(${lerp(-22, -10, s).toFixed(1)}deg)`;
+      }
+      if (handoff) handoff.style.opacity = easeOut(sub(p, 0.94, 1)).toFixed(3);
+    };
+
+    const easeInOutQuad = (t: number) =>
+      t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(frame);
+      }
+    };
+
+    // Escape hatch — click anywhere that isn't a link skips the runway.
+    const onClick = (e: MouseEvent) => {
+      if ((e.target as HTMLElement).closest("a, button")) return;
+      const p = progressRef.current;
+      if (p <= 0.04 || p >= 0.96) return;
+      const rect = runway.getBoundingClientRect();
+      const absTop = window.scrollY + rect.top;
+      window.scrollTo({ top: absTop + rect.height - window.innerHeight, behavior: "smooth" });
+    };
+
+    frame();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    runway.addEventListener("click", onClick);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      runway.removeEventListener("click", onClick);
+    };
+  }, [reduced]);
+
+  if (reduced) return <HeroStatic />;
+
   return (
-    <section
-      aria-label="Hero"
-      className="gs-hero-root"
-      style={{ position: "relative", width: "100%", background: CREAM, overflow: "hidden" }}
-    >
-      <div
-        className="gs-hero-content"
-        style={{
-          position: "relative",
-          zIndex: 2,
-          maxWidth: 980,
-          margin: "0 auto",
-          padding: "clamp(96px, 12vh, 144px) 24px 0",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          textAlign: "center",
-        }}
-      >
-        {/* Eyebrow */}
-        <motion.p
-          variants={fadeUp}
-          initial="initial"
-          animate="animate"
-          transition={{ duration: 0.5, ease, delay: 0.15 }}
-          style={{
-            fontFamily: "var(--font-mono-stack, var(--font-sans-stack))",
-            fontSize: 11,
-            color: PERSIMMON,
-            textTransform: "uppercase",
-            letterSpacing: "0.42em",
-            fontWeight: 600,
-            margin: 0,
-          }}
-        >
-          F-1 · 47 Steps · One Payment
-        </motion.p>
-
-        {/* Headline — TextType cycling on new editorial lines */}
-        <motion.h1
-          variants={fadeUp}
-          initial="initial"
-          animate="animate"
-          transition={{ duration: 0.6, ease, delay: 0.3 }}
-          className="gs-hero-headline"
-          style={{
-            fontFamily: "var(--font-display-stack)",
-            fontWeight: 400,
-            fontSize: "clamp(44px, 7.2vw, 84px)",
-            color: INK,
-            lineHeight: 1.02,
-            letterSpacing: "-0.028em",
-            margin: "24px 0 0",
-            textAlign: "center",
-            textWrap: "balance" as "balance",
-            /* Reserve two-and-a-bit lines so cycling between short and
-               long phrases never reflows the page below, even when the
-               longest line wraps to 3 visual rows on the narrowest
-               mobile viewports. */
-            minHeight: "2.4em",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            maxWidth: 18 + "ch",
-          }}
-        >
-          <TextType
-            text={[
-              "Forty-seven steps. We have all of them.",
-              "Sequenced from I-20 to stamp.",
-              "Walk in already prepared.",
-            ]}
-            typingSpeed={70}
-            pauseDuration={1800}
-            showCursor
-            cursorCharacter="_"
-            deletingSpeed={45}
-            variableSpeedEnabled={false}
-            variableSpeedMin={60}
-            variableSpeedMax={120}
-            cursorBlinkDuration={0.55}
-            cursorStyle={{ color: PERSIMMON }}
-          />
-        </motion.h1>
-
-        {/* Sub-line */}
-        <motion.p
-          variants={fadeUp}
-          initial="initial"
-          animate="animate"
-          transition={{ duration: 0.7, ease, delay: 0.5 }}
-          className="gs-hero-sub"
-          style={{
-            fontFamily: "var(--font-sans-stack)",
-            fontSize: 17,
-            color: INK_SOFT,
-            lineHeight: 1.55,
-            maxWidth: 560,
-            margin: "22px auto 0",
-            letterSpacing: "-0.003em",
-          }}
-        >
-          A 47-step playbook in consulate order. AI document checks trained on
-          real refusal patterns. Voice mock interviews scored like the booth.
-          One workspace until your passport is stamped.
-        </motion.p>
-
-        {/* CTA */}
-        <motion.div
-          variants={fadeUp}
-          initial="initial"
-          animate="animate"
-          transition={{ duration: 0.6, ease, delay: 0.7 }}
-          className="gs-hero-ctas"
-          style={{
-            marginTop: 36,
-            display: "flex",
-            gap: 18,
-            alignItems: "center",
-            justifyContent: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <Link href="/sign-up" className="gs-hero-primary">
-            Start free — Phase 1 forever
-          </Link>
-          <Link href="#playbook" className="gs-hero-secondary">
-            See the 47 steps <span aria-hidden>↓</span>
-          </Link>
-        </motion.div>
-      </div>
-
-      {/* ───── Cliffhanger: playbook teaser scrolling upward, masked top + bottom */}
-      <motion.div
-        variants={fadeUp}
-        initial="initial"
-        animate="animate"
-        transition={{ duration: 0.8, ease, delay: 0.95 }}
-        aria-hidden
-        className="gs-hero-teaser"
-      >
-        <div className="gs-hero-teaser-meta">
-          <span className="gs-hero-teaser-dot" />
-          Phase 02 — After I-20 · live preview
-        </div>
-        <div className="gs-hero-teaser-frame">
-          <div className="gs-hero-teaser-track">
-            {[...STEPS, ...STEPS].map((s, i) => (
-              <Row key={`${s.n}-${i}`} step={s} />
-            ))}
+    <section ref={runwayRef} aria-label="Hero" className="gs-hx-runway">
+      <div className="gs-hx-sticky">
+        {/* ── Layer A · headline stack ── */}
+        <div ref={headRef} className="gs-hx-head">
+          <p className="gs-hx-eyebrow">F-1 · 47 Steps · One Payment</p>
+          <h1 className="gs-hx-h1">
+            Forty-seven steps.
+            <br />
+            We have <em>all</em> of them.
+          </h1>
+          <p className="gs-hx-sub">
+            A 47-step playbook in consulate order. AI document checks. Voice
+            mock interviews. One workspace until your passport is stamped.
+          </p>
+          <div className="gs-hx-ctas">
+            <Link href="/sign-up" className="gs-hx-primary">
+              Start free — Phase 1 forever
+            </Link>
+            <span className="gs-hx-hint">
+              Scroll to fast-forward the journey <span aria-hidden>↓</span>
+            </span>
           </div>
         </div>
-      </motion.div>
+
+        {/* ── Layer B · the playbook (full viewport, clipped to a card) ── */}
+        <div ref={bookRef} className="gs-hx-book" aria-hidden>
+          <div ref={chromeRef} className="gs-hx-chrome">
+            <span ref={phaseRef} className="gs-hx-phase">{PHASE_2}</span>
+            <span className="gs-hx-meter">
+              <span className="gs-hx-bar">
+                <span ref={barRef} className="gs-hx-bar-fill" />
+              </span>
+              <span ref={pctRef} className="gs-hx-pct">0 / 47</span>
+            </span>
+          </div>
+
+          <div ref={nowlineRef} className="gs-hx-nowline">
+            <span>NOW</span>
+          </div>
+
+          <div ref={trackRef} className="gs-hx-track">
+            {ROWS.map((r) => (
+              <div key={r.n} className="gs-hx-row">
+                <span className="gs-hx-mark" aria-hidden>
+                  <svg viewBox="0 0 12 12" fill="none">
+                    <path d="M2.5 6.2 L5 8.6 L9.5 3.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+                <span className="gs-hx-step">Step {r.n}</span>
+                <span className="gs-hx-label">{r.label}</span>
+                <span className="gs-hx-date">{r.date}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* The stamp */}
+          <div ref={stampRef} className="gs-hx-stamp">
+            <span className="gs-hx-stamp-ring">
+              <span className="gs-hx-stamp-inner">
+                <span className="gs-hx-stamp-type">U.S. F-1</span>
+                <span className="gs-hx-stamp-word">STAMPED</span>
+                <span className="gs-hx-stamp-date">JUN 14</span>
+              </span>
+            </span>
+          </div>
+
+          <div ref={handoffRef} className="gs-hx-handoff">
+            That was the fast-forward. Here&rsquo;s how it actually works{" "}
+            <span aria-hidden>↓</span>
+          </div>
+        </div>
+      </div>
 
       <style>{`
-        .gs-hero-root {
-          /* Pulls the StackedFeatureCards section up so the teaser bleeds
-             into it — cliffhanger that actually keeps going. */
-          padding-bottom: 0;
-        }
+        /* The pinned hero relies on position:sticky — keep it out of the
+           content-visibility:auto scroll optimization (same exception the
+           old hero + closer already had). */
+        .v3-root main > .gs-hx-runway { content-visibility: visible; }
 
-        .gs-hero-primary {
-          background: ${PERSIMMON};
-          color: #FAF8F4;
-          font-family: var(--font-sans-stack);
-          font-size: 15px;
-          font-weight: 600;
-          padding: 16px 30px;
-          border-radius: 999px;
-          border: 1px solid ${PERSIMMON};
-          text-decoration: none;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow:
-            0 1px 0 rgba(255,255,255,0.18) inset,
-            0 10px 28px -10px rgba(232,98,42,0.55);
-          transition: transform 200ms ease, box-shadow 200ms ease, background 200ms ease;
-        }
-        @media (hover: hover) and (pointer: fine) {
-          .gs-hero-primary:hover {
-            transform: translateY(-1px);
-            background: #F07040;
-            box-shadow:
-              0 1px 0 rgba(255,255,255,0.2) inset,
-              0 14px 36px -12px rgba(232,98,42,0.65);
-          }
-        }
-        .gs-hero-primary:active { transform: translateY(0) scale(0.98); }
-
-        .gs-hero-secondary {
-          font-family: var(--font-sans-stack);
-          font-size: 14px;
-          font-weight: 500;
-          color: ${INK_SOFT};
-          text-decoration: none;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 14px 6px;
-          letter-spacing: -0.003em;
-          transition: color 200ms ease;
-        }
-        .gs-hero-secondary span { transition: transform 200ms ease; }
-        @media (hover: hover) and (pointer: fine) {
-          .gs-hero-secondary:hover { color: ${INK}; }
-          .gs-hero-secondary:hover span { transform: translateY(2px); }
-        }
-
-        /* Cliffhanger teaser */
-        .gs-hero-teaser {
+        .gs-hx-runway {
           position: relative;
-          margin: clamp(56px, 8vh, 96px) auto 0;
-          max-width: 720px;
-          padding: 0 24px;
+          height: 460vh;
+          background: var(--color-cream);
         }
-        .gs-hero-teaser-meta {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          margin: 0 auto 14px;
+        @media (max-width: 767px) { .gs-hx-runway { height: 340vh; } }
+
+        .gs-hx-sticky {
+          position: sticky; top: 0;
+          height: 100vh; overflow: hidden;
+        }
+
+        /* ── headline stack ── */
+        .gs-hx-head {
+          position: absolute; inset: 0 0 auto 0;
+          display: flex; flex-direction: column; align-items: center;
+          text-align: center;
+          padding: clamp(96px, 13vh, 150px) 24px 0;
+          z-index: 2;
+          will-change: transform, opacity;
+        }
+        .gs-hx-eyebrow {
           font-family: var(--font-mono-stack, var(--font-sans-stack));
-          font-size: 10px;
-          letter-spacing: 0.28em;
-          text-transform: uppercase;
-          color: rgba(11,30,63,0.55);
+          font-size: 11px; letter-spacing: 0.42em; text-transform: uppercase;
+          color: var(--color-persimmon); font-weight: 600;
+          animation: gs-hx-up 700ms var(--ease-out) both;
         }
-        .gs-hero-teaser-dot {
-          width: 6px; height: 6px; border-radius: 999px;
-          background: ${PERSIMMON};
-          box-shadow: 0 0 0 0 rgba(232,98,42,0.45);
-          animation: gs-hero-pulse 1.8s ease-in-out infinite;
+        .gs-hx-h1 {
+          margin: 22px 0 0;
+          font-family: var(--font-display-stack); font-weight: 400;
+          font-size: clamp(46px, 7.4vw, 88px);
+          line-height: 1.02; letter-spacing: -0.028em;
+          color: var(--color-ink);
+          text-wrap: balance;
+          animation: gs-hx-up 700ms var(--ease-out) 120ms both;
         }
-        .gs-hero-teaser-frame {
-          position: relative;
-          height: 260px;
-          overflow: hidden;
-          border-radius: 20px;
-          border: 1px solid rgba(11,30,63,0.08);
-          background: #FFFDF7;
-          box-shadow: 0 24px 48px -28px rgba(11,30,63,0.22);
-          -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 70%, transparent 100%);
-                  mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 70%, transparent 100%);
+        .gs-hx-h1 em { font-style: italic; color: var(--color-persimmon); }
+        .gs-hx-sub {
+          margin: 20px auto 0; max-width: 560px;
+          font-family: var(--font-sans-stack); font-size: 17px;
+          line-height: 1.55; color: var(--color-ink-soft);
+          animation: gs-hx-up 700ms var(--ease-out) 240ms both;
         }
-        .gs-hero-teaser-track {
-          display: flex;
-          flex-direction: column;
-          gap: 0;
-          animation: gs-hero-track 28s linear infinite;
-          will-change: transform;
+        .gs-hx-ctas {
+          margin-top: 32px; display: flex; flex-direction: column;
+          align-items: center; gap: 14px;
+          animation: gs-hx-up 700ms var(--ease-out) 360ms both;
         }
-        .gs-hero-row {
-          display: grid;
-          grid-template-columns: 22px 70px 1fr auto;
-          align-items: center;
-          gap: 14px;
-          height: 56px;
-          padding: 0 22px;
-          border-bottom: 1px solid rgba(11,30,63,0.06);
-          font-family: var(--font-sans-stack);
-          font-size: 13.5px;
-          color: ${INK};
+        .gs-hx-primary {
+          background: var(--color-persimmon); color: #FAF8F4;
+          font-family: var(--font-sans-stack); font-size: 15px; font-weight: 600;
+          padding: 16px 30px; border-radius: 999px; text-decoration: none;
+          box-shadow: 0 10px 28px -10px rgba(232,98,42,0.55);
+          transition: transform 200ms var(--ease-out), background 200ms var(--ease-out);
         }
-        .gs-hero-row-step {
+        @media (hover: hover) {
+          .gs-hx-primary:hover { transform: translateY(-1px); background: var(--color-persimmon-deep); }
+        }
+        .gs-hx-hint {
           font-family: var(--font-mono-stack, var(--font-sans-stack));
-          font-size: 10.5px;
-          letter-spacing: 0.12em;
-          color: rgba(11,30,63,0.45);
+          font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+          color: var(--color-muted);
         }
-        .gs-hero-row-label { letter-spacing: -0.003em; }
-        .gs-hero-row-label.is-current { font-weight: 500; color: ${INK}; }
-        .gs-hero-row-label.is-upcoming { color: rgba(11,30,63,0.55); }
-        .gs-hero-row-date {
+        .gs-hx-hint span { display: inline-block; animation: gs-hx-bob 1.8s var(--ease-in-out) infinite; }
+        @keyframes gs-hx-up {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes gs-hx-bob {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(3px); }
+        }
+
+        /* ── the playbook layer ── */
+        .gs-hx-book {
+          position: absolute; inset: 0; z-index: 3;
+          background: var(--color-cream-soft);
+          border: 1px solid var(--color-border-soft);
+          clip-path: inset(60vh 20vw 5vh 20vw round 20px);
+          will-change: clip-path;
+        }
+        .gs-hx-chrome {
+          position: absolute; inset: 0 0 auto 0; height: 56px; z-index: 4;
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 0 clamp(18px, 4vw, 48px);
+          background: var(--color-cream-soft);
+          border-bottom: 1px solid var(--color-border-soft);
+          opacity: 0;
+        }
+        .gs-hx-phase {
           font-family: var(--font-mono-stack, var(--font-sans-stack));
-          font-size: 11px;
-          color: rgba(11,30,63,0.40);
+          font-size: 10.5px; letter-spacing: 0.24em; font-weight: 600;
+          color: var(--color-persimmon);
+        }
+        .gs-hx-meter { display: inline-flex; align-items: center; gap: 12px; }
+        .gs-hx-bar {
+          width: clamp(80px, 16vw, 200px); height: 3px; border-radius: 999px;
+          background: var(--color-border-soft); overflow: hidden; display: block;
+        }
+        .gs-hx-bar-fill {
+          display: block; height: 100%; width: 100%;
+          background: var(--color-persimmon);
+          transform: scaleX(0); transform-origin: left center;
+          transition: transform 300ms var(--ease-out);
+        }
+        .gs-hx-pct {
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 11px; color: var(--color-ink-soft);
           font-variant-numeric: tabular-nums;
         }
 
-        .gs-hero-mark {
-          width: 18px; height: 18px; border-radius: 999px;
+        .gs-hx-nowline {
+          position: absolute; left: 0; right: 0; top: 50vh; z-index: 3;
+          border-top: 1px dashed rgba(232,98,42,0.5);
+          opacity: 0; pointer-events: none;
+        }
+        .gs-hx-nowline span {
+          position: absolute; right: clamp(18px, 4vw, 48px); top: -9px;
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 9px; letter-spacing: 0.22em; font-weight: 600;
+          color: var(--color-persimmon);
+          background: var(--color-cream-soft); padding: 2px 8px;
+          border: 1px solid rgba(232,98,42,0.5); border-radius: 999px;
+        }
+
+        .gs-hx-track {
+          position: absolute; inset: 0; z-index: 2;
+          padding-top: 62vh;
+          will-change: transform;
+        }
+        .gs-hx-row {
+          display: grid;
+          grid-template-columns: 24px 76px 1fr auto;
+          align-items: center; gap: 16px;
+          height: ${ROW_H}px;
+          max-width: 860px; margin: 0 auto;
+          padding: 0 clamp(18px, 4vw, 48px);
+          border-bottom: 1px solid var(--color-border-soft);
+          font-family: var(--font-sans-stack); font-size: 14.5px;
+          color: var(--color-ink);
+        }
+        .gs-hx-step {
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 10.5px; letter-spacing: 0.12em;
+          color: var(--color-muted);
+        }
+        .gs-hx-label { letter-spacing: -0.003em; transition: color 250ms var(--ease-soft); }
+        .gs-hx-date {
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 11px; color: var(--color-muted);
+          font-variant-numeric: tabular-nums;
+        }
+        .gs-hx-mark {
+          width: 19px; height: 19px; border-radius: 999px;
           display: inline-flex; align-items: center; justify-content: center;
-          flex: 0 0 auto;
+          border: 1.5px solid var(--color-border);
+          background: transparent; color: transparent;
+          transition: background 250ms var(--ease-soft),
+            border-color 250ms var(--ease-soft),
+            color 250ms var(--ease-soft),
+            transform 250ms var(--ease-soft);
         }
-        .gs-hero-mark.is-done {
-          background: ${PERSIMMON};
-          color: #FFF;
+        .gs-hx-mark svg { width: 10px; height: 10px; }
+        .gs-hx-row.is-done .gs-hx-mark {
+          background: var(--color-persimmon);
+          border-color: var(--color-persimmon);
+          color: #FAF8F4;
+          transform: scale(1.08);
         }
-        .gs-hero-mark.is-current {
-          background: transparent;
-          border: 1.5px solid ${PERSIMMON};
-          position: relative;
-        }
-        .gs-hero-mark.is-current::after {
-          content: "";
-          width: 7px; height: 7px; border-radius: 999px;
-          background: ${PERSIMMON};
-          animation: gs-hero-pulse 1.6s ease-in-out infinite;
-        }
-        .gs-hero-mark.is-upcoming {
-          background: transparent;
-          border: 1.5px solid rgba(11,30,63,0.20);
-        }
-        .gs-hero-check {
-          width: 10px; height: 10px;
-        }
+        .gs-hx-row.is-done .gs-hx-label { color: var(--color-ink-soft); }
 
-        /* Scroll cue */
-        .gs-hero-scrollcue {
-          position: absolute;
-          bottom: 16px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 1px;
-          height: 36px;
-          background: rgba(11,30,63,0.18);
-          pointer-events: none;
-          z-index: 2;
+        /* ── the stamp ── */
+        .gs-hx-stamp {
+          position: absolute; left: 50%; top: 50%; z-index: 5;
+          opacity: 0; pointer-events: none;
+          transform: translate(-50%, -50%) scale(1.9) rotate(-22deg);
+          will-change: transform, opacity;
         }
-        .gs-hero-scrollcue::after {
-          content: "";
-          position: absolute;
-          left: -1.5px; top: 0;
-          width: 3px; height: 8px;
+        .gs-hx-stamp-ring {
+          display: flex; align-items: center; justify-content: center;
+          width: clamp(200px, 32vw, 280px); height: clamp(200px, 32vw, 280px);
           border-radius: 999px;
-          background: ${PERSIMMON};
-          animation: gs-hero-cue 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          border: 3px solid var(--color-persimmon);
+          box-shadow: 0 0 0 6px var(--color-cream-soft), 0 0 0 7px rgba(232,98,42,0.35),
+            0 30px 80px -20px rgba(232,98,42,0.35);
+          background: radial-gradient(circle, rgba(232,98,42,0.10) 0%, rgba(232,98,42,0.02) 70%);
+        }
+        .gs-hx-stamp-inner {
+          display: flex; flex-direction: column; align-items: center; gap: 6px;
+          text-align: center; color: var(--color-persimmon);
+        }
+        .gs-hx-stamp-type, .gs-hx-stamp-date {
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 11px; letter-spacing: 0.34em; font-weight: 600;
+        }
+        .gs-hx-stamp-word {
+          font-family: var(--font-display-stack);
+          font-size: clamp(34px, 5vw, 48px); letter-spacing: 0.02em;
+          line-height: 1;
         }
 
-        @keyframes gs-hero-track {
-          from { transform: translate3d(0, 0, 0); }
-          to   { transform: translate3d(0, -50%, 0); }
-        }
-        @keyframes gs-hero-cue {
-          0%   { transform: translateY(0);    opacity: 0; }
-          15%  { opacity: 1; }
-          85%  { opacity: 1; }
-          100% { transform: translateY(28px); opacity: 0; }
-        }
-        @keyframes gs-hero-pulse {
-          0%, 100% { transform: scale(1);   opacity: 1; }
-          50%      { transform: scale(1.4); opacity: 0.55; }
+        .gs-hx-handoff {
+          position: absolute; left: 0; right: 0; bottom: 5vh; z-index: 5;
+          text-align: center; opacity: 0; pointer-events: none;
+          font-family: var(--font-sans-stack); font-size: 14px;
+          color: var(--color-ink-soft);
         }
 
         @media (max-width: 767px) {
-          .gs-hero-content { padding-top: 88px !important; }
-          .gs-hero-headline { font-size: clamp(34px, 9vw, 48px) !important; }
-          .gs-hero-sub { font-size: 15px !important; }
-          .gs-hero-ctas { flex-direction: column !important; gap: 10px !important; width: 100%; }
-          .gs-hero-ctas .gs-hero-primary,
-          .gs-hero-ctas .gs-hero-secondary { width: 100%; justify-content: center; }
-          .gs-hero-teaser { margin-top: 48px; }
-          .gs-hero-teaser-frame { height: 220px; }
-          .gs-hero-row { grid-template-columns: 20px 56px 1fr auto; gap: 10px; padding: 0 16px; font-size: 12.5px; }
+          .gs-hx-row { grid-template-columns: 20px 58px 1fr auto; gap: 10px; font-size: 13px; }
+          .gs-hx-h1 { font-size: clamp(36px, 9.6vw, 50px); }
+          .gs-hx-sub { font-size: 15px; }
         }
-
-        @media (prefers-reduced-motion: reduce) {
-          .gs-hero-teaser-track { animation: none !important; }
-          .gs-hero-teaser-dot { animation: none !important; }
-          .gs-hero-mark.is-current::after { animation: none !important; }
-          .gs-hero-scrollcue::after { animation: none !important; }
-        }
-
-        /* Dark mode — the constants above (CREAM/INK/INK_SOFT/PERSIMMON)
-           already resolve through CSS vars and flip automatically. These
-           are the remaining spots that hardcoded an ink-tinted rgba()
-           directly instead of going through a constant. */
-        html.dark .gs-hero-teaser-meta,
-        html.dark .gs-hero-row-step,
-        html.dark .gs-hero-row-date { color: rgba(245, 241, 232, 0.55); }
-        html.dark .gs-hero-row { border-bottom-color: rgba(245, 241, 232, 0.10); }
-        html.dark .gs-hero-row-label.is-upcoming { color: rgba(245, 241, 232, 0.55); }
-        html.dark .gs-hero-mark.is-upcoming { border-color: rgba(245, 241, 232, 0.24); }
-        html.dark .gs-hero-teaser-frame {
-          background: var(--color-cream-soft);
-          border-color: rgba(245, 241, 232, 0.10);
-        }
-        html.dark .gs-hero-scrollcue { background: rgba(245, 241, 232, 0.22); }
       `}</style>
-
-      <span aria-hidden className="gs-hero-scrollcue" />
     </section>
   );
 }
 
-function Row({ step }: { step: Step }) {
+/* Static fallback — no runway, no pin, no per-frame writes. What
+   reduced-motion users (and any non-JS render) get. */
+function HeroStatic() {
   return (
-    <div className="gs-hero-row">
-      <Mark status={step.status} />
-      <span className="gs-hero-row-step">Step {step.n}</span>
-      <span className={`gs-hero-row-label is-${step.status}`}>{step.label}</span>
-      <span className="gs-hero-row-date">{step.date}</span>
-    </div>
-  );
-}
-
-function Mark({ status }: { status: StepStatus }) {
-  return (
-    <span className={`gs-hero-mark is-${status}`} aria-hidden>
-      {status === "done" ? (
-        <svg className="gs-hero-check" viewBox="0 0 12 12" fill="none" aria-hidden>
-          <path
-            d="M2.5 6.2 L5 8.6 L9.5 3.6"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      ) : null}
-    </span>
+    <section aria-label="Hero" className="gs-hxs">
+      <p className="gs-hx-eyebrow">F-1 · 47 Steps · One Payment</p>
+      <h1 className="gs-hx-h1">
+        Forty-seven steps.
+        <br />
+        We have <em>all</em> of them.
+      </h1>
+      <p className="gs-hx-sub">
+        A 47-step playbook in consulate order. AI document checks. Voice mock
+        interviews. One workspace until your passport is stamped.
+      </p>
+      <div className="gs-hx-ctas">
+        <Link href="/sign-up" className="gs-hx-primary">
+          Start free — Phase 1 forever
+        </Link>
+        <Link href="#playbook" className="gs-hx-hint" style={{ textDecoration: "none" }}>
+          See the 47 steps <span aria-hidden>↓</span>
+        </Link>
+      </div>
+      <div className="gs-hxs-card">
+        {ROWS.slice(0, 5).map((r, i) => (
+          <div key={r.n} className={`gs-hx-row${i < 2 ? " is-done" : ""}`}>
+            <span className="gs-hx-mark" aria-hidden>
+              <svg viewBox="0 0 12 12" fill="none">
+                <path d="M2.5 6.2 L5 8.6 L9.5 3.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <span className="gs-hx-step">Step {r.n}</span>
+            <span className="gs-hx-label">{r.label}</span>
+            <span className="gs-hx-date">{r.date}</span>
+          </div>
+        ))}
+      </div>
+      <style>{`
+        .gs-hxs {
+          display: flex; flex-direction: column; align-items: center;
+          text-align: center;
+          padding: clamp(96px, 13vh, 150px) 24px 80px;
+          background: var(--color-cream);
+        }
+        .gs-hxs .gs-hx-eyebrow, .gs-hxs .gs-hx-h1, .gs-hxs .gs-hx-sub,
+        .gs-hxs .gs-hx-ctas { animation: none !important; }
+        .gs-hxs-card {
+          margin-top: 56px; width: 100%; max-width: 760px;
+          border: 1px solid var(--color-border-soft); border-radius: 20px;
+          background: var(--color-cream-soft); overflow: hidden;
+          text-align: left;
+        }
+        .gs-hxs-card .gs-hx-row:last-child { border-bottom: none; }
+      `}</style>
+    </section>
   );
 }
