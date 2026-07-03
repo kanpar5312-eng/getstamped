@@ -24,6 +24,11 @@ export function Styles() {
       }
       /* Hero is the first paint + has a video; never skip it. */
       .v3-root main > .v3-hero { content-visibility: visible; }
+      /* content-visibility: auto has known interactions with
+         position: sticky in some browsers (the "skipped" containment can
+         suppress the sticky pin) — closer relies on sticky for the
+         footer-reveal effect, so it can't be auto-skipped. */
+      .v3-root main > .v3-closer { content-visibility: visible; }
       .v3-root :where(h1,h2,h3,h4,p,ul,ol,li,figure,blockquote,hr){ margin:0; }
       .v3-root ul, .v3-root ol { list-style: none; padding: 0; }
       .v3-root a { color: inherit; text-decoration: none; }
@@ -1061,6 +1066,10 @@ export function Styles() {
         z-index: 1;
         text-align: center;
         overflow: hidden;
+        /* Explicit (not inherited) so there's a real visible surface for
+           the footer to rise up and cover — makes the sticky-reveal
+           actually legible instead of two transparent layers. */
+        background: var(--color-cream);
       }
       @media (prefers-reduced-motion: reduce) {
         /* Sticky-scroll reveal is itself a motion effect — skip it and let
