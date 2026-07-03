@@ -957,6 +957,7 @@ function ParentViewMock() {
 export function StackedFeatureCards() {
   return (
     <>
+      <div id="playbook">
       <ScrollStack>
         <ScrollStackItem>
           <CardShell bg={WARM_PAPER} ink={INK} demo={<PlaybookMock />}>
@@ -1011,6 +1012,7 @@ export function StackedFeatureCards() {
           </CardShell>
         </ScrollStackItem>
       </ScrollStack>
+      </div>
 
       {/* ════════════════════════════════════════════════════════════════
           Animation timelines. EVERY cursor + state-change uses the SAME

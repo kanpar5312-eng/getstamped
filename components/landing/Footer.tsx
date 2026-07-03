@@ -11,7 +11,7 @@ type LinkItem = { label: string; href: string; external?: boolean };
 
 const PRODUCT: LinkItem[] = [
   { label: "Features", href: "/#features" },
-  { label: "Pricing", href: "/#pricing" },
+  { label: "Pricing", href: "/pricing" },
   { label: "How it works", href: "/#how-it-works" },
   { label: "FAQ", href: "/#faq" },
   { label: "Mock interview", href: "/#voice" },

@@ -29,7 +29,6 @@ import type { Currency } from "@/lib/pricing";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
 import { Testimonials } from "./Testimonials";
-import { Pricing } from "./Pricing";
 import { Reviews } from "./Reviews";
 import { FAQ } from "./FAQ";
 import { StampedCloser } from "./StampedCloser";
@@ -44,7 +43,7 @@ type Props = {
   earlyBirdClaimed: number;
 };
 
-export function MarketingLanding({ currency }: Props) {
+export function MarketingLanding(_props: Props) {
   return (
     <div className="v3-root">
       <Header />
@@ -55,7 +54,6 @@ export function MarketingLanding({ currency }: Props) {
             story right after the hero. */}
         <StackedFeatureCards />
         <VsConsultants />
-        <Pricing currency={currency} />
         <Testimonials />
         {/* Reviews hidden for MVP — fictional testimonials replaced when
             we have ≥3 real student quotes from beta. Re-add <Reviews />

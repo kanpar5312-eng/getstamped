@@ -164,7 +164,7 @@ export function Hero() {
           <Link href="/sign-up" className="gs-hero-primary">
             Start free — Phase 1 forever
           </Link>
-          <Link href="#pricing" className="gs-hero-secondary">
+          <Link href="#playbook" className="gs-hero-secondary">
             See the 47 steps <span aria-hidden>↓</span>
           </Link>
         </motion.div>

@@ -31,7 +31,7 @@ export function StampedCloser() {
       </div>
       <div className="v3-closer-ctas">
         <Link href="/sign-up" className="v3-pill">Start free</Link>
-        <Link href="#pricing" className="v3-ghost">See pricing</Link>
+        <Link href="/pricing" className="v3-ghost">See pricing</Link>
       </div>
     </section>
   );

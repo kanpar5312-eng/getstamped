@@ -11,7 +11,7 @@ import { BrandMark } from "@/components/ui/BrandMark";
 
 const NAV_ITEMS = [
   { label: "workspace", href: "/sign-in", ariaLabel: "Workspace" },
-  { label: "pricing", href: "#pricing", ariaLabel: "Pricing" },
+  { label: "pricing", href: "/pricing", ariaLabel: "Pricing" },
   { label: "faq", href: "#faq", ariaLabel: "FAQ" },
   { label: "sign in", href: "/sign-in", ariaLabel: "Sign in" },
   { label: "start free", href: "/sign-up", ariaLabel: "Start free" },
