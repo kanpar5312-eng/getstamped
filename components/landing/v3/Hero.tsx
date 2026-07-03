@@ -76,6 +76,7 @@ export function Hero() {
   const barRef = useRef<HTMLSpanElement>(null);
   const pctRef = useRef<HTMLSpanElement>(null);
   const stampRef = useRef<HTMLDivElement>(null);
+  const dimRef = useRef<HTMLDivElement>(null);
   const handoffRef = useRef<HTMLDivElement>(null);
   const nowlineRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef(0);
@@ -165,11 +166,13 @@ export function Hero() {
         if (bar) bar.style.transform = `scaleX(${(done / ROWS.length).toFixed(3)})`;
       }
 
-      /* ACT 3 — the stamp */
+      /* ACT 3 — the stamp. Fast press: most of the motion happens in a
+         short scroll window so it reads as an impact, not a fade. */
       if (stamp) {
-        const s = easeOut(sub(p, 0.85, 0.94));
-        stamp.style.opacity = s.toFixed(3);
-        stamp.style.transform = `translate(-50%, -50%) scale(${lerp(1.9, 1, s).toFixed(3)}) rotate(${lerp(-22, -10, s).toFixed(1)}deg)`;
+        const s = easeOut(sub(p, 0.86, 0.92));
+        stamp.style.opacity = Math.min(1, s * 1.4).toFixed(3);
+        stamp.style.transform = `translate(-50%, -50%) scale(${lerp(1.45, 1, s).toFixed(3)}) rotate(-8deg)`;
+        if (dimRef.current) dimRef.current.style.opacity = (0.55 * s).toFixed(3);
       }
       if (handoff) handoff.style.opacity = easeOut(sub(p, 0.94, 1)).toFixed(3);
     };
@@ -210,6 +213,14 @@ export function Hero() {
   return (
     <section ref={runwayRef} aria-label="Hero" className="gs-hx-runway">
       <div className="gs-hx-sticky">
+        {/* Warm afternoon glow pooling behind the headline — kills the
+            flat-blank feel without adding any off-palette color. */}
+        <div className="gs-hx-bg" aria-hidden>
+          <span className="gs-hx-blob gs-hx-blob-a" />
+          <span className="gs-hx-blob gs-hx-blob-b" />
+          <span className="gs-hx-grain" />
+        </div>
+
         {/* ── Layer A · headline stack ── */}
         <div ref={headRef} className="gs-hx-head">
           <p className="gs-hx-eyebrow">F-1 · 47 Steps · One Payment</p>
@@ -230,6 +241,9 @@ export function Hero() {
               Scroll to fast-forward the journey <span aria-hidden>↓</span>
             </span>
           </div>
+          <p className="gs-hx-trust">
+            Phase 1 free forever&ensp;·&ensp;No subscription&ensp;·&ensp;14-day refund
+          </p>
         </div>
 
         {/* ── Layer B · the playbook (full viewport, clipped to a card) ── */}
@@ -263,14 +277,15 @@ export function Hero() {
             ))}
           </div>
 
-          {/* The stamp */}
+          {/* Dim wash under the stamp so it lands on a quiet surface */}
+          <div ref={dimRef} className="gs-hx-dim" />
+
+          {/* The stamp — passport-style rounded rectangle, double border */}
           <div ref={stampRef} className="gs-hx-stamp">
-            <span className="gs-hx-stamp-ring">
-              <span className="gs-hx-stamp-inner">
-                <span className="gs-hx-stamp-type">U.S. F-1</span>
-                <span className="gs-hx-stamp-word">STAMPED</span>
-                <span className="gs-hx-stamp-date">JUN 14</span>
-              </span>
+            <span className="gs-hx-stamp-frame">
+              <span className="gs-hx-stamp-type">· U.S. CONSULATE ·</span>
+              <span className="gs-hx-stamp-word">Stamped.</span>
+              <span className="gs-hx-stamp-date">F-1 &nbsp;·&nbsp; JUN 14 &nbsp;·&nbsp; MULTIPLE ENTRIES</span>
             </span>
           </div>
 
@@ -458,33 +473,74 @@ export function Hero() {
         }
         .gs-hx-row.is-done .gs-hx-label { color: var(--color-ink-soft); }
 
-        /* ── the stamp ── */
+        /* ── hero background — warm pooled light + faint grain ── */
+        .gs-hx-bg { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+        .gs-hx-blob {
+          position: absolute; border-radius: 999px; filter: blur(46px);
+        }
+        .gs-hx-blob-a {
+          width: 620px; height: 620px; left: -10%; top: -14%;
+          background: radial-gradient(circle, rgba(245, 213, 144, 0.5) 0%, transparent 65%);
+          opacity: 0.6;
+        }
+        .gs-hx-blob-b {
+          width: 520px; height: 520px; right: -8%; top: 24%;
+          background: radial-gradient(circle, rgba(232, 98, 42, 0.16) 0%, transparent 65%);
+          opacity: 0.7;
+        }
+        html.dark .gs-hx-blob-a { opacity: 0.12; }
+        html.dark .gs-hx-blob-b { opacity: 0.2; }
+        .gs-hx-grain {
+          position: absolute; inset: 0; opacity: 0.035;
+          background-image:
+            radial-gradient(circle at 25% 30%, rgba(28,25,23,0.5) 0.5px, transparent 1px),
+            radial-gradient(circle at 75% 70%, rgba(28,25,23,0.4) 0.5px, transparent 1px);
+          background-size: 4px 4px, 5px 5px;
+        }
+        html.dark .gs-hx-grain { opacity: 0.06; }
+
+        .gs-hx-trust {
+          margin-top: 26px;
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase;
+          color: var(--color-muted);
+          animation: gs-hx-up 700ms var(--ease-out) 480ms both;
+        }
+
+        /* ── dim wash + the stamp ── */
+        .gs-hx-dim {
+          position: absolute; inset: 0; z-index: 4;
+          background: var(--color-cream-soft);
+          opacity: 0; pointer-events: none;
+        }
         .gs-hx-stamp {
           position: absolute; left: 50%; top: 50%; z-index: 5;
           opacity: 0; pointer-events: none;
-          transform: translate(-50%, -50%) scale(1.9) rotate(-22deg);
+          transform: translate(-50%, -50%) scale(1.45) rotate(-8deg);
           will-change: transform, opacity;
         }
-        .gs-hx-stamp-ring {
-          display: flex; align-items: center; justify-content: center;
-          width: clamp(200px, 32vw, 280px); height: clamp(200px, 32vw, 280px);
-          border-radius: 999px;
-          border: 3px solid var(--color-persimmon);
-          box-shadow: 0 0 0 6px var(--color-cream-soft), 0 0 0 7px rgba(232,98,42,0.35),
-            0 30px 80px -20px rgba(232,98,42,0.35);
-          background: radial-gradient(circle, rgba(232,98,42,0.10) 0%, rgba(232,98,42,0.02) 70%);
-        }
-        .gs-hx-stamp-inner {
-          display: flex; flex-direction: column; align-items: center; gap: 6px;
+        .gs-hx-stamp-frame {
+          display: flex; flex-direction: column; align-items: center; gap: 10px;
           text-align: center; color: var(--color-persimmon);
+          padding: clamp(26px, 4vw, 38px) clamp(34px, 6vw, 64px);
+          border: 3px solid var(--color-persimmon);
+          border-radius: 14px;
+          outline: 1.5px solid rgba(232, 98, 42, 0.55);
+          outline-offset: 5px;
+          background: radial-gradient(80% 90% at 50% 40%, rgba(232,98,42,0.10) 0%, rgba(232,98,42,0.02) 80%);
+          box-shadow: 0 30px 90px -24px rgba(232, 98, 42, 0.4);
+          /* subtle worn-ink effect */
+          -webkit-mask-image: radial-gradient(140% 140% at 48% 52%, #000 62%, rgba(0,0,0,0.82) 78%, rgba(0,0,0,0.95) 100%);
+                  mask-image: radial-gradient(140% 140% at 48% 52%, #000 62%, rgba(0,0,0,0.82) 78%, rgba(0,0,0,0.95) 100%);
         }
         .gs-hx-stamp-type, .gs-hx-stamp-date {
           font-family: var(--font-mono-stack, var(--font-sans-stack));
           font-size: 11px; letter-spacing: 0.34em; font-weight: 600;
+          white-space: nowrap;
         }
         .gs-hx-stamp-word {
-          font-family: var(--font-display-stack);
-          font-size: clamp(34px, 5vw, 48px); letter-spacing: 0.02em;
+          font-family: var(--font-display-stack); font-style: italic;
+          font-size: clamp(52px, 8vw, 84px); letter-spacing: -0.01em;
           line-height: 1;
         }
 
