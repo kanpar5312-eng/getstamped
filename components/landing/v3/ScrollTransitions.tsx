@@ -161,12 +161,20 @@ export function ScrollTransitions() {
         }
       }
 
-      /* ── 3. THE DESCENT ── FAQ → Closer ── */
+      /* ── 3. THE DESCENT ── FAQ → Closer ──
+         Closer itself is no longer transform-animated here — it's
+         position:sticky in CSS now (the footer-reveal effect), and this
+         handler reads closer.getBoundingClientRect().top every frame to
+         drive its own progress. Writing a 3D transform onto that same
+         element distorts the very rect the transform math depends on
+         (getBoundingClientRect reflects post-transform position), which
+         could prevent the progress value from ever cleanly reaching the
+         point where sticky engages. FAQ's own recede effect is untouched
+         — only reads its own rect, no such feedback loop. */
       if (faq && closer) {
         const p = boundaryProgress(closer, vh);
         const active = p > 0.001 && p < 0.999;
         setWC(faq, active);
-        setWC(closer, active);
 
         // Outgoing FAQ recedes over 0.4 → 0.9.
         // Filter:blur during scroll trashes paint perf — same depth-of-field
@@ -182,18 +190,6 @@ export function ScrollTransitions() {
           faq.style.transformOrigin = "center bottom";
           faq.style.transform = `perspective(1000px) translateY(${ty.toFixed(1)}px) translateZ(${tz.toFixed(1)}px) rotateX(${rx.toFixed(2)}deg)`;
           faq.style.opacity = (1 - 0.7 * r).toFixed(3);
-        }
-
-        // Incoming closer rises to meet you over 0 → 0.7
-        const c = easeOut(sub(p, 0, 0.7));
-        if (c >= 1) {
-          closer.style.transform = "";
-          closer.style.opacity = "";
-        } else {
-          const tz = 60 * (1 - c);
-          const rx = -1.5 * (1 - c);
-          closer.style.transform = `perspective(1000px) translateZ(${tz.toFixed(1)}px) rotateX(${rx.toFixed(2)}deg)`;
-          closer.style.opacity = (0.7 + 0.3 * c).toFixed(3);
         }
 
         // Cursor glow activates only past 70% of the descent. The continuous
