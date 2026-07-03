@@ -122,6 +122,33 @@
   --ease-soft:    cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   SITE-WIDE DARK MODE — same `dark` class on <html> that the dashboard
+   toggle (components/dashboard/ThemeToggle.tsx) already sets, so switching
+   it in the dashboard automatically carries over to landing/marketing/auth
+   pages too. Overrides only the four base brand tokens (+ --color-muted,
+   which isn't var()-derived) — every legacy alias below in :root already
+   points at one of these via var(), so it re-skins automatically with no
+   per-component edits, same technique as the dashboard's dark block.
+   ───────────────────────────────────────────────────────────────────── */
+html.dark {
+  --color-cream:        #050505;
+  --color-cream-soft:   #121110;
+  --color-cream-deep:   #1A1817;
+
+  --color-beige:        #2A2825;
+  --color-beige-soft:   #221F1C;
+
+  --color-persimmon-deep: #FF7A4D;
+  --color-persimmon-tint: rgba(232, 98, 42, 0.18);
+
+  --color-ink:          #F5F1E8;
+  --color-ink-soft:     #B8B2A6;
+  --color-ink-deep:     #FFFFFF;
+
+  --color-muted:        #837E77;
+}
+
 /* ────────────────────────────────────────────────────────────────────────
    System awakening — staggered fade-up applied to dashboard children
    while PersonalizationCurtain dissolves. Triggered by adding the class

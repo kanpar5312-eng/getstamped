@@ -1045,7 +1045,27 @@ export function Styles() {
       }
 
       /* ── Closer ─────────────────────────────────────────────────────── */
-      .v3-closer { position: relative; text-align: center; overflow: hidden; }
+      /* Sticky-reveal: closer pins to the top of the viewport as you scroll
+         past it, and the footer (position:relative + higher z-index, see
+         Footer.tsx) rises up and visually covers it from below — same
+         "stacked reveal" pattern as kiro.dev's footer. Pure CSS, no JS;
+         the existing ScrollTransitions entrance effect on this element
+         already clears its transform once boundaryProgress reaches 1
+         (which happens exactly when this element's top hits 0 — the same
+         moment stickiness engages), so there's no conflict between the
+         two effects. */
+      .v3-closer {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        text-align: center;
+        overflow: hidden;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        /* Sticky-scroll reveal is itself a motion effect — skip it and let
+           the section scroll normally like everything else on the page. */
+        .v3-closer { position: relative; }
+      }
       .v3-closer > *:not(.v3-closer-glow) { position: relative; z-index: 1; }
       .v3-closer-rule {
         display: block; width: 64px; height: 1px; margin: 0 auto 22px;
