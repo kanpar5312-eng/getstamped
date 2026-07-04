@@ -27,8 +27,6 @@ const WARM_PAPER = "#FAF5EE";
 const SOFT_PEACH = "#FBE8D9";
 const PERSIMMON = "#E8622A";
 const GREEN = "#3FB37F";
-void INK;
-void GREEN;
 
 /* ────────────────────────────────────────────── shared primitives ── */
 
@@ -149,7 +147,7 @@ function DemoFrame({
   return (
     <div
       style={{
-        background: isDark ? "var(--color-ink)" : "#FFFDF7",
+        background: isDark ? INK : "#FFFDF7",
         border: `1px solid ${isDark ? "rgba(250,248,244,0.10)" : "rgba(11,30,63,0.08)"}`,
         borderRadius: 16,
         boxShadow: "0 30px 70px -32px rgba(11,30,63,0.32)",
@@ -485,7 +483,7 @@ function DocVaultMock() {
               margin: 0,
               fontFamily: "var(--font-display-stack)",
               fontSize: 22,
-              color: "var(--color-ink)",
+              color: INK,
               letterSpacing: "-0.01em",
             }}
           >
@@ -524,7 +522,7 @@ function DocVaultMock() {
             boxShadow: "0 10px 22px -14px rgba(63,179,127,0.45)",
             fontFamily: "var(--font-sans-stack)",
             fontSize: 13,
-            color: "var(--color-ink)",
+            color: INK,
             opacity: 0,
             transform: "translateY(6px)",
           }}
@@ -829,7 +827,7 @@ function ParentViewMock() {
             right: 22,
             padding: "5px 12px",
             borderRadius: 6,
-            background: "var(--color-ink)",
+            background: INK,
             color: PAPER,
             fontFamily: "var(--font-sans-stack)",
             fontSize: 10,
@@ -855,7 +853,7 @@ function ParentViewMock() {
             bottom: 18,
             padding: "18px 18px 18px",
             borderRadius: 14,
-            background: "var(--color-ink)",
+            background: INK,
             color: PAPER,
             opacity: 0,
             transform: "translateY(10px)",

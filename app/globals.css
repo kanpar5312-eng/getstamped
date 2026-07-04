@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+/* Without this, Tailwind v4's `dark:` variant defaults to
+   `@media (prefers-color-scheme: dark)` — the OS preference — which is a
+   totally different signal from this app's actual theme toggle (the
+   `html.dark` class set by components/dashboard/ThemeToggle.tsx and
+   restored from localStorage in app/layout.tsx). Every `dark:` utility in
+   the codebase (AuthShell, sign-in/up, StackedFeatureCards, dashboard
+   upgrade/theme components) was silently keying off the wrong signal —
+   this makes `dark:` follow the same class the rest of the site's
+   var(--color-*) tokens already respond to. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* -------------------------------------------------------------------------
    Color tokens
    Use via Tailwind arbitrary syntax: bg-[var(--color-cream)],

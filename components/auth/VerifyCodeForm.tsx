@@ -196,6 +196,9 @@ export function VerifyCodeForm({ email }: { email: string }) {
           font-size: 13px;
           color: #1E6B41;
         }
+        html.dark .vc-ok {
+          color: #4ADE80;
+        }
 
         .vc-submit {
           all: unset; cursor: pointer;

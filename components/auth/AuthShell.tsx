@@ -159,12 +159,10 @@ export function AuthShell({
           {/* Card — Apple-style glass: 36px radius, frosted backdrop, paired
               shadow + inset highlight. The top-edge filament below stays. */}
           <div
-            className="relative p-7 sm:p-10"
+            className="relative p-7 sm:p-10 bg-[rgba(250,248,244,0.85)] dark:bg-[rgba(18,17,16,0.78)] border-[0.5px] border-[rgba(255,255,255,0.65)] dark:border-[rgba(255,255,255,0.08)]"
             style={{
-              background: "rgba(250, 248, 244, 0.85)",
               WebkitBackdropFilter: "blur(32px) saturate(200%)",
               backdropFilter: "blur(32px) saturate(200%)",
-              border: "0.5px solid rgba(255, 255, 255, 0.65)",
               borderRadius: "var(--gs-radius-2xl)",
               boxShadow:
                 "var(--gs-shadow-glass), 0 32px 64px rgba(0, 0, 0, 0.20)",
