@@ -374,7 +374,7 @@ export function Hero() {
           background: var(--color-persimmon); color: #FAF8F4;
           font-family: var(--font-sans-stack); font-size: 15px; font-weight: 600;
           padding: 16px 30px; border-radius: 999px; text-decoration: none;
-          box-shadow: 0 10px 28px -10px rgba(44,94,255,0.45);
+          box-shadow: 0 10px 28px -10px rgba(232,98,42,0.55);
           transition: transform 200ms var(--ease-out), background 200ms var(--ease-out);
         }
         @media (hover: hover) {
@@ -435,7 +435,7 @@ export function Hero() {
 
         .gs-hx-nowline {
           position: absolute; left: 0; right: 0; top: 50vh; z-index: 3;
-          border-top: 1px dashed rgba(44,94,255,0.5);
+          border-top: 1px dashed rgba(232,98,42,0.5);
           opacity: 0; pointer-events: none;
         }
         .gs-hx-nowline span {
@@ -444,7 +444,7 @@ export function Hero() {
           font-size: 9px; letter-spacing: 0.22em; font-weight: 600;
           color: var(--color-persimmon);
           background: var(--color-cream-soft); padding: 2px 8px;
-          border: 1px solid rgba(44,94,255,0.5); border-radius: 999px;
+          border: 1px solid rgba(232,98,42,0.5); border-radius: 999px;
         }
 
         .gs-hx-ghost {
@@ -502,7 +502,7 @@ export function Hero() {
           transition: background 250ms var(--ease-soft);
         }
         .gs-hx-row.is-current {
-          background: rgba(44, 94, 255, 0.05);
+          background: rgba(232, 98, 42, 0.05);
         }
         .gs-hx-row.is-current .gs-hx-mark { border-color: var(--color-persimmon); }
         .gs-hx-step {
@@ -542,12 +542,12 @@ export function Hero() {
         }
         .gs-hx-blob-a {
           width: 620px; height: 620px; left: -10%; top: -14%;
-          background: radial-gradient(circle, rgba(223, 247, 238, 0.9) 0%, transparent 65%);
+          background: radial-gradient(circle, rgba(245, 213, 144, 0.5) 0%, transparent 65%);
           opacity: 0.6;
         }
         .gs-hx-blob-b {
           width: 520px; height: 520px; right: -8%; top: 24%;
-          background: radial-gradient(circle, rgba(44, 94, 255, 0.14) 0%, transparent 65%);
+          background: radial-gradient(circle, rgba(232, 98, 42, 0.16) 0%, transparent 65%);
           opacity: 0.7;
         }
         html.dark .gs-hx-blob-a { opacity: 0.12; }
@@ -583,14 +583,14 @@ export function Hero() {
         }
         .gs-hx-stamp-frame {
           display: flex; flex-direction: column; align-items: center; gap: 10px;
-          text-align: center; color: var(--color-amber-deep);
+          text-align: center; color: var(--color-persimmon);
           padding: clamp(26px, 4vw, 38px) clamp(34px, 6vw, 64px);
-          border: 3px solid var(--color-amber);
+          border: 3px solid var(--color-persimmon);
           border-radius: 14px;
-          outline: 1.5px solid rgba(246, 166, 35, 0.55);
+          outline: 1.5px solid rgba(232, 98, 42, 0.55);
           outline-offset: 5px;
-          background: radial-gradient(80% 90% at 50% 40%, rgba(246,166,35,0.14) 0%, rgba(246,166,35,0.02) 80%);
-          box-shadow: 0 30px 90px -24px rgba(246, 166, 35, 0.45);
+          background: radial-gradient(80% 90% at 50% 40%, rgba(232,98,42,0.10) 0%, rgba(232,98,42,0.02) 80%);
+          box-shadow: 0 30px 90px -24px rgba(232, 98, 42, 0.4);
           /* subtle worn-ink effect */
           -webkit-mask-image: radial-gradient(140% 140% at 48% 52%, #000 62%, rgba(0,0,0,0.82) 78%, rgba(0,0,0,0.95) 100%);
                   mask-image: radial-gradient(140% 140% at 48% 52%, #000 62%, rgba(0,0,0,0.82) 78%, rgba(0,0,0,0.95) 100%);

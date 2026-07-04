@@ -25,7 +25,7 @@ export function StampedCloser() {
           muted
           playsInline
           preload="metadata"
-          aria-label="Navy passport with GetStamped emblem and glowing amber F-1 stamp"
+          aria-label="Navy passport with GetStamped emblem and glowing persimmon F-1 stamp"
           style={{ width: "100%", height: "auto", display: "block" }}
         />
       </div>

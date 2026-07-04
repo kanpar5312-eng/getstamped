@@ -6,11 +6,10 @@
    pause on hover. Brand: ink bg, paper text, persimmon accents.
    ═════════════════════════════════════════════════════════════════════════ */
 
-const INK = "#101828";
-const CREAM = "#FCFCFD";
-const MINT = "#DFF7EE";
-void MINT;
-const PERSIMMON = "#2C5EFF";
+const INK = "#0B1E3F";
+const CREAM = "#F5F1E8";
+const PEACH = "#FBE8D9";
+const PERSIMMON = "#E8622A";
 void PERSIMMON;
 
 type AvatarKey = "persimmon" | "peach" | "cream" | "saffron" | "ink";
@@ -240,18 +239,18 @@ export function Testimonials() {
           gap: 16px;
           padding: 20px 22px;
           margin: 0;
-          background: #FFFFFF;
-          border: 1px solid rgba(16, 24, 40, 0.08);
+          background: #FFFDF7;
+          border: 1px solid rgba(11, 30, 63, 0.10);
           border-radius: 18px;
-          box-shadow: 0 12px 24px -20px rgba(16, 24, 40, 0.14);
+          box-shadow: 0 12px 24px -20px rgba(11, 30, 63, 0.18);
           transition: border-color 200ms ease-out;
         }
         .gs-tm-card:hover {
-          border-color: rgba(44, 94, 255, 0.35);
+          border-color: rgba(232, 98, 42, 0.45);
         }
         .gs-tm-card.is-accent {
-          background: #DFF7EE;
-          border-color: rgba(16, 107, 65, 0.24);
+          background: #FBE8D9;
+          border-color: rgba(232, 98, 42, 0.30);
         }
 
         .gs-tm-avatar {
@@ -269,29 +268,29 @@ export function Testimonials() {
           box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
         }
         .gs-tm-av-persimmon {
-          background: rgba(44, 94, 255, 0.14);
-          color: #1E46D6;
-          border: 1px solid rgba(44, 94, 255, 0.40);
+          background: rgba(232, 98, 42, 0.18);
+          color: #B85A15;
+          border: 1px solid rgba(232, 98, 42, 0.45);
         }
         .gs-tm-av-peach {
-          background: #DFF7EE;
-          color: #1E6B41;
-          border: 1px solid rgba(16, 107, 65, 0.28);
+          background: #FBE8D9;
+          color: #B85A15;
+          border: 1px solid rgba(232, 98, 42, 0.35);
         }
         .gs-tm-av-cream {
-          background: #F5F7FA;
-          color: #101828;
-          border: 1px solid rgba(16, 24, 40, 0.14);
+          background: #F5F1E8;
+          color: #0B1E3F;
+          border: 1px solid rgba(11, 30, 63, 0.18);
         }
         .gs-tm-av-saffron {
-          background: rgba(246, 166, 35, 0.16);
-          color: #9A5B0A;
-          border: 1px solid rgba(246, 166, 35, 0.40);
+          background: rgba(232, 98, 42, 0.10);
+          color: #2A3F5F;
+          border: 1px solid rgba(11, 30, 63, 0.14);
         }
         .gs-tm-av-ink {
-          background: #FFFFFF;
-          color: #101828;
-          border: 1px solid rgba(16, 24, 40, 0.18);
+          background: #FFFDF7;
+          color: #0B1E3F;
+          border: 1px solid rgba(11, 30, 63, 0.22);
         }
 
         .gs-tm-body {
@@ -305,7 +304,7 @@ export function Testimonials() {
           font-family: var(--font-sans-stack);
           font-size: 14px;
           line-height: 1.55;
-          color: rgba(16, 24, 40, 0.75);
+          color: rgba(11, 30, 63, 0.82);
           letter-spacing: -0.003em;
           display: -webkit-box;
           -webkit-line-clamp: 4;
@@ -343,27 +342,27 @@ export function Testimonials() {
         }
         html.dark .gs-tm-card {
           background: var(--color-cream-soft);
-          border-color: rgba(44, 94, 255, 0.22);
+          border-color: rgba(232, 98, 42, 0.22);
           box-shadow: 0 12px 24px -20px rgba(0, 0, 0, 0.6);
         }
-        html.dark .gs-tm-card:hover { border-color: rgba(44, 94, 255, 0.5); }
+        html.dark .gs-tm-card:hover { border-color: rgba(232, 98, 42, 0.55); }
         html.dark .gs-tm-card.is-accent {
           background: var(--color-persimmon-tint);
-          border-color: rgba(44, 94, 255, 0.4);
+          border-color: rgba(232, 98, 42, 0.4);
         }
         html.dark .gs-tm-avatar { box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset; }
         html.dark .gs-tm-av-persimmon,
         html.dark .gs-tm-av-peach,
         html.dark .gs-tm-av-saffron {
-          background: rgba(44, 94, 255, 0.18);
+          background: rgba(232, 98, 42, 0.18);
           color: var(--color-persimmon-deep);
-          border-color: rgba(44, 94, 255, 0.45);
+          border-color: rgba(232, 98, 42, 0.45);
         }
         html.dark .gs-tm-av-cream,
         html.dark .gs-tm-av-ink {
           background: var(--color-cream-deep);
           color: var(--color-ink);
-          border-color: rgba(245, 247, 250, 0.18);
+          border-color: rgba(245, 241, 232, 0.18);
         }
         html.dark .gs-tm-quote { color: var(--color-ink-soft); }
       `}</style>
