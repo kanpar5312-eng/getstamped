@@ -26,6 +26,7 @@
 
 import { Footer } from "@/components/landing/Footer";
 import type { Currency } from "@/lib/pricing";
+import { Header } from "./Header";
 import { Hero } from "./Hero";
 import { Testimonials } from "./Testimonials";
 import { Reviews } from "./Reviews";
@@ -45,10 +46,7 @@ type Props = {
 export function MarketingLanding(_props: Props) {
   return (
     <div className="v3-root">
-      {/* Header intentionally not rendered here — the new Hero bakes its
-          own nav bar (logo + pill links + CTA) directly into the hero
-          section, matching the reference design. Rendering the sitewide
-          Header on top would stack two nav bars. */}
+      <Header />
       <main>
         <Hero />
         {/* Pinned, stacking feature cards come first — they carry the
