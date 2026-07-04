@@ -49,6 +49,10 @@ export function MarketingLanding(_props: Props) {
       <Header />
       <main>
         <Hero />
+        {/* Anchor target for #features / #how-it-works links (Header, Footer,
+            Pricing) — kept as a separate no-op marker instead of adding an id
+            inside StackedFeatureCards so that component stays untouched. */}
+        <span id="features" className="sr-only" aria-hidden="true" />
         {/* Pinned, stacking feature cards come first — they carry the
             full Playbook / Document Vault / Mock Interview / Parent Share
             story right after the hero. */}

@@ -12,13 +12,14 @@ type LinkItem = { label: string; href: string; external?: boolean };
 const PRODUCT: LinkItem[] = [
   { label: "Features", href: "/#features" },
   { label: "Pricing", href: "/pricing" },
-  { label: "How it works", href: "/#how-it-works" },
-  { label: "FAQ", href: "/#faq" },
-  { label: "Mock interview", href: "/#voice" },
+  { label: "How it works", href: "/#features" },
+  { label: "FAQ", href: "/faq" },
+  { label: "Mock interview", href: "/#features" },
 ];
 
 const COMPANY: LinkItem[] = [
-  { label: "About", href: "/#about" },
+  { label: "About", href: "/about" },
+  { label: "Blog", href: "/blog" },
   { label: "Build log", href: "https://twitter.com", external: true },
   { label: "Contact", href: `mailto:${EMAIL}`, external: true },
   { label: "Dashboard", href: "/dashboard" },
@@ -102,7 +103,7 @@ export function Footer() {
             <p className="mt-3 text-xs text-[var(--color-ink)]/55">
               Built by a 17-year-old.{" "}
               <Link
-                href="/#about"
+                href="/about"
                 className="underline underline-offset-2 hover:text-[var(--color-forsytha)] transition-colors"
               >
                 Read the story →

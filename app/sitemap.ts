@@ -10,6 +10,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   const routes = [
     "",            // /
+    "/pricing",
+    "/faq",
+    "/about",
+    "/blog",
+    "/blog/f1-visa-interview-questions-2026",
+    "/blog/ds-160-common-mistakes",
+    "/blog/sevis-fee-payment-guide",
     "/sign-in",
     "/sign-up",
     "/forgot-password",
@@ -21,10 +28,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/dpa",
     "/disclaimer",
   ];
+  const HIGH_PRIORITY = new Set(["/pricing", "/faq", "/about"]);
   return routes.map((path) => ({
     url: `${SITE}${path}`,
     lastModified: now,
     changeFrequency: path === "" ? "weekly" : "monthly",
-    priority: path === "" ? 1.0 : 0.6,
+    priority: path === "" ? 1.0 : HIGH_PRIORITY.has(path) ? 0.8 : 0.6,
   }));
 }

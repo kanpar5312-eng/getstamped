@@ -1,0 +1,13 @@
+/**
+ * Renders a Schema.org object as a JSON-LD <script> tag. Server component —
+ * no client JS, no visual output, safe to drop into any page.
+ */
+export function JsonLd({ data }: { data: object }) {
+  return (
+    <script
+      type="application/ld+json"
+      // eslint-disable-next-line react/no-danger
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}

@@ -262,7 +262,7 @@ export default function BubbleMenu({
         >
           <span className="logo-content">
             {typeof logo === "string" ? (
-              <img src={logo} alt="Logo" className="bubble-logo" />
+              <img src={logo} alt="GetStamped logo" className="bubble-logo" />
             ) : (
               logo
             )}

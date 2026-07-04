@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { faqPageJsonLd } from "@/lib/seo";
 
 /* ════════════════════════════════════════════════════════════════════════
    FAQ — Wavly-style minimal accordion.
@@ -74,6 +77,7 @@ export function FAQ() {
 
   return (
     <section id="faq" className="py-24 lg:py-32">
+      <JsonLd data={faqPageJsonLd(faqs)} />
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <div className="mx-auto max-w-2xl text-center">
           <div className="text-xs uppercase tracking-[0.18em] text-[var(--color-muted)] font-medium">
@@ -83,7 +87,14 @@ export function FAQ() {
             Questions, <span className="text-[var(--color-persimmon)]">answered</span>.
           </h2>
           <p className="mt-5 text-base text-[var(--color-ink-soft)] leading-relaxed">
-            Still curious? Email{" "}
+            Still curious? See the{" "}
+            <Link
+              href="/pricing"
+              className="text-[var(--color-persimmon)] hover:underline underline-offset-2"
+            >
+              full pricing breakdown
+            </Link>{" "}
+            or email{" "}
             <a
               href="mailto:getstamped.online@gmail.com"
               className="text-[var(--color-persimmon)] hover:underline underline-offset-2"

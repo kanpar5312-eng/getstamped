@@ -30,7 +30,11 @@ export function Pricing({ currency }: { currency: Currency }) {
         </h2>
         <p className="v3-lead v3-mt-6 v3-max-reading">
           One payment unlocks everything through visa stamping. No subscription,
-          no upsells, no trial timer.
+          no upsells, no trial timer. See{" "}
+          <Link href="/#features" className="v3-link">
+            what&rsquo;s included
+          </Link>{" "}
+          in every plan.
         </p>
       </div>
       <div className="v3-price-grid">
