@@ -118,6 +118,7 @@ export async function markStep(
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/timeline");
   revalidatePath(`/dashboard/timeline/${stepNumber}`);
+  revalidatePath("/dashboard/timeline-planner");
   revalidatePath("/dashboard/feedback");
 
   // Fire-and-forget readiness recompute. Safe before the Edge Function

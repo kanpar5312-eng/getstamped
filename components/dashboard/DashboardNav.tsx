@@ -19,6 +19,7 @@ type Tab = {
 const TABS: Tab[] = [
   { label: "Home",          href: "/dashboard",                group: "primary"   },
   { label: "Timeline",      href: "/dashboard/timeline",       group: "primary"   },
+  { label: "Planner",       href: "/dashboard/timeline-planner", group: "primary", badge: "new" },
   { label: "Documents",     href: "/dashboard/documents",      group: "primary"   },
   { label: "Mock Interview",href: "/dashboard/mock-interview", group: "secondary", badge: "new" },
   { label: "Feedback",      href: "/dashboard/feedback",       group: "secondary", badge: "new" },
@@ -76,7 +77,11 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
   const isActive = (href: string) =>
     href === "/dashboard"
       ? pathname === "/dashboard"
-      : pathname.startsWith(href);
+      // Exact match or a real sub-path (trailing "/") — plain startsWith
+      // would make "/dashboard/timeline-planner" also match the
+      // "/dashboard/timeline" tab, since one href is a string-prefix of
+      // the other.
+      : pathname === href || pathname.startsWith(`${href}/`);
 
   const planLabel = plan === "free" ? "Upgrade" : plan === "solo" ? "Solo" : "Family";
 

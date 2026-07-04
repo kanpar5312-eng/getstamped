@@ -33,6 +33,10 @@ export type UserProfile = {
 export type StepProgress = {
   stepNumber: number;
   status: "not_started" | "in_progress" | "complete";
+  /** When this step was marked complete. Optional — only the Timeline
+   *  Planner (lib/timeline-planner.ts) reads it, to estimate the user's
+   *  actual pace. Absent in older callers; treated as "no data" there. */
+  completedAt?: Date | null;
 };
 
 export type DashboardData = {

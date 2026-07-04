@@ -33,7 +33,7 @@ export async function getCurrentUser(stateParam?: string): Promise<{
       if (user) {
         const [{ data: profileRow }, { data: progressRows }] = await Promise.all([
           sb.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-          sb.from("step_progress").select("step_number, status").eq("user_id", user.id),
+          sb.from("step_progress").select("step_number, status, completed_at").eq("user_id", user.id),
         ]);
 
         const profile: UserProfile = {
@@ -53,10 +53,11 @@ export async function getCurrentUser(stateParam?: string): Promise<{
           homeCountry: homeCodeFromCountryName(profileRow?.country),
         };
 
-        type ProgressRow = { step_number: number; status: string };
+        type ProgressRow = { step_number: number; status: string; completed_at: string | null };
         const progress: StepProgress[] = (progressRows ?? []).map((r: ProgressRow) => ({
           stepNumber: r.step_number,
           status: r.status as StepProgress["status"],
+          completedAt: r.completed_at ? new Date(r.completed_at) : null,
         }));
 
         return { profile, progress, isReal: true };

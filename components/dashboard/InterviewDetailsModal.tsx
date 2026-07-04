@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
+import { updateProfile } from "@/app/actions/profile";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 type Props = {
   open: boolean;
@@ -59,20 +62,40 @@ export function InterviewDetailsModal({
   initialLocation,
   initialTimeOfDay,
 }: Props) {
+  const router = useRouter();
   const [date, setDate] = useState(toDateValue(initialDate));
   const [location, setLocation] = useState(initialLocation ?? "Mumbai");
   const [time, setTime] = useState<"morning" | "afternoon">(
     initialTimeOfDay ?? "morning",
   );
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const save = () => {
+  const save = async () => {
     setSaving(true);
-    // Mock: simulate Supabase update + Realtime broadcast
-    setTimeout(() => {
+    setError(null);
+
+    // Dev/mock mode (no Supabase configured) — nothing to persist to, so
+    // keep the old simulate-and-close behavior rather than surfacing a
+    // config error on every local preview.
+    if (!isSupabaseConfigured()) {
+      await new Promise((r) => setTimeout(r, 400));
       setSaving(false);
       onClose();
-    }, 500);
+      return;
+    }
+
+    // Note: time-of-day isn't a persisted column yet (profiles has no such
+    // field) — it stays local UI state, same as before this save() actually
+    // wrote anything. Date + consulate are real columns and now persist.
+    const res = await updateProfile({ interview_date: date || null, consulate: location });
+    setSaving(false);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    router.refresh();
+    onClose();
   };
 
   return (
@@ -159,6 +182,9 @@ export function InterviewDetailsModal({
           We&rsquo;ll use this to drive your countdown, prep checklist, and
           interview-imminent dashboard mode.
         </p>
+        {error && (
+          <p className="text-xs text-[#B91C1C]">{error}</p>
+        )}
       </div>
     </Modal>
   );

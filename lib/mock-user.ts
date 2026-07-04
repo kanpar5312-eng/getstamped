@@ -22,9 +22,13 @@ function daysAhead(n: number): Date {
 }
 
 function progressUpTo(n: number): StepProgress[] {
+  // Spread completions backward from "now" at a believable ~1.5 days/step
+  // cadence, earliest step longest ago — gives the Timeline Planner's pace
+  // estimate real (if synthetic) history to work with in mock mode.
   return Array.from({ length: n }, (_, i) => ({
     stepNumber: i + 1,
     status: "complete" as const,
+    completedAt: daysAgo(Math.round((n - (i + 1)) * 1.5)),
   }));
 }
 
