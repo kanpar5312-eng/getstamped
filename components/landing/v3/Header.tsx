@@ -188,7 +188,7 @@ function DesktopBar() {
           width: 260px; height: 200%;
           border-radius: 999px;
           background: radial-gradient(140px 46px at center,
-            rgba(255, 158, 120, 0.22) 0%,
+            rgba(246, 166, 35, 0.20) 0%,
             rgba(255, 255, 255, 0.09) 45%,
             transparent 72%);
           opacity: 0; pointer-events: none;

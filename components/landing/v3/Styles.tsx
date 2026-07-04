@@ -5,13 +5,58 @@
 export function Styles() {
   return (
     <style>{`
+      /* ════════════════════════════════════════════════════════════════
+         Brand system (landing-only) — scoped to .v3-root so the shared
+         globals.css tokens (and therefore the dashboard, which reads the
+         same variable names) are never touched. Every persimmon/cream/ink
+         reference elsewhere in the v3 tree resolves through these three
+         overrides, so the whole marketing surface repaints from one place.
+           Sapphire #2C5EFF — primary / interactive (was persimmon)
+           Amber    #F6A623 — stamps, success, small accents (new)
+           Mint     #DFF7EE — soft cards, dividers (new)
+         ════════════════════════════════════════════════════════════════ */
       .v3-root {
+        --color-persimmon:      #2C5EFF;
+        --color-persimmon-deep: #1E46D6;
+        --color-persimmon-soft: #6C8DFF;
+        --color-persimmon-tint: #E5ECFF;
+        --color-amber:      #F6A623;
+        --color-amber-deep: #D68A0E;
+        --color-amber-tint: #FDECD1;
+        --color-mint:       #DFF7EE;
+        --color-mint-deep:  #BDEBD9;
+        --color-cream:      #FCFCFD;
+        --color-cream-soft: #FFFFFF;
+        --color-cream-deep: #F5F7FA;
+        --color-beige:      #E5E7EB;
+        --color-beige-soft: #ECEEF1;
+        --color-ink:      #101828;
+        --color-ink-soft: #667085;
+        --color-ink-deep: #0B1220;
+        --color-muted:    #98A2B3;
+        --color-border:      var(--color-beige);
+        --color-border-hover: #CBD5E1;
+
         color: var(--color-ink);
         background: var(--color-paper);
         font-family: var(--font-sans-stack);
         font-feature-settings: "ss01", "ss02";
         font-kerning: normal;
         text-rendering: optimizeLegibility;
+      }
+      html.dark .v3-root {
+        --color-persimmon-deep: #7C9CFF;
+        --color-persimmon-tint: rgba(44, 94, 255, 0.18);
+        --color-amber-tint: rgba(246, 166, 35, 0.16);
+        --color-cream:      #0B0D12;
+        --color-cream-soft: #12151B;
+        --color-cream-deep: #171B22;
+        --color-beige:      #232833;
+        --color-beige-soft: #1B1F27;
+        --color-ink:      #F5F7FA;
+        --color-ink-soft: #98A2B3;
+        --color-ink-deep: #FFFFFF;
+        --color-muted:    #7A8493;
       }
       /* Off-screen sections opt out of layout + paint work — biggest single
          scroll-perf win on a long landing. contain-intrinsic-size keeps the
@@ -103,15 +148,15 @@ export function Styles() {
         /* Heavier opaque tint + lighter blur — same premium look at a fraction
            of the per-frame paint cost. backdrop-filter is one of the most
            expensive properties in the browser. */
-        background: rgba(247, 243, 236, 0.94);
+        background: rgba(252, 252, 253, 0.94);
         backdrop-filter: saturate(140%) blur(8px);
         -webkit-backdrop-filter: saturate(140%) blur(8px);
-        border-bottom: 1px solid rgba(11, 30, 63, 0.06);
+        border-bottom: 1px solid rgba(16, 24, 40, 0.06);
         transition: border-color 200ms var(--ease-soft), background-color 200ms var(--ease-soft);
         will-change: background-color;
       }
       .v3-header.is-scrolled {
-        background: rgba(247, 243, 236, 0.92);
+        background: rgba(252, 252, 253, 0.92);
         border-bottom-color: var(--color-border);
       }
       .v3-header-inner {
@@ -482,7 +527,7 @@ export function Styles() {
       .v3-doc-scan {
         position: absolute; inset: 0;
         background: linear-gradient(90deg,
-          transparent 0%, rgba(255,91,46,0.18) 50%, transparent 100%);
+          transparent 0%, rgba(44,94,255,0.18) 50%, transparent 100%);
         clip-path: inset(0 100% 0 0);
         animation: v3-scan 2.4s var(--ease-in-out) infinite;
       }
@@ -616,8 +661,8 @@ export function Styles() {
         animation: v3-pulse 1.8s var(--ease-out) infinite;
       }
       @keyframes v3-pulse {
-        0% { box-shadow: 0 0 0 0 rgba(255,91,46,0.55); }
-        100% { box-shadow: 0 0 0 10px rgba(255,91,46,0); }
+        0% { box-shadow: 0 0 0 0 rgba(44,94,255,0.55); }
+        100% { box-shadow: 0 0 0 10px rgba(44,94,255,0); }
       }
 
       /* ── Pricing ────────────────────────────────────────────────────── */
@@ -638,9 +683,9 @@ export function Styles() {
       .v3-price-card {
         position: relative; display: flex; flex-direction: column;
         background: var(--color-cream-soft);
-        border: 1px solid rgba(11,30,63,0.08);
+        border: 1px solid rgba(16,24,40,0.08);
         border-radius: 28px; padding: 32px 28px;
-        box-shadow: 0 24px 48px -28px rgba(11,30,63,0.18);
+        box-shadow: 0 24px 48px -28px rgba(16,24,40,0.14);
         overflow: hidden;
         transition: transform 240ms var(--ease-soft),
           box-shadow 240ms var(--ease-soft);
@@ -654,10 +699,10 @@ export function Styles() {
       /* Solo "most chosen" — soft peach with a persimmon halo. */
       .v3-price-solo {
         background: var(--color-persimmon-tint);
-        border: 1px solid rgba(232,98,42,0.40);
+        border: 1px solid rgba(44,94,255,0.35);
         box-shadow:
-          0 0 0 1px rgba(232,98,42,0.30),
-          0 24px 56px -28px rgba(232,98,42,0.32);
+          0 0 0 1px rgba(44,94,255,0.28),
+          0 24px 56px -28px rgba(44,94,255,0.30);
         color: var(--color-ink);
         overflow: visible;
       }
@@ -665,8 +710,8 @@ export function Styles() {
         background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.55) 20%, rgba(255,255,255,0.55) 80%, transparent 100%);
       }
       .v3-price-solo .v3-check {
-        background: rgba(232,98,42,0.22);
-        border-color: rgba(232,98,42,0.55);
+        background: rgba(44,94,255,0.18);
+        border-color: rgba(44,94,255,0.50);
       }
       @media (hover: hover) and (pointer: fine) {
         .v3-price-card:not(.v3-price-solo):hover {
@@ -679,11 +724,11 @@ export function Styles() {
       }
       .v3-price-chip {
         position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
-        background: var(--color-persimmon); color: var(--color-ink);
+        background: var(--color-amber); color: #101828;
         font-family: var(--font-sans-stack);
         font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
         text-transform: uppercase; padding: 5px 14px; border-radius: 999px;
-        box-shadow: 0 4px 12px rgba(255, 200, 1, 0.35);
+        box-shadow: 0 4px 12px rgba(246, 166, 35, 0.35);
         white-space: nowrap;
       }
       .v3-price-name {
@@ -969,7 +1014,7 @@ export function Styles() {
         color: #fff;
         padding: 6px 12px;
         border-radius: 999px;
-        box-shadow: 0 2px 6px rgba(232,98,42,0.18);
+        box-shadow: 0 2px 6px rgba(44,94,255,0.18);
       }
       .v3-faq-q {
         font-family: var(--font-display-stack);
@@ -1038,7 +1083,7 @@ export function Styles() {
         position: absolute; inset: 0; z-index: 0; pointer-events: none;
         opacity: 0;
         border-radius: 50%;
-        box-shadow: inset 0 0 90px 50px rgba(255, 91, 46, 0.06);
+        box-shadow: inset 0 0 90px 50px rgba(246, 166, 35, 0.10);
         transition: opacity 200ms var(--ease-soft);
       }
       .v3-pricing > *:not(.v3-portal-glow) { position: relative; z-index: 1; }

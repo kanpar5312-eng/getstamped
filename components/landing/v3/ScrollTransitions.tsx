@@ -218,7 +218,7 @@ export function ScrollTransitions() {
       if (closerGlow && glow.active) {
         glow.x += (glow.tx - glow.x) * 0.12;
         glow.y += (glow.ty - glow.y) * 0.12;
-        closerGlow.style.background = `radial-gradient(440px circle at ${glow.x.toFixed(0)}px ${glow.y.toFixed(0)}px, rgba(255,91,46,0.14), transparent 60%)`;
+        closerGlow.style.background = `radial-gradient(440px circle at ${glow.x.toFixed(0)}px ${glow.y.toFixed(0)}px, rgba(246,166,35,0.16), transparent 60%)`;
         glowRaf = requestAnimationFrame(glowLoop);
       } else {
         glowRunning = false;
