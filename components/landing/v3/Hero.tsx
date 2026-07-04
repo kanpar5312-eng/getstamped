@@ -1,404 +1,682 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /* ════════════════════════════════════════════════════════════════════════
-   Hero — cinematic full-bleed stage.
+   Hero — scroll-through-the-playbook.
 
-   One dominant idea per fold: the dark passport film (/new.mp4 — ink
-   black with a warm persimmon light beam, 1.9 MB, muted/looped) fills
-   the viewport; a two-line Instrument Serif headline rises out of it
-   line-by-line through overflow masks; an "F-1 · APPROVED" stamp
-   presses over the corner of the last word like a real consulate
-   stamp. That stamp is the brand (GetStamped) in one gesture.
+   A ~450vh runway with a sticky 100vh stage. Scroll drives three acts:
 
-   Deliberate choices:
-   • No scroll pinning, no runway. Scroll releases the page immediately
-     with only a soft parallax fade (single rAF listener, transform +
-     opacity only).
-   • The fixed dark chrome header finally sits on a surface that makes
-     sense — the whole first fold is one dark composition.
-   • Mobile is the same composition, not a cut-down: 100svh, centered
-     column, stacked CTAs.
-   • prefers-reduced-motion: entrances removed (everything visible),
-     parallax off, film paused on its poster frame.
+     ACT 1 (p 0 → 0.24)   Headline stack fades up and away while the
+                          playbook card — rendered full-viewport but
+                          clipped down to a small centered card via
+                          clip-path — expands to fill the screen.
+     ACT 2 (p 0.24 → 0.84) You scroll *through* the playbook: rows rise
+                          past a fixed "now" line and tick off with a
+                          persimmon check, the phase label flips
+                          (02 → 05), dates advance, progress bar fills.
+     ACT 3 (p 0.84 → 1)   The final step ticks and an F-1 stamp presses
+                          onto the screen. Page releases into the
+                          feature sections.
+
+   Mechanics per house rules:
+     • ONE rAF-throttled scroll listener, zero React state per frame —
+       direct style/class writes only (same pattern as ScrollTransitions).
+     • clip-path + transform + opacity only. No layout writes per frame.
+     • Click anywhere (except links) skips to the end of the runway.
+     • prefers-reduced-motion → a static hero, no runway, no pin.
+     • All colors via var(--color-*) so dark mode flips automatically.
    ═════════════════════════════════════════════════════════════════════════ */
 
+type PlayRow = { n: number; label: string; date: string; phase: string };
+
+const PHASE_2 = "PHASE 02 · AFTER I-20";
+const PHASE_3 = "PHASE 03 · DS-160 & FEES";
+const PHASE_4 = "PHASE 04 · INTERVIEW PREP";
+const PHASE_5 = "PHASE 05 · POST-APPROVAL";
+
+const ROWS: PlayRow[] = [
+  { n: 12, label: "Pay SEVIS I-901 fee", date: "Mar 03", phase: PHASE_2 },
+  { n: 13, label: "Complete DS-160 form", date: "Mar 07", phase: PHASE_2 },
+  { n: 14, label: "Schedule visa appointment", date: "Mar 10", phase: PHASE_2 },
+  { n: 15, label: "Prepare document bundle", date: "Mar 12", phase: PHASE_2 },
+  { n: 16, label: "US-spec visa photos", date: "Mar 14", phase: PHASE_2 },
+  { n: 20, label: "Upload DS-160 photo", date: "Mar 21", phase: PHASE_3 },
+  { n: 21, label: "Personal info — passport match", date: "Mar 24", phase: PHASE_3 },
+  { n: 23, label: "Create visa service profile", date: "Mar 29", phase: PHASE_3 },
+  { n: 24, label: "Pay the MRV fee", date: "Apr 02", phase: PHASE_3 },
+  { n: 26, label: "Book the interview slot", date: "Apr 08", phase: PHASE_3 },
+  { n: 30, label: "Financial story, to the dollar", date: "Apr 18", phase: PHASE_4 },
+  { n: 31, label: "Return-intent answers", date: "Apr 22", phase: PHASE_4 },
+  { n: 33, label: "Mock interview, round one", date: "Apr 26", phase: PHASE_4 },
+  { n: 36, label: "Route + consulate day plan", date: "May 06", phase: PHASE_4 },
+  { n: 37, label: "Final document check", date: "May 09", phase: PHASE_4 },
+  { n: 40, label: "Track passport return", date: "May 16", phase: PHASE_5 },
+  { n: 43, label: "Flights, bank, insurance", date: "May 24", phase: PHASE_5 },
+  { n: 44, label: "Verify visa details", date: "May 28", phase: PHASE_5 },
+  { n: 45, label: "Pre-departure essentials", date: "Jun 02", phase: PHASE_5 },
+  { n: 47, label: "Port of entry — SEVIS validated", date: "Jun 14", phase: PHASE_5 },
+];
+
+const ROW_H = 64; // px, fixed — lets per-frame math avoid rect reads
+/* First N rows render pre-ticked so the resting card reads as a journey
+   already in motion (persimmon checks visible before any scroll). */
+const PRETICKED = 5;
+
+const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
+const sub = (v: number, a: number, b: number) => clamp01((v - a) / (b - a));
+const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
 export function Hero() {
-  const rootRef = useRef<HTMLElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const runwayRef = useRef<HTMLElement>(null);
+  const headRef = useRef<HTMLDivElement>(null);
+  const bookRef = useRef<HTMLDivElement>(null);
+  const chromeRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const phaseRef = useRef<HTMLSpanElement>(null);
+  const barRef = useRef<HTMLSpanElement>(null);
+  const pctRef = useRef<HTMLSpanElement>(null);
+  const stampRef = useRef<HTMLDivElement>(null);
+  const dimRef = useRef<HTMLDivElement>(null);
+  const ghostRef = useRef<HTMLSpanElement>(null);
+  const handoffRef = useRef<HTMLDivElement>(null);
+  const nowlineRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef(0);
+  const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) {
-      // Ambient film counts as motion — hold the poster frame.
-      videoRef.current?.pause();
-      return;
-    }
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => setReduced(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
 
-    /* Parallax release — the stage recedes as the page scrolls on.
-       One passive listener, rAF-throttled, transform/opacity only. */
-    const root = rootRef.current;
-    const video = videoRef.current;
-    const content = contentRef.current;
-    if (!root || !content) return;
+  useEffect(() => {
+    if (reduced) return;
+    const runway = runwayRef.current;
+    const head = headRef.current;
+    const book = bookRef.current;
+    const chrome = chromeRef.current;
+    const track = trackRef.current;
+    const phaseEl = phaseRef.current;
+    const bar = barRef.current;
+    const pct = pctRef.current;
+    const stamp = stampRef.current;
+    const handoff = handoffRef.current;
+    const nowline = nowlineRef.current;
+    if (!runway || !head || !book || !track) return;
+
+    const rows = Array.from(track.querySelectorAll<HTMLElement>(".gs-hx-row"));
+    let lastDone = -1;
     let ticking = false;
+
     const frame = () => {
       ticking = false;
-      const y = window.scrollY;
       const vh = window.innerHeight;
-      if (y > vh * 1.2) return; // past the fold — nothing to update
-      const p = Math.min(1, y / (vh * 0.85));
-      content.style.transform = `translate3d(0, ${(y * 0.22).toFixed(1)}px, 0)`;
-      content.style.opacity = (1 - p * p).toFixed(3);
-      if (video) video.style.transform = `translate3d(0, ${(y * 0.1).toFixed(1)}px, 0) scale(1.02)`;
+      const vw = window.innerWidth;
+      const rect = runway.getBoundingClientRect();
+      const total = rect.height - vh;
+      if (total <= 0) return;
+      const p = clamp01(-rect.top / total);
+      progressRef.current = p;
+
+      /* ACT 1 — headline out, card expands to fullscreen */
+      const hOut = easeOut(sub(p, 0, 0.14));
+      head.style.opacity = (1 - hOut).toFixed(3);
+      head.style.transform = `translateY(${(-44 * hOut).toFixed(1)}px)`;
+      head.style.pointerEvents = p > 0.1 ? "none" : "";
+
+      const k = easeOut(sub(p, 0.03, 0.26));
+      const isMobile = vw < 768;
+      const sideStart = isMobile ? vw * 0.05 : Math.max((vw - 760) / 2, vw * 0.04);
+      const topStart = vh * (isMobile ? 0.54 : 0.58);
+      const botStart = vh * 0.05;
+      const inTop = lerp(topStart, 0, k);
+      const inSide = lerp(sideStart, 0, k);
+      const inBot = lerp(botStart, 0, k);
+      const rad = lerp(20, 0, k);
+      book.style.clipPath = `inset(${inTop.toFixed(1)}px ${inSide.toFixed(1)}px ${inBot.toFixed(1)}px ${inSide.toFixed(1)}px round ${rad.toFixed(1)}px)`;
+
+      if (chrome) chrome.style.opacity = easeOut(sub(p, 0.16, 0.28)).toFixed(3);
+      if (nowline) nowline.style.opacity = easeOut(sub(p, 0.2, 0.3)).toFixed(3);
+
+      /* ACT 2 — travel through the playbook */
+      const t = sub(p, 0.26, 0.84);
+      const padTop = vh * 0.66;
+      const trackLen = padTop + ROWS.length * ROW_H;
+      const maxT = trackLen - vh * 0.42;
+      const translate = -easeInOutQuad(t) * maxT;
+      track.style.transform = `translate3d(0, ${translate.toFixed(1)}px, 0)`;
+
+      // A row is "done" once its center rises past the now-line (50vh);
+      // floored at PRETICKED so the resting card's checks never un-tick.
+      const done = Math.max(
+        PRETICKED,
+        Math.min(
+          ROWS.length,
+          Math.floor((vh * 0.5 - padTop - ROW_H / 2 - translate) / ROW_H + 1),
+        ),
+      );
+      if (done !== lastDone) {
+        lastDone = done;
+        rows.forEach((r, i) => {
+          r.classList.toggle("is-done", i < done);
+          r.classList.toggle("is-current", i === done && done < ROWS.length);
+        });
+        const idx = Math.min(Math.max(done, 1) - 1, ROWS.length - 1);
+        if (phaseEl) phaseEl.textContent = ROWS[idx].phase;
+        // "PHASE 0X · …" → the big ghost numeral behind the rows
+        if (ghostRef.current) ghostRef.current.textContent = ROWS[idx].phase.slice(6, 8);
+        if (pct) pct.textContent = `${Math.round((done / ROWS.length) * 100)}%`;
+        if (bar) bar.style.transform = `scaleX(${(done / ROWS.length).toFixed(3)})`;
+      }
+
+      /* ACT 3 — the stamp. Fast press: most of the motion happens in a
+         short scroll window so it reads as an impact, not a fade. */
+      if (stamp) {
+        const s = easeOut(sub(p, 0.86, 0.92));
+        stamp.style.opacity = Math.min(1, s * 1.4).toFixed(3);
+        stamp.style.transform = `translate(-50%, -50%) scale(${lerp(1.45, 1, s).toFixed(3)}) rotate(-8deg)`;
+        if (dimRef.current) dimRef.current.style.opacity = (0.55 * s).toFixed(3);
+      }
+      if (handoff) handoff.style.opacity = easeOut(sub(p, 0.94, 1)).toFixed(3);
     };
+
+    const easeInOutQuad = (t: number) =>
+      t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
     const onScroll = () => {
       if (!ticking) {
         ticking = true;
         requestAnimationFrame(frame);
       }
     };
+
+    // Escape hatch — click anywhere that isn't a link skips the runway.
+    const onClick = (e: MouseEvent) => {
+      if ((e.target as HTMLElement).closest("a, button")) return;
+      const p = progressRef.current;
+      if (p <= 0.04 || p >= 0.96) return;
+      const rect = runway.getBoundingClientRect();
+      const absTop = window.scrollY + rect.top;
+      window.scrollTo({ top: absTop + rect.height - window.innerHeight, behavior: "smooth" });
+    };
+
+    frame();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    window.addEventListener("resize", onScroll);
+    runway.addEventListener("click", onClick);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      runway.removeEventListener("click", onClick);
+    };
+  }, [reduced]);
+
+  if (reduced) return <HeroStatic />;
 
   return (
-    <section ref={rootRef} aria-label="Hero" className="gs-h5">
-      {/* The film */}
-      <video
-        ref={videoRef}
-        className="gs-h5-film"
-        src="/new.mp4"
-        poster="/pass.png"
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="metadata"
-        aria-hidden
-        tabIndex={-1}
-      />
-      {/* Scrim — guarantees text contrast whatever frame is playing */}
-      <div className="gs-h5-scrim" aria-hidden />
-
-      {/* The composition */}
-      <div ref={contentRef} className="gs-h5-content">
-        <p className="gs-h5-kicker">F-1 · From 10 countries · One payment</p>
-
-        <h1 className="gs-h5-h1">
-          <span className="gs-h5-mask">
-            <span className="gs-h5-line gs-h5-line-1">Every step from home</span>
-          </span>
-          <span className="gs-h5-mask">
-            <span className="gs-h5-line gs-h5-line-2">
-              to your <em>US visa.</em>
-              {/* The stamp — pressed over the corner of the last word */}
-              <span className="gs-h5-stamp" aria-hidden>
-                <span className="gs-h5-stamp-in">
-                  <span className="gs-h5-stamp-top">F-1</span>
-                  <span className="gs-h5-stamp-mid">APPROVED</span>
-                  <span className="gs-h5-stamp-bot">GETSTAMPED</span>
-                </span>
-              </span>
-            </span>
-          </span>
-        </h1>
-
-        <p className="gs-h5-sub">
-          The full route, sequenced for your home country — every form, fee,
-          document, and interview between you and the stamp.
-        </p>
-
-        <div className="gs-h5-ctas">
-          <Link href="/sign-up" className="gs-h5-primary">
-            Start free — Phase 1 forever
-          </Link>
-          <Link href="#playbook" className="gs-h5-ghost">
-            See how it works
-          </Link>
+    <section ref={runwayRef} aria-label="Hero" className="gs-hx-runway">
+      <div className="gs-hx-sticky">
+        {/* Warm afternoon glow pooling behind the headline — kills the
+            flat-blank feel without adding any off-palette color. */}
+        <div className="gs-hx-bg" aria-hidden>
+          <span className="gs-hx-blob gs-hx-blob-a" />
+          <span className="gs-hx-blob gs-hx-blob-b" />
+          <span className="gs-hx-grain" />
         </div>
 
-        <p className="gs-h5-trust">No subscription · 14-day refund</p>
-      </div>
+        {/* ── Layer A · headline stack ── */}
+        <div ref={headRef} className="gs-hx-head">
+          <p className="gs-hx-eyebrow">F-1 · From 10 countries · One payment</p>
+          <h1 className="gs-hx-h1">
+            Every step from <em>home</em>
+            <br />
+            to your US visa.
+          </h1>
+          <p className="gs-hx-sub">
+            The full F-1 route, sequenced for your home country — every form,
+            fee, and interview between you and the stamp. AI document checks.
+            Voice mock interviews. One workspace until your passport says yes.
+          </p>
+          <div className="gs-hx-ctas">
+            <Link href="/sign-up" className="gs-hx-primary">
+              Start free — Phase 1 forever
+            </Link>
+            <span className="gs-hx-hint">
+              Scroll to fast-forward the journey <span aria-hidden>↓</span>
+            </span>
+          </div>
+          <p className="gs-hx-trust">
+            Phase 1 free forever&ensp;·&ensp;No subscription&ensp;·&ensp;14-day refund
+          </p>
+        </div>
 
-      {/* Scroll cue */}
-      <div className="gs-h5-cue" aria-hidden>
-        <span />
+        {/* ── Layer B · the playbook (full viewport, clipped to a card) ── */}
+        <div ref={bookRef} className="gs-hx-book" aria-hidden>
+          {/* Ghost phase numeral + paper grain so the fullscreen stretch
+              never reads as a flat empty sheet */}
+          <span ref={ghostRef} className="gs-hx-ghost">02</span>
+          <span className="gs-hx-book-grain" />
+
+          <div ref={chromeRef} className="gs-hx-chrome">
+            <span ref={phaseRef} className="gs-hx-phase">{PHASE_2}</span>
+            <span className="gs-hx-meter">
+              <span className="gs-hx-bar">
+                <span ref={barRef} className="gs-hx-bar-fill" />
+              </span>
+              <span ref={pctRef} className="gs-hx-pct">25%</span>
+            </span>
+          </div>
+
+          <div ref={nowlineRef} className="gs-hx-nowline">
+            <span>NOW</span>
+          </div>
+
+          <div ref={trackRef} className="gs-hx-track">
+            {/* Card masthead — visible in the resting card, scrolls away
+                with the journey */}
+            <div className="gs-hx-minihead">
+              <span className="gs-hx-minihead-dot" />
+              Live playbook · tuned to your home country
+            </div>
+            {ROWS.map((r, i) => (
+              <div key={r.n} className={`gs-hx-row${i < PRETICKED ? " is-done" : ""}${i === PRETICKED ? " is-current" : ""}`}>
+                <span className="gs-hx-mark" aria-hidden>
+                  <svg viewBox="0 0 12 12" fill="none">
+                    <path d="M2.5 6.2 L5 8.6 L9.5 3.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+                <span className="gs-hx-step">Step {r.n}</span>
+                <span className="gs-hx-label">{r.label}</span>
+                <span className="gs-hx-date">{r.date}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Dim wash under the stamp so it lands on a quiet surface */}
+          <div ref={dimRef} className="gs-hx-dim" />
+
+          {/* The stamp — passport-style rounded rectangle, double border */}
+          <div ref={stampRef} className="gs-hx-stamp">
+            <span className="gs-hx-stamp-frame">
+              <span className="gs-hx-stamp-type">· U.S. CONSULATE ·</span>
+              <span className="gs-hx-stamp-word">Stamped.</span>
+              <span className="gs-hx-stamp-date">F-1 &nbsp;·&nbsp; JUN 14 &nbsp;·&nbsp; MULTIPLE ENTRIES</span>
+            </span>
+          </div>
+
+          <div ref={handoffRef} className="gs-hx-handoff">
+            That was the fast-forward. Here&rsquo;s how it actually works{" "}
+            <span aria-hidden>↓</span>
+          </div>
+        </div>
       </div>
 
       <style>{`
-        /* Full-bleed stage relies on nothing being containment-skipped. */
-        .v3-root main > .gs-h5 { content-visibility: visible; }
+        /* The pinned hero relies on position:sticky — keep it out of the
+           content-visibility:auto scroll optimization (same exception the
+           old hero + closer already had). */
+        .v3-root main > .gs-hx-runway { content-visibility: visible; }
 
-        .gs-h5 {
+        .gs-hx-runway {
           position: relative;
-          height: 100svh;
-          min-height: 620px;
-          overflow: hidden;
-          background: #0A0908;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          height: 460vh;
+          background: var(--color-cream);
+        }
+        @media (max-width: 767px) { .gs-hx-runway { height: 340vh; } }
+
+        .gs-hx-sticky {
+          position: sticky; top: 0;
+          height: 100vh; overflow: hidden;
         }
 
-        .gs-h5-film {
-          position: absolute;
-          inset: -2% 0;
-          width: 100%;
-          height: 104%;
-          object-fit: cover;
-          opacity: 0;
-          animation: gs-h5-film-in 1600ms cubic-bezier(0.22, 1, 0.36, 1) 100ms forwards;
-          will-change: transform, opacity;
-        }
-        @keyframes gs-h5-film-in { to { opacity: 1; } }
-
-        .gs-h5-scrim {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background:
-            radial-gradient(120% 90% at 50% 42%, rgba(10, 9, 8, 0) 0%, rgba(10, 9, 8, 0.62) 100%),
-            linear-gradient(180deg, rgba(10, 9, 8, 0.42) 0%, rgba(10, 9, 8, 0.12) 34%, rgba(10, 9, 8, 0.14) 66%, rgba(10, 9, 8, 0.66) 100%);
-        }
-
-        .gs-h5-content {
-          position: relative;
-          z-index: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
+        /* ── headline stack ── */
+        .gs-hx-head {
+          position: absolute; inset: 0 0 auto 0;
+          display: flex; flex-direction: column; align-items: center;
           text-align: center;
-          padding: 0 24px;
-          max-width: 1080px;
+          padding: clamp(96px, 13vh, 150px) 24px 0;
+          z-index: 2;
           will-change: transform, opacity;
         }
-
-        .gs-h5-kicker {
-          margin: 0 0 clamp(18px, 3vh, 28px);
+        .gs-hx-eyebrow {
           font-family: var(--font-mono-stack, var(--font-sans-stack));
-          font-size: 11px;
-          font-weight: 600;
-          letter-spacing: 0.34em;
-          text-transform: uppercase;
-          color: #FF9E78;
-          opacity: 0;
-          animation: gs-h5-up 800ms cubic-bezier(0.22, 1, 0.36, 1) 350ms both;
+          font-size: 11px; letter-spacing: 0.42em; text-transform: uppercase;
+          color: var(--color-persimmon); font-weight: 600;
+          animation: gs-hx-up 700ms var(--ease-out) both;
         }
-
-        .gs-h5-h1 {
-          margin: 0;
-          font-family: var(--font-display-stack);
-          font-weight: 400;
-          font-size: clamp(44px, 8.6vw, 92px);
-          line-height: 1.04;
-          letter-spacing: -0.025em;
-          color: #F5F1E8;
+        .gs-hx-h1 {
+          margin: 22px 0 0;
+          font-family: var(--font-display-stack); font-weight: 400;
+          font-size: clamp(46px, 7.4vw, 88px);
+          line-height: 1.02; letter-spacing: -0.028em;
+          color: var(--color-ink);
           text-wrap: balance;
+          animation: gs-hx-up 700ms var(--ease-out) 120ms both;
         }
-        .gs-h5-h1 em {
-          font-style: italic;
-          color: #FF9E78;
+        .gs-hx-h1 em { font-style: italic; color: var(--color-persimmon); }
+        .gs-hx-sub {
+          margin: 20px auto 0; max-width: 560px;
+          font-family: var(--font-sans-stack); font-size: 17px;
+          line-height: 1.55; color: var(--color-ink-soft);
+          animation: gs-hx-up 700ms var(--ease-out) 240ms both;
         }
-        /* Masked line-rise: each line lifts out of an overflow-hidden strip */
-        .gs-h5-mask {
-          display: block;
-          overflow: hidden;
-          padding-bottom: 0.08em; /* keep serif descenders unclipped */
-          margin-bottom: -0.08em;
+        .gs-hx-ctas {
+          margin-top: 32px; display: flex; flex-direction: column;
+          align-items: center; gap: 14px;
+          animation: gs-hx-up 700ms var(--ease-out) 360ms both;
         }
-        .gs-h5-line {
-          display: inline-block;
-          position: relative;
-          transform: translateY(112%);
-          animation: gs-h5-rise 1000ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        .gs-hx-primary {
+          background: var(--color-persimmon); color: #FAF8F4;
+          font-family: var(--font-sans-stack); font-size: 15px; font-weight: 600;
+          padding: 16px 30px; border-radius: 999px; text-decoration: none;
+          box-shadow: 0 10px 28px -10px rgba(232,98,42,0.55);
+          transition: transform 200ms var(--ease-out), background 200ms var(--ease-out);
         }
-        .gs-h5-line-1 { animation-delay: 480ms; }
-        .gs-h5-line-2 { animation-delay: 620ms; }
-        @keyframes gs-h5-rise { to { transform: translateY(0); } }
-        @keyframes gs-h5-up {
-          from { opacity: 0; transform: translateY(14px); }
+        @media (hover: hover) {
+          .gs-hx-primary:hover { transform: translateY(-1px); background: var(--color-persimmon-deep); }
+        }
+        .gs-hx-hint {
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+          color: var(--color-muted);
+        }
+        .gs-hx-hint span { display: inline-block; animation: gs-hx-bob 1.8s var(--ease-in-out) infinite; }
+        @keyframes gs-hx-up {
+          from { opacity: 0; transform: translateY(16px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+        @keyframes gs-hx-bob {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(3px); }
+        }
 
-        /* The stamp — a consulate press over the corner of "visa." */
-        .gs-h5-stamp {
-          position: absolute;
-          right: -0.55em;
-          top: -0.52em;
-          width: 1.52em;
-          height: 1.52em;
-          pointer-events: none;
+        /* ── the playbook layer ── */
+        .gs-hx-book {
+          position: absolute; inset: 0; z-index: 3;
+          background: var(--color-cream-soft);
+          border: 1px solid var(--color-border-soft);
+          clip-path: inset(60vh 20vw 5vh 20vw round 20px);
+          will-change: clip-path;
+        }
+        .gs-hx-chrome {
+          position: absolute; inset: 0 0 auto 0; height: 56px; z-index: 4;
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 0 clamp(18px, 4vw, 48px);
+          background: var(--color-cream-soft);
+          border-bottom: 1px solid var(--color-border-soft);
           opacity: 0;
-          transform: scale(1.6) rotate(4deg);
-          animation: gs-h5-press 650ms cubic-bezier(0.19, 1, 0.22, 1) 1500ms both;
         }
-        @keyframes gs-h5-press {
-          to { opacity: 1; transform: scale(1) rotate(-12deg); }
-        }
-        .gs-h5-stamp-in {
-          position: absolute;
-          inset: 0;
-          border: 2.5px solid rgba(255, 91, 46, 0.85);
-          border-radius: 999px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 0.08em;
-          box-shadow: inset 0 0 0 1.5px rgba(10, 9, 8, 0.25), inset 0 0 0.6em rgba(255, 91, 46, 0.14);
-          /* worn ink — a real stamp never prints evenly */
-          -webkit-mask-image: radial-gradient(135% 135% at 46% 54%, #000 58%, rgba(0,0,0,0.78) 82%, rgba(0,0,0,0.95) 100%);
-                  mask-image: radial-gradient(135% 135% at 46% 54%, #000 58%, rgba(0,0,0,0.78) 82%, rgba(0,0,0,0.95) 100%);
-        }
-        .gs-h5-stamp-top, .gs-h5-stamp-bot {
+        .gs-hx-phase {
           font-family: var(--font-mono-stack, var(--font-sans-stack));
-          font-size: 0.085em;
-          font-weight: 700;
-          letter-spacing: 0.3em;
-          text-indent: 0.3em; /* optically re-center tracked caps */
-          color: rgba(255, 91, 46, 0.9);
-          line-height: 1;
+          font-size: 10.5px; letter-spacing: 0.24em; font-weight: 600;
+          color: var(--color-persimmon);
         }
-        .gs-h5-stamp-mid {
+        .gs-hx-meter { display: inline-flex; align-items: center; gap: 12px; }
+        .gs-hx-bar {
+          width: clamp(80px, 16vw, 200px); height: 3px; border-radius: 999px;
+          background: var(--color-border-soft); overflow: hidden; display: block;
+        }
+        .gs-hx-bar-fill {
+          display: block; height: 100%; width: 100%;
+          background: var(--color-persimmon);
+          transform: scaleX(0); transform-origin: left center;
+          transition: transform 300ms var(--ease-out);
+        }
+        .gs-hx-pct {
           font-family: var(--font-mono-stack, var(--font-sans-stack));
-          font-size: 0.135em;
-          font-weight: 700;
-          letter-spacing: 0.22em;
-          text-indent: 0.22em;
-          color: rgba(255, 91, 46, 0.95);
-          line-height: 1;
-          border-top: 1px solid rgba(255, 91, 46, 0.5);
-          border-bottom: 1px solid rgba(255, 91, 46, 0.5);
-          padding: 0.16em 0;
+          font-size: 11px; color: var(--color-ink-soft);
+          font-variant-numeric: tabular-nums;
         }
 
-        .gs-h5-sub {
-          margin: clamp(20px, 3.4vh, 30px) auto 0;
-          max-width: 52ch;
-          font-family: var(--font-sans-stack);
-          font-size: clamp(15px, 1.9vw, 17.5px);
-          line-height: 1.6;
-          color: rgba(245, 241, 232, 0.86);
-          text-wrap: pretty;
-          opacity: 0;
-          animation: gs-h5-up 800ms cubic-bezier(0.22, 1, 0.36, 1) 950ms both;
+        .gs-hx-nowline {
+          position: absolute; left: 0; right: 0; top: 50vh; z-index: 3;
+          border-top: 1px dashed rgba(232,98,42,0.5);
+          opacity: 0; pointer-events: none;
+        }
+        .gs-hx-nowline span {
+          position: absolute; right: clamp(18px, 4vw, 48px); top: -9px;
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 9px; letter-spacing: 0.22em; font-weight: 600;
+          color: var(--color-persimmon);
+          background: var(--color-cream-soft); padding: 2px 8px;
+          border: 1px solid rgba(232,98,42,0.5); border-radius: 999px;
         }
 
-        .gs-h5-ctas {
-          margin-top: clamp(26px, 4.4vh, 38px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 14px;
-          flex-wrap: wrap;
-          opacity: 0;
-          animation: gs-h5-up 800ms cubic-bezier(0.22, 1, 0.36, 1) 1100ms both;
+        .gs-hx-ghost {
+          position: absolute; left: 2vw; top: 50%; z-index: 1;
+          transform: translateY(-50%);
+          font-family: var(--font-display-stack); font-style: italic;
+          font-size: clamp(200px, 34vh, 380px); line-height: 1;
+          color: var(--color-ink); opacity: 0.045;
+          pointer-events: none; user-select: none;
+          font-variant-numeric: tabular-nums;
         }
-        .gs-h5-primary {
-          background: var(--color-persimmon, #E8622A);
+        .gs-hx-book-grain {
+          position: absolute; inset: 0; z-index: 1; pointer-events: none;
+          opacity: 0.03;
+          background-image:
+            radial-gradient(circle at 25% 30%, rgba(28,25,23,0.5) 0.5px, transparent 1px),
+            radial-gradient(circle at 75% 70%, rgba(28,25,23,0.4) 0.5px, transparent 1px);
+          background-size: 4px 4px, 5px 5px;
+        }
+        html.dark .gs-hx-book-grain { opacity: 0.05; }
+
+        .gs-hx-track {
+          position: absolute; inset: 0; z-index: 2;
+          padding-top: 66vh;
+          will-change: transform;
+        }
+        .gs-hx-minihead {
+          position: absolute; top: calc(66vh - 52px); left: 0; right: 0;
+          max-width: 920px; margin: 0 auto;
+          padding: 0 clamp(18px, 4vw, 48px);
+          display: flex; align-items: center; gap: 10px;
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase;
+          color: var(--color-persimmon); font-weight: 600;
+        }
+        .gs-hx-minihead-dot {
+          width: 7px; height: 7px; border-radius: 999px;
+          background: var(--color-persimmon);
+          animation: gs-hx-pulse 1.8s var(--ease-in-out) infinite;
+        }
+        @keyframes gs-hx-pulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.35); opacity: 0.55; }
+        }
+        .gs-hx-row {
+          display: grid;
+          grid-template-columns: 24px 76px 1fr auto;
+          align-items: center; gap: 16px;
+          height: ${ROW_H}px;
+          max-width: 920px; margin: 0 auto;
+          padding: 0 clamp(18px, 4vw, 48px);
+          border-bottom: 1px solid var(--color-border-soft);
+          font-family: var(--font-sans-stack); font-size: 15px;
+          color: var(--color-ink);
+          transition: background 250ms var(--ease-soft);
+        }
+        .gs-hx-row.is-current {
+          background: rgba(232, 98, 42, 0.05);
+        }
+        .gs-hx-row.is-current .gs-hx-mark { border-color: var(--color-persimmon); }
+        .gs-hx-step {
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 10.5px; letter-spacing: 0.12em;
+          color: var(--color-persimmon-deep); opacity: 0.75;
+        }
+        .gs-hx-label { letter-spacing: -0.003em; transition: color 250ms var(--ease-soft); }
+        .gs-hx-date {
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 11px; color: var(--color-muted);
+          font-variant-numeric: tabular-nums;
+        }
+        .gs-hx-mark {
+          width: 19px; height: 19px; border-radius: 999px;
+          display: inline-flex; align-items: center; justify-content: center;
+          border: 1.5px solid var(--color-border);
+          background: transparent; color: transparent;
+          transition: background 250ms var(--ease-soft),
+            border-color 250ms var(--ease-soft),
+            color 250ms var(--ease-soft),
+            transform 250ms var(--ease-soft);
+        }
+        .gs-hx-mark svg { width: 10px; height: 10px; }
+        .gs-hx-row.is-done .gs-hx-mark {
+          background: var(--color-persimmon);
+          border-color: var(--color-persimmon);
           color: #FAF8F4;
-          font-family: var(--font-sans-stack);
-          font-size: 15px;
-          font-weight: 600;
-          padding: 17px 32px;
-          border-radius: 999px;
-          text-decoration: none;
-          box-shadow: 0 1px 0 rgba(255,255,255,0.22) inset, 0 14px 38px -12px rgba(232, 98, 42, 0.65);
-          transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), background 200ms ease;
+          transform: scale(1.08);
         }
-        @media (hover: hover) {
-          .gs-h5-primary:hover { transform: translateY(-2px); background: #F07040; }
-        }
-        .gs-h5-primary:active { transform: translateY(0) scale(0.98); }
-        .gs-h5-ghost {
-          font-family: var(--font-sans-stack);
-          font-size: 15px;
-          font-weight: 500;
-          color: #F5F1E8;
-          text-decoration: none;
-          padding: 16px 26px;
-          border-radius: 999px;
-          border: 1px solid rgba(245, 241, 232, 0.32);
-          transition: border-color 200ms ease, background 200ms ease;
-        }
-        @media (hover: hover) {
-          .gs-h5-ghost:hover { border-color: rgba(245, 241, 232, 0.7); background: rgba(245, 241, 232, 0.06); }
-        }
+        .gs-hx-row.is-done .gs-hx-label { color: var(--color-ink-soft); }
 
-        .gs-h5-trust {
-          margin: clamp(16px, 2.6vh, 22px) 0 0;
+        /* ── hero background — warm pooled light + faint grain ── */
+        .gs-hx-bg { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+        .gs-hx-blob {
+          position: absolute; border-radius: 999px; filter: blur(46px);
+        }
+        .gs-hx-blob-a {
+          width: 620px; height: 620px; left: -10%; top: -14%;
+          background: radial-gradient(circle, rgba(245, 213, 144, 0.5) 0%, transparent 65%);
+          opacity: 0.6;
+        }
+        .gs-hx-blob-b {
+          width: 520px; height: 520px; right: -8%; top: 24%;
+          background: radial-gradient(circle, rgba(232, 98, 42, 0.16) 0%, transparent 65%);
+          opacity: 0.7;
+        }
+        html.dark .gs-hx-blob-a { opacity: 0.12; }
+        html.dark .gs-hx-blob-b { opacity: 0.2; }
+        .gs-hx-grain {
+          position: absolute; inset: 0; opacity: 0.035;
+          background-image:
+            radial-gradient(circle at 25% 30%, rgba(28,25,23,0.5) 0.5px, transparent 1px),
+            radial-gradient(circle at 75% 70%, rgba(28,25,23,0.4) 0.5px, transparent 1px);
+          background-size: 4px 4px, 5px 5px;
+        }
+        html.dark .gs-hx-grain { opacity: 0.06; }
+
+        .gs-hx-trust {
+          margin-top: 26px;
           font-family: var(--font-mono-stack, var(--font-sans-stack));
-          font-size: 10.5px;
-          letter-spacing: 0.2em;
-          text-transform: uppercase;
-          color: rgba(245, 241, 232, 0.6);
-          opacity: 0;
-          animation: gs-h5-up 800ms cubic-bezier(0.22, 1, 0.36, 1) 1250ms both;
+          font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase;
+          color: var(--color-muted);
+          animation: gs-hx-up 700ms var(--ease-out) 480ms both;
         }
 
-        .gs-h5-cue {
-          position: absolute;
-          bottom: 22px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 1px;
-          height: 42px;
-          background: rgba(245, 241, 232, 0.18);
-          overflow: hidden;
-          opacity: 0;
-          animation: gs-h5-film-in 800ms ease 1800ms forwards;
+        /* ── dim wash + the stamp ── */
+        .gs-hx-dim {
+          position: absolute; inset: 0; z-index: 4;
+          background: var(--color-cream-soft);
+          opacity: 0; pointer-events: none;
         }
-        .gs-h5-cue span {
-          position: absolute;
-          left: 0;
-          top: -10px;
-          width: 1px;
-          height: 10px;
-          background: #FF9E78;
-          animation: gs-h5-cue-run 2s cubic-bezier(0.4, 0, 0.2, 1) 2s infinite;
+        .gs-hx-stamp {
+          position: absolute; left: 50%; top: 50%; z-index: 5;
+          opacity: 0; pointer-events: none;
+          transform: translate(-50%, -50%) scale(1.45) rotate(-8deg);
+          will-change: transform, opacity;
         }
-        @keyframes gs-h5-cue-run {
-          0%   { transform: translateY(0); opacity: 0; }
-          15%  { opacity: 1; }
-          80%  { opacity: 1; }
-          100% { transform: translateY(52px); opacity: 0; }
+        .gs-hx-stamp-frame {
+          display: flex; flex-direction: column; align-items: center; gap: 10px;
+          text-align: center; color: var(--color-persimmon);
+          padding: clamp(26px, 4vw, 38px) clamp(34px, 6vw, 64px);
+          border: 3px solid var(--color-persimmon);
+          border-radius: 14px;
+          outline: 1.5px solid rgba(232, 98, 42, 0.55);
+          outline-offset: 5px;
+          background: radial-gradient(80% 90% at 50% 40%, rgba(232,98,42,0.10) 0%, rgba(232,98,42,0.02) 80%);
+          box-shadow: 0 30px 90px -24px rgba(232, 98, 42, 0.4);
+          /* subtle worn-ink effect */
+          -webkit-mask-image: radial-gradient(140% 140% at 48% 52%, #000 62%, rgba(0,0,0,0.82) 78%, rgba(0,0,0,0.95) 100%);
+                  mask-image: radial-gradient(140% 140% at 48% 52%, #000 62%, rgba(0,0,0,0.82) 78%, rgba(0,0,0,0.95) 100%);
         }
-
-        @media (max-width: 640px) {
-          .gs-h5 { min-height: 560px; }
-          .gs-h5-h1 { font-size: clamp(40px, 11.5vw, 54px); }
-          .gs-h5-stamp { right: -0.35em; top: -0.62em; width: 1.42em; height: 1.42em; }
-          .gs-h5-ctas { flex-direction: column; width: 100%; }
-          .gs-h5-primary, .gs-h5-ghost {
-            width: 100%;
-            max-width: 340px;
-            text-align: center;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-          }
+        .gs-hx-stamp-type, .gs-hx-stamp-date {
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 11px; letter-spacing: 0.34em; font-weight: 600;
+          white-space: nowrap;
+        }
+        .gs-hx-stamp-word {
+          font-family: var(--font-display-stack); font-style: italic;
+          font-size: clamp(52px, 8vw, 84px); letter-spacing: -0.01em;
+          line-height: 1;
         }
 
-        @media (prefers-reduced-motion: reduce) {
-          .gs-h5-film,
-          .gs-h5-kicker,
-          .gs-h5-line,
-          .gs-h5-stamp,
-          .gs-h5-sub,
-          .gs-h5-ctas,
-          .gs-h5-trust,
-          .gs-h5-cue {
-            animation: none !important;
-            opacity: 1 !important;
-            transform: none !important;
-          }
-          .gs-h5-stamp { transform: rotate(-12deg) !important; }
-          .gs-h5-cue span { animation: none !important; opacity: 0 !important; }
+        .gs-hx-handoff {
+          position: absolute; left: 0; right: 0; bottom: 5vh; z-index: 5;
+          text-align: center; opacity: 0; pointer-events: none;
+          font-family: var(--font-sans-stack); font-size: 14px;
+          color: var(--color-ink-soft);
         }
+
+        @media (max-width: 767px) {
+          .gs-hx-row { grid-template-columns: 20px 58px 1fr auto; gap: 10px; font-size: 13px; }
+          .gs-hx-h1 { font-size: clamp(36px, 9.6vw, 50px); }
+          .gs-hx-sub { font-size: 15px; }
+        }
+      `}</style>
+    </section>
+  );
+}
+
+/* Static fallback — no runway, no pin, no per-frame writes. What
+   reduced-motion users (and any non-JS render) get. */
+function HeroStatic() {
+  return (
+    <section aria-label="Hero" className="gs-hxs">
+      <p className="gs-hx-eyebrow">F-1 · From 10 countries · One payment</p>
+      <h1 className="gs-hx-h1">
+        Every step from <em>home</em>
+        <br />
+        to your US visa.
+      </h1>
+      <p className="gs-hx-sub">
+        The full F-1 route, sequenced for your home country — every form,
+        fee, and interview between you and the stamp. AI document checks.
+        Voice mock interviews. One workspace until your passport says yes.
+      </p>
+      <div className="gs-hx-ctas">
+        <Link href="/sign-up" className="gs-hx-primary">
+          Start free — Phase 1 forever
+        </Link>
+        <Link href="#playbook" className="gs-hx-hint" style={{ textDecoration: "none" }}>
+          See the playbook <span aria-hidden>↓</span>
+        </Link>
+      </div>
+      <div className="gs-hxs-card">
+        {ROWS.slice(0, 5).map((r, i) => (
+          <div key={r.n} className={`gs-hx-row${i < 2 ? " is-done" : ""}`}>
+            <span className="gs-hx-mark" aria-hidden>
+              <svg viewBox="0 0 12 12" fill="none">
+                <path d="M2.5 6.2 L5 8.6 L9.5 3.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <span className="gs-hx-step">Step {r.n}</span>
+            <span className="gs-hx-label">{r.label}</span>
+            <span className="gs-hx-date">{r.date}</span>
+          </div>
+        ))}
+      </div>
+      <style>{`
+        .gs-hxs {
+          display: flex; flex-direction: column; align-items: center;
+          text-align: center;
+          padding: clamp(96px, 13vh, 150px) 24px 80px;
+          background: var(--color-cream);
+        }
+        .gs-hxs .gs-hx-eyebrow, .gs-hxs .gs-hx-h1, .gs-hxs .gs-hx-sub,
+        .gs-hxs .gs-hx-ctas { animation: none !important; }
+        .gs-hxs-card {
+          margin-top: 56px; width: 100%; max-width: 760px;
+          border: 1px solid var(--color-border-soft); border-radius: 20px;
+          background: var(--color-cream-soft); overflow: hidden;
+          text-align: left;
+        }
+        .gs-hxs-card .gs-hx-row:last-child { border-bottom: none; }
       `}</style>
     </section>
   );
