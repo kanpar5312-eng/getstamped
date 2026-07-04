@@ -267,6 +267,12 @@ export function Hero() {
             <br />
             to your US visa.
           </h1>
+          <p className="sr-only">
+            GetStamped is a guided F-1 student visa preparation workspace
+            that walks international students through all 47 required steps,
+            checks visa documents with AI, and runs voice-based mock visa
+            interviews, in one place.
+          </p>
           <p className="gs-hx-sub">
             The full F-1 route, sequenced for your home country — every form,
             fee, and interview between you and the stamp. AI document checks.
