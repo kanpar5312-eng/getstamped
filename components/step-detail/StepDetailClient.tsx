@@ -12,6 +12,11 @@ import type { StepStatus } from "@/lib/timeline-data";
 import { getChecklistItem } from "@/lib/documents/checklist";
 import { getDocumentExample } from "@/components/documents/examples";
 import { ManualVerifyModal } from "@/components/documents/ManualVerifyModal";
+import { DocumentConsentModal } from "@/components/documents/DocumentConsentModal";
+import { notifyNetworkError } from "@/components/NetworkToast";
+
+const MAX_BYTES = 10 * 1024 * 1024;
+const ACCEPTED_MIME = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
 
 type DocState = { name: string; description: string; required: boolean; uploadedAt: Date | null };
 
@@ -37,6 +42,9 @@ type Props = {
   docSlugBySlot?: (string | null)[];
   /** Real status for each resolved slug, fetched server-side. */
   docLiveStatus?: Record<string, DocLiveStatus>;
+  /** DPDP consent already recorded for the current version — same gate
+   *  as the Document Vault's, since this page now uploads inline too. */
+  consentGiven?: boolean;
 };
 
 function CheckIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
@@ -94,6 +102,7 @@ export function StepDetailClient({
   phaseTotal,
   docSlugBySlot,
   docLiveStatus,
+  consentGiven = false,
 }: Props) {
   const router = useRouter();
   const [status, setStatus] = useState<StepStatus>(initialStatus);
@@ -110,8 +119,106 @@ export function StepDetailClient({
   const [askOpen, setAskOpen] = useState(false);
   const [showCelebrate, setShowCelebrate] = useState(false);
   const [paywallHit, setPaywallHit] = useState(false);
+  const [savedNotice, setSavedNotice] = useState(false);
   const [, startTransition] = useTransition();
   const instructionsRef = useRef<HTMLElement>(null);
+
+  // ---- Inline document upload (mirrors components/documents/DocumentsClient
+  // ---- so Timeline steps actually upload instead of just linking away) ----
+  const [hasConsent, setHasConsent] = useState(consentGiven);
+  const hasConsentRef = useRef(consentGiven);
+  const [consentOpen, setConsentOpen] = useState(false);
+  const pendingUploadRef = useRef<{ slug: string; file: File } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadSlugRef = useRef<string | null>(null);
+
+  const updateLiveStatus = (slug: string, patch: Partial<DocLiveStatus>) => {
+    setLiveStatus((prev) => {
+      const base: DocLiveStatus = prev[slug] ?? { status: "missing", verificationMethod: null };
+      return { ...prev, [slug]: { ...base, ...patch } };
+    });
+  };
+
+  const runSlugUpload = async (slug: string, file: File) => {
+    if (!hasConsentRef.current) {
+      pendingUploadRef.current = { slug, file };
+      setConsentOpen(true);
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      updateLiveStatus(slug, { status: "attention" });
+      return;
+    }
+    if (!ACCEPTED_MIME.includes(file.type)) {
+      updateLiveStatus(slug, { status: "attention" });
+      return;
+    }
+
+    updateLiveStatus(slug, { status: "uploading" });
+    const form = new FormData();
+    form.append("file", file);
+    form.append("slug", slug);
+    try {
+      const r = await fetch("/api/documents/upload", { method: "POST", body: form });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data.ok) {
+        updateLiveStatus(slug, { status: "attention" });
+        return;
+      }
+      updateLiveStatus(slug, { status: "checking" });
+      const c = await fetch("/api/documents/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId: data.documentId }),
+      });
+      if (c.ok) {
+        // Re-fetch the real row rather than trust the check response's
+        // shape — same pattern DocumentsClient uses.
+        const s = await fetch(`/api/documents/state?slug=${encodeURIComponent(slug)}`, { cache: "no-store" });
+        const sdata = await s.json().catch(() => ({}));
+        if (s.ok && sdata?.row) {
+          updateLiveStatus(slug, {
+            status: sdata.row.status,
+            verificationMethod: sdata.row.verificationMethod ?? "ai",
+          });
+        } else {
+          updateLiveStatus(slug, { status: "attention" });
+        }
+      } else {
+        updateLiveStatus(slug, { status: "attention" });
+      }
+    } catch {
+      notifyNetworkError();
+      updateLiveStatus(slug, { status: "attention" });
+    }
+  };
+
+  const triggerSlugUpload = (slug: string) => {
+    uploadSlugRef.current = slug;
+    fileInputRef.current?.click();
+  };
+
+  const onFileChosen = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file next time
+    const slug = uploadSlugRef.current;
+    if (!file || !slug) return;
+    void runSlugUpload(slug, file);
+  };
+
+  const onConsentConfirmed = () => {
+    hasConsentRef.current = true;
+    setHasConsent(true);
+    setConsentOpen(false);
+    const pending = pendingUploadRef.current;
+    pendingUploadRef.current = null;
+    if (pending) void runSlugUpload(pending.slug, pending.file);
+  };
+
+  const onConsentCancelled = () => {
+    setConsentOpen(false);
+    pendingUploadRef.current = null;
+  };
 
   // Locked detection
   const isLocked = initialStatus === "locked";
@@ -189,11 +296,14 @@ export function StepDetailClient({
   };
 
   // "Save for later" — keep the step in_progress (so it shows on the
-  // dashboard as a resume point) and bounce back to the timeline list.
+  // dashboard as a resume point) WITHOUT leaving the page. It used to
+  // navigate to /dashboard/timeline, which read as "the page exited" —
+  // it's meant to be a quiet save, not a navigation.
   const saveForLater = async () => {
     setStatus("in_progress");
     void markStep(step.number, "in_progress");
-    startTransition(() => router.push("/dashboard/timeline"));
+    setSavedNotice(true);
+    setTimeout(() => setSavedNotice(false), 2200);
   };
 
   // ------------------------- Paywall variant -------------------------
@@ -213,6 +323,7 @@ export function StepDetailClient({
             onMarkComplete={() => {}}
             onReopen={() => {}}
             onSaveForLater={() => {}}
+            savedNotice={false}
             showCelebrate={false}
             prevStep={prevStep}
             nextStep={nextStep}
@@ -223,6 +334,7 @@ export function StepDetailClient({
             docSlugBySlot={docSlugBySlot}
             liveStatus={liveStatus}
             onVerifyManually={() => {}}
+            onUploadSlug={() => {}}
           />
         </div>
 
@@ -278,6 +390,7 @@ export function StepDetailClient({
         onMarkComplete={markComplete}
         onReopen={reopen}
         onSaveForLater={saveForLater}
+        savedNotice={savedNotice}
         showCelebrate={showCelebrate}
         prevStep={prevStep}
         nextStep={nextStep}
@@ -288,6 +401,19 @@ export function StepDetailClient({
         docSlugBySlot={docSlugBySlot}
         liveStatus={liveStatus}
         onVerifyManually={setManualVerifySlug}
+        onUploadSlug={triggerSlugUpload}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={ACCEPTED_MIME.join(",")}
+        className="sr-only"
+        onChange={onFileChosen}
+      />
+      <DocumentConsentModal
+        open={consentOpen}
+        onCancel={onConsentCancelled}
+        onConfirmed={onConsentConfirmed}
       />
       <AskPanel
         open={askOpen}
@@ -338,6 +464,7 @@ type MainProps = {
   onMarkComplete: () => void;
   onReopen: () => void;
   onSaveForLater: () => void;
+  savedNotice: boolean;
   showCelebrate: boolean;
   prevStep: Step | null;
   nextStep: Step | null;
@@ -348,6 +475,7 @@ type MainProps = {
   docSlugBySlot?: (string | null)[];
   liveStatus: Record<string, DocLiveStatus>;
   onVerifyManually: (slug: string) => void;
+  onUploadSlug: (slug: string) => void;
 };
 
 function StepDetailMain({
@@ -362,11 +490,13 @@ function StepDetailMain({
   onMarkComplete,
   onReopen,
   onSaveForLater,
+  savedNotice,
   showCelebrate,
   prevStep,
   docSlugBySlot,
   liveStatus,
   onVerifyManually,
+  onUploadSlug,
   nextStep,
   askOpen,
   setAskOpen,
@@ -531,13 +661,21 @@ function StepDetailMain({
                           </Link>
                         ) : (
                           <span className="flex items-center gap-2 shrink-0">
-                            <Link
-                              href="/dashboard/documents"
-                              title="Upload for AI check"
-                              className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink-soft)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-deep)] transition-colors"
-                            >
-                              <UploadIcon /> Upload
-                            </Link>
+                            {live?.status === "uploading" || live?.status === "checking" ? (
+                              <span className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)]">
+                                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-accent)] animate-soft-pulse" />
+                                {live.status === "uploading" ? "Uploading…" : "Checking…"}
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => onUploadSlug(slug)}
+                                title="Upload for AI check"
+                                className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink-soft)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-deep)] transition-colors"
+                              >
+                                <UploadIcon /> Upload
+                              </button>
+                            )}
                             {getDocumentExample(slug) && (
                               <button
                                 type="button"
@@ -650,7 +788,12 @@ function StepDetailMain({
                   <h3 className="font-display text-lg tracking-tight text-[var(--color-ink)]">Done with this step?</h3>
                   <p className="text-xs text-[var(--color-muted)]">Marking complete updates your dashboard and unlocks the next step.</p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex items-center flex-wrap gap-2">
+                  {savedNotice && (
+                    <span className="text-xs font-medium text-[var(--color-accent-deep)] animate-fade-up">
+                      Saved — you can pick this up later.
+                    </span>
+                  )}
                   <button type="button" onClick={onSaveForLater} className="inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-transparent px-4 py-2 text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-deep)] transition-colors">
                     Save for later
                   </button>

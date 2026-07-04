@@ -67,6 +67,14 @@ export async function markStep(
   const now = new Date().toISOString();
   const row: Record<string, string | number> = {
     user_id: userId,
+    // supabase/migrations/0002_country_aware.sql dropped the old
+    // (user_id, step_number) unique constraint and replaced it with
+    // (user_id, country_code, step_number) for the multi-country
+    // groundwork. This F-1 (US) playbook always writes country_code
+    // "US" — every write here was silently failing the upsert (wrong
+    // onConflict target = no matching constraint = Postgres error)
+    // until country_code was added below.
+    country_code: "US",
     step_number: stepNumber,
     status,
     updated_at: now,
@@ -79,7 +87,7 @@ export async function markStep(
 
   const { error: upsertErr } = await sb
     .from("step_progress")
-    .upsert(row, { onConflict: "user_id,step_number" });
+    .upsert(row, { onConflict: "user_id,country_code,step_number" });
 
   if (upsertErr) return { ok: false, error: upsertErr.message };
 

@@ -7,6 +7,7 @@ import { buildTimelineView } from "@/lib/timeline-data";
 import { StepDetailClient, type DocLiveStatus } from "@/components/step-detail/StepDetailClient";
 import { getServerSupabase, getSessionUser } from "@/lib/supabase/server";
 import { resolveDocumentSlug } from "@/lib/documents/slug-resolver";
+import { DOCUMENT_CONSENT_VERSION } from "@/lib/documents/consent";
 
 type SearchParams = Promise<{ state?: string }>;
 type Params = Promise<{ stepNumber: string }>;
@@ -60,24 +61,32 @@ export default async function StepDetailPage({
   const relevantSlugs = Array.from(new Set(docSlugBySlot.filter((s): s is string => Boolean(s))));
 
   const docLiveStatus: Record<string, DocLiveStatus> = {};
-  if (relevantSlugs.length > 0) {
-    const sb = await getServerSupabase();
-    const sessionUser = await getSessionUser();
-    if (sb && sessionUser) {
-      const { data } = await sb
-        .from("documents")
-        .select("slug, status, verification_method")
-        .eq("user_id", sessionUser.id)
-        .in("slug", relevantSlugs)
-        .is("deleted_at", null);
-      for (const row of data ?? []) {
-        docLiveStatus[row.slug] = {
-          status: row.status,
-          verificationMethod:
-            row.verification_method ?? (row.status === "accepted" ? "ai" : null),
-        };
-      }
+  // DPDP Act compliance — same affirmative-consent gate the Document Vault
+  // uses. Fetched here too since the Timeline page now uploads inline
+  // (via /api/documents/upload) instead of only linking out to the vault.
+  let consentGiven = false;
+  const sb = await getServerSupabase();
+  const sessionUser = await getSessionUser();
+  if (sb && sessionUser) {
+    const [{ data }, { data: profileRow }] = await Promise.all([
+      relevantSlugs.length > 0
+        ? sb
+            .from("documents")
+            .select("slug, status, verification_method")
+            .eq("user_id", sessionUser.id)
+            .in("slug", relevantSlugs)
+            .is("deleted_at", null)
+        : Promise.resolve({ data: null }),
+      sb.from("profiles").select("document_consent_version").eq("id", sessionUser.id).maybeSingle(),
+    ]);
+    for (const row of data ?? []) {
+      docLiveStatus[row.slug] = {
+        status: row.status,
+        verificationMethod:
+          row.verification_method ?? (row.status === "accepted" ? "ai" : null),
+      };
     }
+    consentGiven = profileRow?.document_consent_version === DOCUMENT_CONSENT_VERSION;
   }
 
   return (
@@ -92,6 +101,7 @@ export default async function StepDetailPage({
         phaseTotal={phaseTotal}
         docSlugBySlot={docSlugBySlot}
         docLiveStatus={docLiveStatus}
+        consentGiven={consentGiven}
       />
     </div>
   );
