@@ -112,6 +112,21 @@ export function Hero() {
     const rows = Array.from(track.querySelectorAll<HTMLElement>(".gs-hx-row"));
     let lastDone = -1;
     let ticking = false;
+    // Coarse-grained mobile detection to trim clip-path repaint precision —
+    // one read on mount/resize, not per frame.
+    let isMobile = window.innerWidth < 768;
+
+    // Repainting clip-path every frame at sub-pixel precision is the single
+    // biggest source of mobile jank here (clip-path forces a real repaint of
+    // the region, not just a compositor update, on most mobile browsers).
+    // Snapping to a coarser grid on phones cuts the number of distinct
+    // shapes the browser has to rasterize per second without any visible
+    // difference at this element's size.
+    const snap = (v: number, step: number) => Math.round(v / step) * step;
+    let lastClip = "";
+    let lastHeadT = "";
+    let lastChromeOp = "";
+    let lastNowlineOp = "";
 
     const frame = () => {
       ticking = false;
@@ -125,23 +140,34 @@ export function Hero() {
 
       /* ACT 1 — headline out, card expands to fullscreen */
       const hOut = easeOut(sub(p, 0, 0.14));
-      head.style.opacity = (1 - hOut).toFixed(3);
-      head.style.transform = `translateY(${(-44 * hOut).toFixed(1)}px)`;
-      head.style.pointerEvents = p > 0.1 ? "none" : "";
+      const headT = `translateY(${(-44 * hOut).toFixed(1)}px)`;
+      if (headT !== lastHeadT) {
+        lastHeadT = headT;
+        head.style.opacity = (1 - hOut).toFixed(3);
+        head.style.transform = headT;
+        head.style.pointerEvents = p > 0.1 ? "none" : "";
+      }
 
       const k = easeOut(sub(p, 0.03, 0.26));
-      const isMobile = vw < 768;
       const sideStart = isMobile ? vw * 0.05 : Math.max((vw - 760) / 2, vw * 0.04);
       const topStart = vh * (isMobile ? 0.54 : 0.58);
       const botStart = vh * 0.05;
-      const inTop = lerp(topStart, 0, k);
-      const inSide = lerp(sideStart, 0, k);
-      const inBot = lerp(botStart, 0, k);
-      const rad = lerp(20, 0, k);
-      book.style.clipPath = `inset(${inTop.toFixed(1)}px ${inSide.toFixed(1)}px ${inBot.toFixed(1)}px ${inSide.toFixed(1)}px round ${rad.toFixed(1)}px)`;
+      const clipStep = isMobile ? 3 : 1;
+      const radStep = isMobile ? 2 : 1;
+      const inTop = snap(lerp(topStart, 0, k), clipStep);
+      const inSide = snap(lerp(sideStart, 0, k), clipStep);
+      const inBot = snap(lerp(botStart, 0, k), clipStep);
+      const rad = snap(lerp(20, 0, k), radStep);
+      const clip = `inset(${inTop}px ${inSide}px ${inBot}px ${inSide}px round ${rad}px)`;
+      if (clip !== lastClip) {
+        lastClip = clip;
+        book.style.clipPath = clip;
+      }
 
-      if (chrome) chrome.style.opacity = easeOut(sub(p, 0.16, 0.28)).toFixed(3);
-      if (nowline) nowline.style.opacity = easeOut(sub(p, 0.2, 0.3)).toFixed(3);
+      const chromeOp = easeOut(sub(p, 0.16, 0.28)).toFixed(2);
+      if (chrome && chromeOp !== lastChromeOp) { lastChromeOp = chromeOp; chrome.style.opacity = chromeOp; }
+      const nowlineOp = easeOut(sub(p, 0.2, 0.3)).toFixed(2);
+      if (nowline && nowlineOp !== lastNowlineOp) { lastNowlineOp = nowlineOp; nowline.style.opacity = nowlineOp; }
 
       /* ACT 2 — travel through the playbook */
       const t = sub(p, 0.26, 0.84);
@@ -194,6 +220,10 @@ export function Hero() {
         requestAnimationFrame(frame);
       }
     };
+    const onResize = () => {
+      isMobile = window.innerWidth < 768;
+      onScroll();
+    };
 
     // Escape hatch — click anywhere that isn't a link skips the runway.
     const onClick = (e: MouseEvent) => {
@@ -207,11 +237,11 @@ export function Hero() {
 
     frame();
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("resize", onResize);
     runway.addEventListener("click", onClick);
     return () => {
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("resize", onResize);
       runway.removeEventListener("click", onClick);
     };
   }, [reduced]);
@@ -402,6 +432,11 @@ export function Hero() {
           border: 1px solid var(--color-border-soft);
           clip-path: inset(60vh 20vw 5vh 20vw round 20px);
           will-change: clip-path;
+          /* Promote to its own compositor layer so the clip-path repaint
+             doesn't drag the blurred glow layer behind it along with it —
+             the single biggest win for mobile scroll smoothness here. */
+          transform: translateZ(0);
+          backface-visibility: hidden;
         }
         .gs-hx-chrome {
           position: absolute; inset: 0 0 auto 0; height: 56px; z-index: 4;
@@ -560,6 +595,18 @@ export function Hero() {
           background-size: 4px 4px, 5px 5px;
         }
         html.dark .gs-hx-grain { opacity: 0.06; }
+        /* filter: blur() is one of the costliest paints on mobile GPUs, and
+           it sits directly under a layer whose clip-path repaints on every
+           scroll frame — that combination is the main source of the mobile
+           jank. Trade blur radius for size on phones; the gradient itself
+           already tapers to transparent so the glow still reads softly. */
+        @media (max-width: 767px) {
+          .gs-hx-blob { filter: blur(20px); }
+          .gs-hx-blob-a { width: 380px; height: 380px; }
+          .gs-hx-blob-b { width: 340px; height: 340px; }
+          .gs-hx-grain { display: none; }
+          .gs-hx-book-grain { display: none; }
+        }
 
         .gs-hx-trust {
           margin-top: 26px;
