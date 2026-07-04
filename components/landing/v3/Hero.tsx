@@ -60,6 +60,9 @@ const ROWS: PlayRow[] = [
 ];
 
 const ROW_H = 64; // px, fixed — lets per-frame math avoid rect reads
+/* First N rows render pre-ticked so the resting card reads as a journey
+   already in motion (persimmon checks visible before any scroll). */
+const PRETICKED = 5;
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const sub = (v: number, a: number, b: number) => clamp01((v - a) / (b - a));
@@ -77,6 +80,7 @@ export function Hero() {
   const pctRef = useRef<HTMLSpanElement>(null);
   const stampRef = useRef<HTMLDivElement>(null);
   const dimRef = useRef<HTMLDivElement>(null);
+  const ghostRef = useRef<HTMLSpanElement>(null);
   const handoffRef = useRef<HTMLDivElement>(null);
   const nowlineRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef(0);
@@ -128,7 +132,7 @@ export function Hero() {
       const k = easeOut(sub(p, 0.03, 0.26));
       const isMobile = vw < 768;
       const sideStart = isMobile ? vw * 0.05 : Math.max((vw - 760) / 2, vw * 0.04);
-      const topStart = vh * (isMobile ? 0.56 : 0.6);
+      const topStart = vh * (isMobile ? 0.54 : 0.58);
       const botStart = vh * 0.05;
       const inTop = lerp(topStart, 0, k);
       const inSide = lerp(sideStart, 0, k);
@@ -141,15 +145,16 @@ export function Hero() {
 
       /* ACT 2 — travel through the playbook */
       const t = sub(p, 0.26, 0.84);
-      const padTop = vh * 0.62;
+      const padTop = vh * 0.66;
       const trackLen = padTop + ROWS.length * ROW_H;
       const maxT = trackLen - vh * 0.42;
       const translate = -easeInOutQuad(t) * maxT;
       track.style.transform = `translate3d(0, ${translate.toFixed(1)}px, 0)`;
 
-      // A row is "done" once its center rises past the now-line (50vh).
+      // A row is "done" once its center rises past the now-line (50vh);
+      // floored at PRETICKED so the resting card's checks never un-tick.
       const done = Math.max(
-        0,
+        PRETICKED,
         Math.min(
           ROWS.length,
           Math.floor((vh * 0.5 - padTop - ROW_H / 2 - translate) / ROW_H + 1),
@@ -157,12 +162,15 @@ export function Hero() {
       );
       if (done !== lastDone) {
         lastDone = done;
-        rows.forEach((r, i) => r.classList.toggle("is-done", i < done));
-        if (phaseEl) {
-          const idx = Math.min(Math.max(done, 1) - 1, ROWS.length - 1);
-          phaseEl.textContent = ROWS[idx].phase;
-        }
-        if (pct) pct.textContent = `${Math.round((done / ROWS.length) * 47)} / 47`;
+        rows.forEach((r, i) => {
+          r.classList.toggle("is-done", i < done);
+          r.classList.toggle("is-current", i === done && done < ROWS.length);
+        });
+        const idx = Math.min(Math.max(done, 1) - 1, ROWS.length - 1);
+        if (phaseEl) phaseEl.textContent = ROWS[idx].phase;
+        // "PHASE 0X · …" → the big ghost numeral behind the rows
+        if (ghostRef.current) ghostRef.current.textContent = ROWS[idx].phase.slice(6, 8);
+        if (pct) pct.textContent = `${Math.round((done / ROWS.length) * 100)}%`;
         if (bar) bar.style.transform = `scaleX(${(done / ROWS.length).toFixed(3)})`;
       }
 
@@ -223,15 +231,16 @@ export function Hero() {
 
         {/* ── Layer A · headline stack ── */}
         <div ref={headRef} className="gs-hx-head">
-          <p className="gs-hx-eyebrow">F-1 · 47 Steps · One Payment</p>
+          <p className="gs-hx-eyebrow">F-1 · From 10 countries · One payment</p>
           <h1 className="gs-hx-h1">
-            Forty-seven steps.
+            Every step from <em>home</em>
             <br />
-            We have <em>all</em> of them.
+            to your US visa.
           </h1>
           <p className="gs-hx-sub">
-            A 47-step playbook in consulate order. AI document checks. Voice
-            mock interviews. One workspace until your passport is stamped.
+            The full F-1 route, sequenced for your home country — every form,
+            fee, and interview between you and the stamp. AI document checks.
+            Voice mock interviews. One workspace until your passport says yes.
           </p>
           <div className="gs-hx-ctas">
             <Link href="/sign-up" className="gs-hx-primary">
@@ -248,13 +257,18 @@ export function Hero() {
 
         {/* ── Layer B · the playbook (full viewport, clipped to a card) ── */}
         <div ref={bookRef} className="gs-hx-book" aria-hidden>
+          {/* Ghost phase numeral + paper grain so the fullscreen stretch
+              never reads as a flat empty sheet */}
+          <span ref={ghostRef} className="gs-hx-ghost">02</span>
+          <span className="gs-hx-book-grain" />
+
           <div ref={chromeRef} className="gs-hx-chrome">
             <span ref={phaseRef} className="gs-hx-phase">{PHASE_2}</span>
             <span className="gs-hx-meter">
               <span className="gs-hx-bar">
                 <span ref={barRef} className="gs-hx-bar-fill" />
               </span>
-              <span ref={pctRef} className="gs-hx-pct">0 / 47</span>
+              <span ref={pctRef} className="gs-hx-pct">25%</span>
             </span>
           </div>
 
@@ -263,8 +277,14 @@ export function Hero() {
           </div>
 
           <div ref={trackRef} className="gs-hx-track">
-            {ROWS.map((r) => (
-              <div key={r.n} className="gs-hx-row">
+            {/* Card masthead — visible in the resting card, scrolls away
+                with the journey */}
+            <div className="gs-hx-minihead">
+              <span className="gs-hx-minihead-dot" />
+              Live playbook · tuned to your home country
+            </div>
+            {ROWS.map((r, i) => (
+              <div key={r.n} className={`gs-hx-row${i < PRETICKED ? " is-done" : ""}${i === PRETICKED ? " is-current" : ""}`}>
                 <span className="gs-hx-mark" aria-hidden>
                   <svg viewBox="0 0 12 12" fill="none">
                     <path d="M2.5 6.2 L5 8.6 L9.5 3.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -427,26 +447,68 @@ export function Hero() {
           border: 1px solid rgba(232,98,42,0.5); border-radius: 999px;
         }
 
+        .gs-hx-ghost {
+          position: absolute; left: 2vw; top: 50%; z-index: 1;
+          transform: translateY(-50%);
+          font-family: var(--font-display-stack); font-style: italic;
+          font-size: clamp(200px, 34vh, 380px); line-height: 1;
+          color: var(--color-ink); opacity: 0.045;
+          pointer-events: none; user-select: none;
+          font-variant-numeric: tabular-nums;
+        }
+        .gs-hx-book-grain {
+          position: absolute; inset: 0; z-index: 1; pointer-events: none;
+          opacity: 0.03;
+          background-image:
+            radial-gradient(circle at 25% 30%, rgba(28,25,23,0.5) 0.5px, transparent 1px),
+            radial-gradient(circle at 75% 70%, rgba(28,25,23,0.4) 0.5px, transparent 1px);
+          background-size: 4px 4px, 5px 5px;
+        }
+        html.dark .gs-hx-book-grain { opacity: 0.05; }
+
         .gs-hx-track {
           position: absolute; inset: 0; z-index: 2;
-          padding-top: 62vh;
+          padding-top: 66vh;
           will-change: transform;
+        }
+        .gs-hx-minihead {
+          position: absolute; top: calc(66vh - 52px); left: 0; right: 0;
+          max-width: 920px; margin: 0 auto;
+          padding: 0 clamp(18px, 4vw, 48px);
+          display: flex; align-items: center; gap: 10px;
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase;
+          color: var(--color-persimmon); font-weight: 600;
+        }
+        .gs-hx-minihead-dot {
+          width: 7px; height: 7px; border-radius: 999px;
+          background: var(--color-persimmon);
+          animation: gs-hx-pulse 1.8s var(--ease-in-out) infinite;
+        }
+        @keyframes gs-hx-pulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.35); opacity: 0.55; }
         }
         .gs-hx-row {
           display: grid;
           grid-template-columns: 24px 76px 1fr auto;
           align-items: center; gap: 16px;
           height: ${ROW_H}px;
-          max-width: 860px; margin: 0 auto;
+          max-width: 920px; margin: 0 auto;
           padding: 0 clamp(18px, 4vw, 48px);
           border-bottom: 1px solid var(--color-border-soft);
-          font-family: var(--font-sans-stack); font-size: 14.5px;
+          font-family: var(--font-sans-stack); font-size: 15px;
           color: var(--color-ink);
+          transition: background 250ms var(--ease-soft);
         }
+        .gs-hx-row.is-current {
+          background: rgba(232, 98, 42, 0.05);
+        }
+        .gs-hx-row.is-current .gs-hx-mark { border-color: var(--color-persimmon); }
         .gs-hx-step {
           font-family: var(--font-mono-stack, var(--font-sans-stack));
           font-size: 10.5px; letter-spacing: 0.12em;
-          color: var(--color-muted);
+          color: var(--color-persimmon-deep); opacity: 0.75;
         }
         .gs-hx-label { letter-spacing: -0.003em; transition: color 250ms var(--ease-soft); }
         .gs-hx-date {
@@ -566,22 +628,23 @@ export function Hero() {
 function HeroStatic() {
   return (
     <section aria-label="Hero" className="gs-hxs">
-      <p className="gs-hx-eyebrow">F-1 · 47 Steps · One Payment</p>
+      <p className="gs-hx-eyebrow">F-1 · From 10 countries · One payment</p>
       <h1 className="gs-hx-h1">
-        Forty-seven steps.
+        Every step from <em>home</em>
         <br />
-        We have <em>all</em> of them.
+        to your US visa.
       </h1>
       <p className="gs-hx-sub">
-        A 47-step playbook in consulate order. AI document checks. Voice mock
-        interviews. One workspace until your passport is stamped.
+        The full F-1 route, sequenced for your home country — every form,
+        fee, and interview between you and the stamp. AI document checks.
+        Voice mock interviews. One workspace until your passport says yes.
       </p>
       <div className="gs-hx-ctas">
         <Link href="/sign-up" className="gs-hx-primary">
           Start free — Phase 1 forever
         </Link>
         <Link href="#playbook" className="gs-hx-hint" style={{ textDecoration: "none" }}>
-          See the 47 steps <span aria-hidden>↓</span>
+          See the playbook <span aria-hidden>↓</span>
         </Link>
       </div>
       <div className="gs-hxs-card">

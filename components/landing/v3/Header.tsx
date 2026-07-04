@@ -6,12 +6,16 @@ import BubbleMenu from "@/components/ui/BubbleMenu";
 import { BrandMark } from "@/components/ui/BrandMark";
 
 /* Header: mobile keeps the BubbleMenu untouched. Desktop (≥900px) is a
-   Kiro-style dark chrome bar — logo left, uppercase nav center, sign-in +
-   CTA right — with a soft glass light that follows the cursor across the
-   bar. The bar is deliberately ink-dark in BOTH themes (it's chrome, like
-   the footer), so its colors are literal rather than token-driven; the
-   persimmon accent is shared with everything else. No search — we don't
-   have one. */
+   Kiro-style translucent dark chrome bar — logo left, uppercase nav
+   center, sign-in + CTA right — with a warm glass light that follows the
+   cursor (rAF lerp, not a CSS transition, so it trails smoothly instead
+   of stuttering). The bar is deliberately ink-dark in BOTH themes (it's
+   chrome, like the footer), so its colors are literal.
+
+   NOTE on selectors: Styles.tsx has `.v3-root a { color: inherit }`
+   (specificity 0,1,1) which BEATS a single-class rule (0,1,0) — that made
+   the first version's light link colors silently lose and render dark-on-
+   dark. Every color rule below is therefore `.gs-nav .gs-nav-*` (0,2,0). */
 
 const NAV_ITEMS = [
   { label: "workspace", href: "/sign-in", ariaLabel: "Workspace" },
@@ -88,19 +92,37 @@ function DesktopBar() {
     const bar = barRef.current;
     const glow = glowRef.current;
     if (!bar || !glow) return;
+
+    /* Buttery cursor-follow: lerp toward the target x every frame while
+       hovering (and until it settles), instead of a CSS transition that
+       restarts on every mousemove and reads as jitter. */
+    let targetX = -300;
+    let currentX = -300;
+    let hovering = false;
     let raf = 0;
-    const onMove = (e: MouseEvent) => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
+
+    const loop = () => {
+      currentX += (targetX - currentX) * 0.18;
+      glow.style.transform = `translate(${currentX.toFixed(1)}px, -50%)`;
+      if (hovering || Math.abs(targetX - currentX) > 0.5) {
+        raf = requestAnimationFrame(loop);
+      } else {
         raf = 0;
-        const r = bar.getBoundingClientRect();
-        glow.style.transform = `translate(${(e.clientX - r.left - 110).toFixed(0)}px, -50%)`;
-        glow.style.opacity = "1";
-      });
+      }
+    };
+
+    const onMove = (e: MouseEvent) => {
+      const r = bar.getBoundingClientRect();
+      targetX = e.clientX - r.left - 130;
+      hovering = true;
+      glow.style.opacity = "1";
+      if (!raf) raf = requestAnimationFrame(loop);
     };
     const onLeave = () => {
+      hovering = false;
       glow.style.opacity = "0";
     };
+
     bar.addEventListener("mousemove", onMove);
     bar.addEventListener("mouseleave", onLeave);
     return () => {
@@ -146,13 +168,13 @@ function DesktopBar() {
           display: flex; align-items: center; justify-content: space-between;
           gap: 24px;
           padding: 0 10px 0 22px;
-          background: rgba(20, 17, 15, 0.92);
-          -webkit-backdrop-filter: blur(18px) saturate(160%);
-          backdrop-filter: blur(18px) saturate(160%);
-          border: 1px solid rgba(245, 241, 232, 0.10);
+          background: rgba(22, 19, 16, 0.72);
+          -webkit-backdrop-filter: blur(22px) saturate(180%);
+          backdrop-filter: blur(22px) saturate(180%);
+          border: 1px solid rgba(245, 241, 232, 0.12);
           border-radius: 18px;
-          box-shadow: 0 18px 48px -20px rgba(0, 0, 0, 0.45),
-            inset 0 1px 0 rgba(255, 255, 255, 0.06);
+          box-shadow: 0 18px 48px -20px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.10);
           overflow: hidden;
           animation: gs-nav-in 600ms var(--ease-out) both;
         }
@@ -161,21 +183,21 @@ function DesktopBar() {
           to   { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
 
-        .gs-nav-glow {
+        .gs-nav .gs-nav-glow {
           position: absolute; top: 50%; left: 0;
-          width: 220px; height: 78%;
+          width: 260px; height: 200%;
           border-radius: 999px;
-          background: radial-gradient(130px 40px at center,
-            rgba(255, 158, 120, 0.16) 0%,
-            rgba(255, 255, 255, 0.07) 45%,
-            transparent 75%);
+          background: radial-gradient(140px 46px at center,
+            rgba(255, 158, 120, 0.22) 0%,
+            rgba(255, 255, 255, 0.09) 45%,
+            transparent 72%);
           opacity: 0; pointer-events: none;
-          transform: translate(-220px, -50%);
-          transition: opacity 250ms var(--ease-soft), transform 140ms linear;
+          transform: translate(-300px, -50%);
+          transition: opacity 300ms var(--ease-soft);
           will-change: transform, opacity;
         }
 
-        .gs-nav-logo {
+        .gs-nav .gs-nav-logo {
           display: inline-flex; align-items: center; gap: 9px;
           color: #F5F1E8; text-decoration: none;
           font-family: var(--font-display-stack);
@@ -184,49 +206,50 @@ function DesktopBar() {
           flex-shrink: 0;
         }
 
-        .gs-nav-links {
+        .gs-nav .gs-nav-links {
           display: flex; align-items: center; gap: 4px;
           position: relative; z-index: 1;
           margin: 0 auto;
         }
-        .gs-nav-link {
+        .gs-nav .gs-nav-link {
           font-family: var(--font-mono-stack, var(--font-sans-stack));
           font-size: 12px; font-weight: 500;
           letter-spacing: 0.14em; text-transform: uppercase;
-          color: rgba(245, 241, 232, 0.72);
+          color: rgba(245, 241, 232, 0.78);
           text-decoration: none;
           padding: 9px 14px; border-radius: 10px;
           transition: color 180ms var(--ease-soft), background 180ms var(--ease-soft);
         }
-        .gs-nav-link:hover {
-          color: #F5F1E8;
-          background: rgba(245, 241, 232, 0.07);
+        .gs-nav .gs-nav-link:hover {
+          color: #FFFFFF;
+          background: rgba(245, 241, 232, 0.08);
         }
 
-        .gs-nav-actions {
+        .gs-nav .gs-nav-actions {
           display: inline-flex; align-items: center; gap: 8px;
           position: relative; z-index: 1;
           flex-shrink: 0;
         }
-        .gs-nav-signin {
+        .gs-nav .gs-nav-signin {
           font-family: var(--font-mono-stack, var(--font-sans-stack));
           font-size: 12px; font-weight: 500;
           letter-spacing: 0.14em; text-transform: uppercase;
-          color: rgba(245, 241, 232, 0.85); text-decoration: none;
+          color: rgba(245, 241, 232, 0.9); text-decoration: none;
           padding: 10px 16px; border-radius: 12px;
-          border: 1px solid rgba(245, 241, 232, 0.18);
+          border: 1px solid rgba(245, 241, 232, 0.22);
           transition: border-color 180ms var(--ease-soft), color 180ms var(--ease-soft);
         }
-        .gs-nav-signin:hover { border-color: rgba(245, 241, 232, 0.45); color: #F5F1E8; }
-        .gs-nav-cta {
+        .gs-nav .gs-nav-signin:hover { border-color: rgba(245, 241, 232, 0.5); color: #FFFFFF; }
+        .gs-nav .gs-nav-cta {
           font-family: var(--font-mono-stack, var(--font-sans-stack));
           font-size: 12px; font-weight: 600;
           letter-spacing: 0.14em; text-transform: uppercase;
           color: #1C1917; background: #F5F1E8; text-decoration: none;
           padding: 11px 18px; border-radius: 12px;
-          transition: background 180ms var(--ease-soft), transform 180ms var(--ease-soft);
+          transition: background 180ms var(--ease-soft), color 180ms var(--ease-soft),
+            transform 180ms var(--ease-soft);
         }
-        .gs-nav-cta:hover { background: var(--color-persimmon); color: #F5F1E8; transform: translateY(-1px); }
+        .gs-nav .gs-nav-cta:hover { background: var(--color-persimmon); color: #F5F1E8; transform: translateY(-1px); }
       `}</style>
     </header>
   );
