@@ -150,7 +150,7 @@ export function Hero() {
 
       const k = easeOut(sub(p, 0.03, 0.26));
       const sideStart = isMobile ? vw * 0.05 : Math.max((vw - 760) / 2, vw * 0.04);
-      const topStart = vh * (isMobile ? 0.54 : 0.58);
+      const topStart = vh * (isMobile ? 0.62 : 0.58);
       const botStart = vh * 0.05;
       const clipStep = isMobile ? 3 : 1;
       const radStep = isMobile ? 2 : 1;
@@ -662,8 +662,15 @@ export function Hero() {
 
         @media (max-width: 767px) {
           .gs-hx-row { grid-template-columns: 20px 58px 1fr auto; gap: 10px; font-size: 13px; }
-          .gs-hx-h1 { font-size: clamp(36px, 9.6vw, 50px); }
-          .gs-hx-sub { font-size: 15px; }
+          /* Compact the headline stack so it clears the card preview that
+             starts rising at ~62vh — previously the CTA/trust line could
+             sit right at that boundary and read as crowded/cut off. */
+          .gs-hx-head { padding: clamp(56px, 9vh, 88px) 20px 0; }
+          .gs-hx-eyebrow { font-size: 10px; letter-spacing: 0.32em; }
+          .gs-hx-h1 { margin-top: 14px; font-size: clamp(34px, 9vw, 48px); }
+          .gs-hx-sub { margin-top: 14px; font-size: 15px; line-height: 1.5; }
+          .gs-hx-ctas { margin-top: 22px; gap: 12px; }
+          .gs-hx-trust { margin-top: 16px; }
         }
       `}</style>
     </section>
