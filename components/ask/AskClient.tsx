@@ -393,12 +393,21 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
         <span className="text-[var(--color-ink-soft)]">Ask</span>
       </nav>
 
-      <div className="mt-6 flex gap-6">
+      {/*
+        Fixed-height chat shell (like Claude/ChatGPT): this row is bounded
+        to the viewport instead of growing with message content, so the
+        message list scrolls internally while the input stays pinned at
+        the bottom of `main` — the user never has to scroll the whole page
+        down to find the textarea. The calc() approximates the dashboard
+        nav (64px) + this page's own breadcrumb/margin + <main>'s vertical
+        padding; min-h keeps it usable on short viewports.
+      */}
+      <div className="mt-6 flex gap-6 h-[calc(100dvh-200px)] min-h-[420px]">
         {/* Sidebar */}
         <aside
           className={[
             "w-[280px] flex-shrink-0",
-            "lg:block",
+            "lg:block lg:overflow-y-auto",
             // z-50 puts the drawer above the dashboard's glass header
             // (which itself has a backdrop-filter stacking context).
             // Without this, the header pokes through on mobile.
@@ -495,8 +504,8 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
         )}
 
         {/* Main chat */}
-        <main className="flex-1 min-w-0 flex flex-col" style={{ minHeight: "70vh" }}>
-          <header className="flex items-center justify-between gap-3 pb-4 border-b border-[var(--color-border-soft)]">
+        <main className="flex-1 min-w-0 min-h-0 flex flex-col">
+          <header className="shrink-0 flex items-center justify-between gap-3 pb-4 border-b border-[var(--color-border-soft)]">
             <div className="flex items-center gap-2 min-w-0">
               <button
                 type="button"
@@ -527,7 +536,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
             )}
           </header>
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto py-6 space-y-4">
+          <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto py-6 space-y-4">
             {!active ? (
               // Empty state
               <div className="text-center max-w-xl mx-auto py-12">
@@ -636,8 +645,8 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
             )}
           </div>
 
-          {/* Input area */}
-          <div className="border-t border-[var(--color-border-soft)] pt-4">
+          {/* Input area — pinned at the bottom of main, never scrolls away */}
+          <div className="shrink-0 border-t border-[var(--color-border-soft)] pt-4">
             {/* Scope chips + speed + counter */}
             <div className="flex items-center justify-between gap-3 mb-2">
               <div className="inline-flex rounded-lg bg-[var(--color-paper-deep)] p-0.5 text-xs">
