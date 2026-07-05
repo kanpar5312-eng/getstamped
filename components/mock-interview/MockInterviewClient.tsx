@@ -187,39 +187,62 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   const mutedRef = useRef(muted);
   mutedRef.current = muted;
   const audioElRef = useRef<HTMLAudioElement | null>(null);
-  // Pre-fetched MP3 blob URL keyed by `${interviewer}:${text-hash}`. We
-  // prefetch the *next* question while the user is answering the current
-  // one, so playback starts instantly when the turn flips.
-  const prefetchRef = useRef<Map<string, string>>(new Map());
+  // Pre-fetched MP3 blob-URL promise, keyed by `${interviewer}:${difficulty}:
+  // ${text}`. We prefetch the *next* question while the user is answering
+  // the current one, so playback starts instantly when the turn flips.
+  // Stores the in-flight promise (not just the resolved URL) so a
+  // concurrent caller awaits the same request instead of firing a second
+  // one — see fetchTtsUrl.
+  const prefetchRef = useRef<Map<string, Promise<string | null>>>(new Map());
 
-  /** Hit the TTS route, return an object-URL the <audio> tag can play. */
+  /**
+   * Hit the TTS route, return an object-URL the <audio> tag can play.
+   *
+   * Caches in-flight promises, not just resolved URLs: runQuestion fires a
+   * fire-and-forget prefetch for the NEXT question right after speaking
+   * the current one (void fetchTtsUrl(nextQ)), and speak() calls this same
+   * function again for that exact text once the turn comes around. With
+   * only resolved values cached, those two calls raced as two independent
+   * fetches for the same audio — wasteful, and if the first one lost the
+   * race or errored, the cache stayed empty even though a fetch was still
+   * technically in flight. Caching the promise itself means the second
+   * caller just awaits the same request.
+   */
   const fetchTtsUrl = useCallback(
-    async (text: string): Promise<string | null> => {
+    (text: string): Promise<string | null> => {
       const cacheKey = `${interviewer}:${difficulty}:${text}`;
       const cached = prefetchRef.current.get(cacheKey);
       if (cached) return cached;
-      try {
-        const r = await fetch("/api/mock-interview/tts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text,
-            interviewer,
-            tone: difficulty === "strict" ? "strict" : "standard",
-          }),
-        });
-        if (!r.ok) {
-          if (r.status === 503) setTtsAvail(false); // not configured
+
+      const promise = (async () => {
+        try {
+          const r = await fetch("/api/mock-interview/tts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              text,
+              interviewer,
+              tone: difficulty === "strict" ? "strict" : "standard",
+            }),
+          });
+          if (!r.ok) {
+            const detail = await r.text().catch(() => "");
+            console.error("[mock-interview] tts http error", r.status, detail.slice(0, 300));
+            if (r.status === 503) setTtsAvail(false); // not configured
+            prefetchRef.current.delete(cacheKey);
+            return null;
+          }
+          const blob = await r.blob();
+          return URL.createObjectURL(blob);
+        } catch (err) {
+          console.error("[mock-interview] tts fetch failed:", err);
+          prefetchRef.current.delete(cacheKey);
           return null;
         }
-        const blob = await r.blob();
-        const url = URL.createObjectURL(blob);
-        prefetchRef.current.set(cacheKey, url);
-        return url;
-      } catch (err) {
-        console.error("[mock-interview] tts fetch failed:", err);
-        return null;
-      }
+      })();
+
+      prefetchRef.current.set(cacheKey, promise);
+      return promise;
     },
     [interviewer, difficulty],
   );
@@ -269,7 +292,18 @@ export function MockInterviewClient({ plan, consulate }: Props) {
           resolve();
         };
         audio.onended = finish;
-        audio.onerror = finish;
+        // NOT wiring onerror yet — see below. Reusing one <audio> element
+        // across every turn means reassigning .src while a previous
+        // request is still settling, which some browsers report as an
+        // `error` event on the element even though nothing actually
+        // failed. With onerror already wired at that point, this was
+        // resolving "officer done speaking" instantly, before any audio
+        // had played — this is very likely why only the first question
+        // (nothing to interrupt yet) and the transition lines (spoken
+        // after a long recognition pause, plenty of time to settle) were
+        // audible, while the question spoken right after a src swap
+        // wasn't. onerror is now only wired once .play() has actually
+        // resolved, so it only ever catches a REAL mid-playback failure.
         try {
           audio.pause();
           audio.currentTime = 0;
@@ -282,7 +316,10 @@ export function MockInterviewClient({ plan, consulate }: Props) {
         audio
           .play()
           .then(() => {
-            // playback started cleanly — wait for onended
+            // Playback has genuinely started — now it's safe to treat a
+            // later `error` event as a real failure instead of a spurious
+            // one from the src reassignment above.
+            if (!settled) audio.onerror = finish;
           })
           .catch((err) => {
             // play() rejecting is almost always autoplay policy. Log so
@@ -313,9 +350,15 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   }, []);
 
   // On unmount: pause any playing audio + revoke prefetched object URLs.
+  // Entries are promises now (see fetchTtsUrl), so wait for each to settle
+  // before revoking — a still-pending or failed one has no URL to revoke.
   useEffect(() => () => {
     audioElRef.current?.pause();
-    prefetchRef.current.forEach((url) => URL.revokeObjectURL(url));
+    prefetchRef.current.forEach((p) => {
+      void p.then((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    });
     prefetchRef.current.clear();
   }, []);
 
