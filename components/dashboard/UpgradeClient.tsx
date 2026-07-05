@@ -11,7 +11,6 @@ type Plan = "free" | "solo" | "family";
 
 type Props = {
   currentPlan: Plan;
-  earlyBirdRemaining: number;
 };
 
 const DISCOUNT_PCT = 30;
@@ -191,6 +190,33 @@ function DiscountBanner() {
   );
 }
 
+/* ---------- Plan status (already-subscribed users) ----------
+   Replaces the discount banner + promo pill once someone has actually
+   paid — pitching "30% off, buy now" to a Solo/Family subscriber read
+   as if the page didn't know they'd already upgraded. */
+function PlanStatusBanner({ plan }: { plan: Plan }) {
+  const name = plan === "family" ? "Family" : "Solo";
+  return (
+    <section className="mt-6 rounded-2xl border border-[var(--color-accent)]/30 bg-[var(--color-accent-tint)] p-6 sm:p-8 text-center">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-accent)] px-3 py-1 text-[11px] font-mono uppercase tracking-wider text-white">
+        <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M5 12l5 5 9-11" />
+        </svg>
+        Active
+      </span>
+      <h2 className="mt-4 font-display text-2xl sm:text-[32px] tracking-tight text-[var(--color-ink)]">
+        You&rsquo;re on {name}.
+      </h2>
+      <p className="mt-2 max-w-md mx-auto text-sm text-[var(--color-ink-soft)] leading-relaxed">
+        {plan === "family"
+          ? "Every phase, every step, for up to two students — already unlocked, one-time payment, no renewals."
+          : "Every phase, every step is already unlocked — one-time payment, no renewals."}
+        {plan === "solo" && " Need a second seat? Family is below."}
+      </p>
+    </section>
+  );
+}
+
 /* ---------- Promo pill (replaces the old Monthly/Lifetime toggle) ---------- */
 
 function PromoPill() {
@@ -359,8 +385,9 @@ function TierCard({
 
 /* ---------- Page ---------- */
 
-export function UpgradeClient({ currentPlan, earlyBirdRemaining }: Props) {
-  const { currency, toggle } = usePricing();
+export function UpgradeClient({ currentPlan }: Props) {
+  const { currency } = usePricing();
+  const isSubscribed = currentPlan !== "free";
 
   return (
     <div className="upgrade-page mx-auto max-w-6xl">
@@ -370,26 +397,19 @@ export function UpgradeClient({ currentPlan, earlyBirdRemaining }: Props) {
         <span className="text-[var(--color-ink-soft)]">Upgrade</span>
       </nav>
 
-      <DiscountBanner />
-
-      {/* Promo pill + currency */}
-      <div className="mt-10 flex items-center justify-center gap-4 flex-wrap">
-        <PromoPill />
-        <button
-          type="button"
-          onClick={toggle}
-          className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors"
-          style={{
-            background: "var(--color-ink)",
-            color: "var(--color-paper)",
-            boxShadow: "0 4px 14px -4px rgba(11,30,63,0.35), inset 0 1px 0 rgba(255,255,255,0.08)",
-          }}
-        >
-          <span className="font-mono" style={{ color: "var(--color-paper)" }}>{currency}</span>
-          <span style={{ color: "rgba(250,248,244,0.5)" }}>·</span>
-          <span style={{ color: "var(--color-paper)" }}>switch to {currency === "USD" ? "INR" : "USD"}</span>
-        </button>
-      </div>
+      {/* Already-paying users don't need the discount pitch aimed at
+          prospects — show them a plain confirmation of what they have
+          instead of the same "30% off, buy now" banner every time. */}
+      {isSubscribed ? (
+        <PlanStatusBanner plan={currentPlan} />
+      ) : (
+        <>
+          <DiscountBanner />
+          <div className="mt-10 flex items-center justify-center">
+            <PromoPill />
+          </div>
+        </>
+      )}
 
       {/* Promo code (visible only to free users; if they're already on
           a paid plan there's nothing to unlock). */}
@@ -412,8 +432,7 @@ export function UpgradeClient({ currentPlan, earlyBirdRemaining }: Props) {
       </section>
 
       {/* Trust strip — three reasons the price isn't the whole story.
-          Concrete promises, no marketing fluff: refund mechanics, the
-          early-bird ceiling, and who actually replies to support. */}
+          Concrete promises, no marketing fluff. */}
       <section className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {[
           {
@@ -421,8 +440,8 @@ export function UpgradeClient({ currentPlan, earlyBirdRemaining }: Props) {
             body: "Try every step, every tool. One email gets you a full refund — no forms, no questions.",
           },
           {
-            label: `${earlyBirdRemaining} early-bird spots left`,
-            body: "First 100 Solo buyers lock $9 / ₹799 pricing forever, even as the public price climbs.",
+            label: "One payment, lifetime access",
+            body: "Pay once and every phase, every step, and every tool stays unlocked until your visa is stamped — no renewals, no recurring charges.",
           },
           {
             label: "A founder reads every email",
@@ -441,7 +460,7 @@ export function UpgradeClient({ currentPlan, earlyBirdRemaining }: Props) {
         <a href="mailto:getstamped.online@gmail.com" className="text-[var(--color-accent-deep)] dark:text-blue-400 hover:text-[var(--color-accent)] transition-colors">
           getstamped.online@gmail.com
         </a>{" "}
-        for early-bird interest.
+        with any questions.
       </p>
     </div>
   );

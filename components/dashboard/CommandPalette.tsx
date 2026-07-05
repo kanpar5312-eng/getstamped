@@ -254,7 +254,7 @@ export function CommandPalette() {
       role="dialog"
       aria-modal="true"
       aria-label="Quick search"
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto p-4 pt-[10vh] sm:pt-[14vh]"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) setOpen(false);
       }}
@@ -262,13 +262,23 @@ export function CommandPalette() {
       {/* Backdrop */}
       <div
         aria-hidden
-        className="absolute inset-0 bg-[var(--color-ink)]/45 backdrop-blur-md"
+        className="fixed inset-0 bg-[var(--color-ink)]/45 backdrop-blur-md"
         onMouseDown={() => setOpen(false)}
       />
 
-      {/* Panel */}
+      {/*
+        Panel — anchored near the top of the viewport, not vertically
+        centered. Centering against the full page height put the search
+        input below the visible area whenever it was taller than what's
+        actually on-screen (e.g. once the mobile keyboard opens and
+        shrinks the visible viewport without shrinking `100vh` itself) —
+        the user had to scroll down just to find the box they'd just
+        opened. Anchoring near the top avoids that regardless of keyboard
+        state, and matches how every other command palette (Linear,
+        Raycast, VS Code) places itself.
+      */}
       <div
-        className="relative w-full max-w-2xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper-soft)] text-[var(--color-ink)] shadow-[0_40px_120px_-20px_rgba(20,33,28,0.45)] overflow-hidden animate-fade-up max-h-[80vh] flex flex-col"
+        className="relative w-full max-w-2xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper-soft)] text-[var(--color-ink)] shadow-[0_40px_120px_-20px_rgba(20,33,28,0.45)] overflow-hidden animate-fade-up max-h-[70vh] flex flex-col"
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Search bar */}

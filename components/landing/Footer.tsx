@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { BrandMark } from "@/components/ui/BrandMark";
-import { usePricing } from "@/lib/PricingContext";
 
 const EMAIL = "founder@getstamped.app";
 
@@ -73,8 +72,6 @@ function Column({ heading, items }: { heading: string; items: LinkItem[] }) {
 
 export function Footer() {
   const year = new Date().getFullYear();
-  const { currency, toggle } = usePricing();
-  const otherSymbol = currency === "INR" ? "$" : "₹";
 
   return (
     <footer className="relative z-10 w-full bg-[var(--color-persimmon-tint)] text-[var(--color-ink)]">
@@ -150,18 +147,6 @@ export function Footer() {
                 >
                   {EMAIL}
                 </a>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={toggle}
-                  className="text-sm text-[var(--color-ink)]/65 hover:text-[var(--color-ink)] transition-colors"
-                >
-                  Pricing in {currency === "INR" ? "₹" : "$"} ·{" "}
-                  <span className="underline underline-offset-2">
-                    change to {otherSymbol}
-                  </span>
-                </button>
               </li>
             </ul>
           </div>

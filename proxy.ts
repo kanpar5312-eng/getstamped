@@ -59,18 +59,23 @@ export async function proxy(req: NextRequest) {
 
   // ---- Currency cookie ----
   // Detect country from whatever geo header the host platform provides:
-  //   • Vercel:     `request.geo.country`   (e.g. "IN", "US", "GB")
+  //   • Vercel:     `x-vercel-ip-country` header (e.g. "IN", "US", "GB") —
+  //     `request.geo`/`request.ip` were removed from NextRequest in
+  //     Next.js 15+; reading `req.geo.country` (the old approach) is
+  //     always undefined on this Next version, which silently forced
+  //     every visitor to INR regardless of where they actually were.
   //   • Cloudflare: `cf-ipcountry` header
   //   • Fastly:     `x-country-code` header
   // Default is INR for every first-time visitor; geo only flips it to USD
-  // when we positively detect a non-India IP. Unknown geo → INR. (The
-  // header is just a hint; the pricing toggle still lets users override.)
+  // when we positively detect a non-India IP. Unknown geo → INR. This is
+  // now the sole source of truth for currency — there is no manual
+  // switcher in the UI anymore, so getting this right matters.
   const existing = req.cookies.get("gs_currency")?.value;
   if (existing !== "INR" && existing !== "USD") {
-    const vercelGeo = (req as unknown as { geo?: { country?: string } }).geo?.country;
+    const vercelCountry = req.headers.get("x-vercel-ip-country");
     const cfCountry = req.headers.get("cf-ipcountry");
     const fastlyCountry = req.headers.get("x-country-code");
-    const country = (vercelGeo ?? cfCountry ?? fastlyCountry ?? "").toUpperCase();
+    const country = (vercelCountry ?? cfCountry ?? fastlyCountry ?? "").toUpperCase();
     // Default INR; only confirmed non-India geos get USD.
     const isNonIndia = country !== "" && country !== "IN";
     res.cookies.set("gs_currency", isNonIndia ? "USD" : "INR", {

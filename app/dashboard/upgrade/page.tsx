@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/current-user";
-import { getWaitlistCount } from "@/app/actions/waitlist";
 import { UpgradeClient } from "@/components/dashboard/UpgradeClient";
 
 export const metadata: Metadata = {
@@ -16,13 +15,6 @@ export default async function UpgradePage({
 }) {
   const sp = await searchParams;
   const { profile } = await getCurrentUser(sp.state);
-  const { earlyBirdClaimed } = await getWaitlistCount();
-  const earlyBirdRemaining = Math.max(0, 100 - earlyBirdClaimed);
 
-  return (
-    <UpgradeClient
-      currentPlan={profile.plan}
-      earlyBirdRemaining={earlyBirdRemaining}
-    />
-  );
+  return <UpgradeClient currentPlan={profile.plan} />;
 }
