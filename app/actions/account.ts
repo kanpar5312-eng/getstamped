@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/config";
@@ -199,30 +199,52 @@ export async function exportUserData(): Promise<
   const userId = u.user.id;
   const userEmail = u.user.email ?? "";
 
+  // Any failure below (a bad query, an encoding error from pdf-lib, etc.)
+  // used to throw past the caller uncaught — the client's handleExport
+  // has no try/catch around this call, so it just silently died with the
+  // button never re-enabling. Catch here and always return a real result.
+  try {
+    return await buildExportPdf(u.sb, userId, userEmail);
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? `Export failed: ${err.message}` : "Export failed. Please try again.",
+    };
+  }
+}
+
+async function buildExportPdf(
+  sb: SupabaseClient,
+  userId: string,
+  userEmail: string,
+): Promise<
+  | { ok: true; filename: string; jsonBase64: string; mimeType: string }
+  | { ok: false; error: string }
+> {
   const [profileRes, stepsRes, activityRes, docsRes, threadsRes, messagesRes, sessionsRes] =
     await Promise.all([
-      u.sb.from("profiles").select("*").eq("id", userId).maybeSingle(),
-      u.sb.from("step_progress").select("*").eq("user_id", userId).order("step_number"),
-      u.sb
+      sb.from("profiles").select("*").eq("id", userId).maybeSingle(),
+      sb.from("step_progress").select("*").eq("user_id", userId).order("step_number"),
+      sb
         .from("step_activity")
         .select("*")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(50),
-      u.sb
+      sb
         .from("documents")
         .select("*")
         .eq("user_id", userId)
         .is("deleted_at", null)
         .order("uploaded_at", { ascending: false }),
-      u.sb.from("ai_threads").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
-      u.sb
+      sb.from("ai_threads").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
+      sb
         .from("ai_messages")
         .select("*")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(100),
-      u.sb
+      sb
         .from("mock_interview_sessions")
         .select("*")
         .eq("user_id", userId)
@@ -440,12 +462,16 @@ export async function exportUserData(): Promise<
   for (const s of steps) {
     const n = String(s.step_number ?? "?").padStart(2, "0");
     const status = String(s.status ?? "not_started");
-    const mark = status === "complete" ? "■" : status === "in_progress" ? "◐" : "□";
+    // pdf-lib's standard Helvetica font only supports WinAnsi encoding —
+    // ■ / ◐ / □ aren't in that character set and throw at draw time,
+    // which is why export silently failed for any user with step
+    // progress rows (i.e. almost everyone). Plain ASCII marks instead.
+    const mark = status === "complete" ? "[x]" : status === "in_progress" ? "[~]" : "[ ]";
     const color = status === "complete" ? persimmon : muted;
     need(1);
-    page.drawText(mark, { x: MARGIN, y, size: 12, font: helvBold, color });
-    page.drawText(`Step ${n}`, { x: MARGIN + 18, y, size: 10, font: helvBold, color: ink });
-    page.drawText(status.replace("_", " "), { x: MARGIN + 80, y, size: 10, font: helv, color: inkSoft });
+    page.drawText(mark, { x: MARGIN, y, size: 11, font: helvBold, color });
+    page.drawText(`Step ${n}`, { x: MARGIN + 32, y, size: 10, font: helvBold, color: ink });
+    page.drawText(status.replace("_", " "), { x: MARGIN + 94, y, size: 10, font: helv, color: inkSoft });
     if (s.completed_at) {
       page.drawText(fmt(s.completed_at), {
         x: MARGIN + 220, y, size: 9, font: helv, color: muted,

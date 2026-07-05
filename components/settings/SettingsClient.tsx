@@ -361,25 +361,34 @@ export function SettingsClient({ initial, referral, family }: Props) {
   const handleExport = async () => {
     if (pending) return;
     setPending(true);
-    const res = await exportUserData();
-    setPending(false);
-    if (!res.ok) {
-      showToast(res.error);
-      return;
+    try {
+      const res = await exportUserData();
+      if (!res.ok) {
+        showToast(res.error);
+        return;
+      }
+      // Decode the base64 PDF the server built and trigger a browser
+      // download. atob() works in every modern browser without polyfills.
+      const binary = atob(res.jsonBase64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: res.mimeType ?? "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = res.filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Export downloaded.");
+    } catch {
+      // Belt-and-suspenders: exportUserData() now catches its own errors
+      // and always resolves with { ok: false }, but this button used to
+      // silently do nothing on any uncaught server error, so this stays
+      // as a last line of defense against the same failure mode.
+      showToast("Export failed. Please try again.");
+    } finally {
+      setPending(false);
     }
-    // Decode the base64 PDF the server built and trigger a browser
-    // download. atob() works in every modern browser without polyfills.
-    const binary = atob(res.jsonBase64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    const blob = new Blob([bytes], { type: res.mimeType ?? "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = res.filename;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast("Export downloaded.");
   };
 
   const handleRefund = async () => {
@@ -664,21 +673,26 @@ export function SettingsClient({ initial, referral, family }: Props) {
           )}
 
           {active === "danger" && (
-            <section className="rounded-2xl border-2 border-red-200 bg-red-50/40 p-6 sm:p-7">
-              <h2 className="text-base font-medium text-red-700">Danger zone</h2>
-              <p className="mt-0.5 text-xs text-red-700/70">Actions here are permanent.</p>
+            /* Was border-red-200 / bg-red-50/40 — Tailwind's red-50/200 are
+               pale, light-mode-only colors. Blended at 40% over this
+               dark dashboard surface they read as a muddy gray-pink wash
+               instead of a warning. var(--error) already flips correctly
+               between the dashboard's light/dark palettes. */
+            <section className="rounded-2xl border-2 border-[var(--error)]/35 bg-[var(--error)]/[0.07] p-6 sm:p-7">
+              <h2 className="text-base font-medium text-[var(--error)]">Danger zone</h2>
+              <p className="mt-0.5 text-xs text-[var(--error)]/70">Actions here are permanent.</p>
               <ul className="mt-6 space-y-3">
                 {[
                   { label: "Reset all progress", desc: "Clears completed steps. Documents stay.", action: () => setResetModal(true) },
                   { label: "Export my data", desc: "GDPR · download a readable PDF of everything.", action: handleExport },
                   { label: "Delete account", desc: "30-day grace period. Reactivate by signing in within 30 days.", action: () => setDeleteModal(true) },
                 ].map((row, i) => (
-                  <li key={i} className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-[var(--color-paper-soft)] p-4">
+                  <li key={i} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--error)]/25 bg-[var(--color-paper-soft)] p-4">
                     <div>
                       <p className="text-sm font-medium text-[var(--color-ink)]">{row.label}</p>
                       <p className="text-xs text-[var(--color-muted)]">{row.desc}</p>
                     </div>
-                    <button type="button" onClick={row.action} className="text-xs font-medium text-red-700 hover:text-red-800 transition-colors shrink-0">
+                    <button type="button" onClick={row.action} className="text-xs font-medium text-[var(--error)] hover:opacity-80 transition-opacity shrink-0">
                       Continue
                     </button>
                   </li>
