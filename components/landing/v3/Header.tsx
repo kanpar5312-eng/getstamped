@@ -9,13 +9,8 @@ import { BrandMark } from "@/components/ui/BrandMark";
    (mobile). The matchMedia listener is SSR-safe — server renders the
    mobile fallback, the client swaps once mounted. */
 
-/* "workspace" used to sit here pointing at /sign-in — identical
-   destination to "sign in" below, under a different label. Removed
-   rather than repointed at /dashboard: unauthenticated visits to
-   /dashboard silently render a mock demo profile (see
-   lib/current-user.ts) instead of redirecting to sign-in, which would
-   have been more confusing, not less. */
 const NAV_ITEMS = [
+  { label: "workspace", href: "/sign-in", ariaLabel: "Workspace" },
   { label: "pricing", href: "/pricing", ariaLabel: "Pricing" },
   { label: "faq", href: "#faq", ariaLabel: "FAQ" },
   { label: "sign in", href: "/sign-in", ariaLabel: "Sign in" },
