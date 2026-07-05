@@ -198,17 +198,29 @@ function DiscountBanner() {
 function PlanStatusBanner({ plan }: { plan: Plan }) {
   const name = plan === "family" ? "Family" : "Solo";
   return (
-    <section className="mt-6 rounded-2xl border border-[var(--color-accent)]/30 bg-[var(--color-accent-tint)] p-6 sm:p-8 text-center">
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-accent)] px-3 py-1 text-[11px] font-mono uppercase tracking-wider text-white">
+    <section
+      className="relative overflow-hidden rounded-3xl mt-6 border border-white/[0.06] p-6 sm:p-8 text-center"
+      style={{
+        background:
+          "radial-gradient(120% 90% at 50% 0%, var(--color-accent-tint) 0%, transparent 55%), linear-gradient(160deg, var(--color-ink) 0%, var(--color-ink-soft) 60%, var(--color-ink-deep) 100%)",
+        boxShadow: "0 30px 70px -30px rgba(0, 0, 0, 0.5)",
+      }}
+    >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -top-16 left-1/2 h-40 w-72 -translate-x-1/2 rounded-full opacity-40"
+        style={{ background: "radial-gradient(circle, var(--color-accent-soft), transparent 70%)", filter: "blur(28px)" }}
+      />
+      <span className="relative inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[11px] font-mono uppercase tracking-wider text-[var(--color-ink)] shadow-[0_4px_14px_-4px_rgba(0,0,0,0.3)]">
         <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="M5 12l5 5 9-11" />
         </svg>
         Active
       </span>
-      <h2 className="mt-4 font-display text-2xl sm:text-[32px] tracking-tight text-[var(--color-ink)]">
+      <h2 className="relative mt-4 font-display text-2xl sm:text-[32px] tracking-tight text-white">
         You&rsquo;re on {name}.
       </h2>
-      <p className="mt-2 max-w-md mx-auto text-sm text-[var(--color-ink-soft)] leading-relaxed">
+      <p className="relative mt-2 max-w-md mx-auto text-sm text-white/75 leading-relaxed">
         {plan === "family"
           ? "Every phase, every step, for up to two students — already unlocked, one-time payment, no renewals."
           : "Every phase, every step is already unlocked — one-time payment, no renewals."}
@@ -217,7 +229,7 @@ function PlanStatusBanner({ plan }: { plan: Plan }) {
       {plan === "family" && (
         <Link
           href="/dashboard/settings#plan"
-          className="mt-4 inline-flex text-sm font-medium text-[var(--color-accent-deep)] hover:text-[var(--color-accent)] transition-colors"
+          className="relative mt-4 inline-flex text-sm font-medium text-white/85 hover:text-white transition-colors"
         >
           Invite your second student →
         </Link>

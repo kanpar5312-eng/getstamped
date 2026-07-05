@@ -732,6 +732,21 @@ body {
   --upg-lime-2:  #84cc16;
   --upg-blue:    #3b82f6;
   --upg-blue-2:  #2563eb;
+
+  /* Premium accent — a deep, burnished copper instead of the dashboard's
+     bright candy-orange "ember" (#FF5B2E). Overriding the shared brand
+     tokens at this container scope re-skins every var(--color-accent) /
+     var(--color-persimmon) consumer inside the upgrade page — including
+     inline styles — without touching the ember token used elsewhere in
+     the dashboard. */
+  --color-persimmon:      #B54A1F;
+  --color-persimmon-deep: #8A3714;
+  --color-persimmon-soft: #C96B3D;
+  --color-persimmon-tint: rgba(181, 74, 31, 0.14);
+  --color-accent:         var(--color-persimmon);
+  --color-accent-deep:    var(--color-persimmon-deep);
+  --color-accent-soft:    var(--color-persimmon-soft);
+  --color-accent-tint:    var(--color-persimmon-tint);
 }
 .upgrade-page .upg-banner-light { display: block; }
 .upgrade-page .upg-banner-dark  { display: none;  }
@@ -740,17 +755,25 @@ body {
    (.v3-price-card): bigger radius, soft elevated shadow, hairline
    border. Free + Family sit on plain cream; Solo (the recommended
    tier) gets the landing's peach-glass treatment so the two pages
-   read as the same product. */
+   read as the same product. A faint lit-from-above top edge (Apple's
+   glass-card signature) replaces the previously flat hairline. */
 .upgrade-page .upg-card {
+  position: relative;
   background: var(--color-cream-soft);
   border-color: var(--color-border-soft);
-  border-radius: 28px;
-  box-shadow: 0 24px 60px -30px rgba(11,30,63,0.18);
+  border-radius: var(--gs-radius-xl);
+  box-shadow:
+    0 32px 80px -36px rgba(11, 30, 63, 0.22),
+    0 8px 24px -12px rgba(11, 30, 63, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
   transition: transform 240ms cubic-bezier(0.22,1,0.36,1), box-shadow 240ms cubic-bezier(0.22,1,0.36,1);
 }
 .upgrade-page .upg-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 30px 70px -28px rgba(11,30,63,0.24);
+  transform: translateY(-3px);
+  box-shadow:
+    0 40px 90px -34px rgba(11, 30, 63, 0.28),
+    0 10px 28px -12px rgba(11, 30, 63, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 /* Solo (primary) accent */
@@ -760,22 +783,28 @@ body {
 }
 .upgrade-page .upg-cta-solo:hover { background: var(--color-forest-deep); }
 
-/* Family (best value) accent */
+/* Family (best value) accent — subtle gradient + inset sheen instead of
+   a flat fill, so the CTA reads as a crafted surface, not a color swatch. */
 .upgrade-page .upg-cta-family {
-  background: var(--color-accent);
+  background: linear-gradient(180deg, var(--color-persimmon-soft) 0%, var(--color-accent) 100%);
   color: #ffffff;
+  box-shadow: 0 10px 24px -10px rgba(181, 74, 31, 0.55), inset 0 1px 0 rgba(255,255,255,0.22);
 }
-.upgrade-page .upg-cta-family:hover { background: var(--color-accent-deep); }
+.upgrade-page .upg-cta-family:hover {
+  background: linear-gradient(180deg, var(--color-persimmon-soft) 0%, var(--color-accent-deep) 100%);
+  box-shadow: 0 14px 30px -10px rgba(181, 74, 31, 0.6), inset 0 1px 0 rgba(255,255,255,0.22);
+}
 
 /* "Most popular" — peach-glass card + persimmon halo, same recipe as
    the landing page's recommended pricing tier. */
 .upgrade-page .upg-popular-ring {
   background: var(--color-persimmon-tint);
-  box-shadow: 0 0 0 1px var(--color-accent), 0 30px 70px -28px rgba(232,98,42,0.30);
+  box-shadow: 0 0 0 1px var(--color-accent), 0 34px 80px -30px rgba(181, 74, 31, 0.28);
 }
 .upgrade-page .upg-popular-banner {
   background: var(--color-forest);
   color: var(--color-cream-soft);
+  box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.25);
 }
 
 /* "Best value" ring + banner */
@@ -783,14 +812,17 @@ body {
   box-shadow: 0 0 0 1px var(--color-accent);
 }
 .upgrade-page .upg-value-banner {
-  background: var(--color-accent);
+  background: linear-gradient(180deg, var(--color-persimmon-soft) 0%, var(--color-accent) 100%);
   color: #ffffff;
+  box-shadow: 0 6px 16px -6px rgba(181, 74, 31, 0.45);
 }
 
-/* Discount % badges */
+/* Discount % badges — a soft translucent tag instead of a solid coupon-
+   sticker block; reads as a refined detail, not a shout. */
 .upgrade-page .upg-chip-discount {
-  background: var(--color-accent);
-  color: #ffffff;
+  background: var(--color-accent-tint);
+  color: var(--color-accent-deep);
+  border: 1px solid var(--color-accent);
 }
 
 /* Sale-price tint — forest in light, vibrant in dark per tier */
@@ -807,6 +839,7 @@ body {
 .upgrade-page .upg-quota {
   background: var(--color-surface);
   border-color: var(--color-border-soft);
+  border-radius: var(--gs-radius-md);
 }
 
 /* =========================================================================
