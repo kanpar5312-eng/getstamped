@@ -1,8 +1,14 @@
+import Link from "next/link";
+import { STEPS } from "@/lib/steps";
+import type { StepProgress } from "@/lib/dashboard-state";
+
 type StripItem = {
   day: string;
   title: string;
   icon: "user" | "doc" | "money" | "mic";
   locked?: boolean;
+  completed?: boolean;
+  href?: string;
 };
 
 function Icon({ kind }: { kind: StripItem["icon"] }) {
@@ -71,49 +77,126 @@ function LockGlyph() {
   );
 }
 
+function CheckGlyph() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={11}
+      height={11}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M5 12l5 5 9-11" />
+    </svg>
+  );
+}
+
+/* Rough keyword match so a real step title gets a sensible icon instead of
+   a hand-picked one per hardcoded item. */
+function iconFor(title: string): StripItem["icon"] {
+  const t = title.toLowerCase();
+  if (t.includes("mock") || t.includes("interview")) return "mic";
+  if (t.includes("financ") || t.includes("fee") || t.includes("sevis") || t.includes("bank") || t.includes("fund")) return "money";
+  if (t.includes("document") || t.includes("upload") || t.includes("form") || t.includes("photo") || t.includes("i-20") || t.includes("ds-160") || t.includes("passport")) return "doc";
+  return "user";
+}
+
+/* Real next steps for this user — the four steps starting at whatever
+   step they're actually on, pulled from lib/steps.ts (the canonical
+   47-step source), not a fixed "Profile / University docs / Financial
+   docs / First mock" placeholder that didn't match any real step title. */
+function buildFromProgress(progress: StepProgress[], nextStepNumber: number): StripItem[] {
+  const completeSet = new Set(
+    progress.filter((p) => p.status === "complete").map((p) => p.stepNumber),
+  );
+  const startIndex = Math.max(
+    STEPS.findIndex((s) => s.number === nextStepNumber),
+    0,
+  );
+  return STEPS.slice(startIndex, startIndex + 4).map((s, i) => ({
+    day: `Step ${s.number}`,
+    title: s.title,
+    icon: iconFor(s.title),
+    completed: completeSet.has(s.number),
+    // Only the current step is actionable today; the rest are upcoming,
+    // not done — same rule Block2NextStep uses for "next step".
+    locked: i > 0,
+    href: `/dashboard/timeline?step=${s.number}`,
+  }));
+}
+
 export function WeekOneStrip({
+  progress,
+  nextStepNumber,
   items,
   staggerIndex = 4,
 }: {
+  /** Real per-step completion data — combined with nextStepNumber to
+   *  derive the default (unset `items`) view. */
+  progress?: StepProgress[];
+  /** The user's current step number (DashboardData.nextStep?.number). */
+  nextStepNumber?: number;
   items?: StripItem[];
   staggerIndex?: number;
 }) {
-  const data: StripItem[] = items ?? [
-    { day: "Day 1", title: "Profile", icon: "user" },
-    { day: "Day 2", title: "University docs", icon: "doc", locked: true },
-    { day: "Day 3", title: "Financial docs", icon: "money", locked: true },
-    { day: "Day 4", title: "First mock", icon: "mic", locked: true },
-  ];
+  const data: StripItem[] = items ?? buildFromProgress(progress ?? [], nextStepNumber ?? 1);
+
   return (
     <section
       data-stagger=""
       style={{ "--stagger-index": staggerIndex } as React.CSSProperties}
       className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5"
     >
-      <p data-eyebrow="">Your week one</p>
+      <p data-eyebrow="">Up next</p>
       <ol className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {data.map((it) => (
-          <li
-            key={it.day}
-            className="relative rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4"
-            style={{ opacity: it.locked ? 0.6 : 1 }}
-          >
-            {it.locked && (
-              <span className="absolute right-3 top-3 text-[var(--stone)]">
-                <LockGlyph />
+        {data.map((it) => {
+          const clickable = Boolean(it.href) && !it.locked;
+          const inner = (
+            <>
+              {it.locked && (
+                <span className="absolute right-3 top-3 text-[var(--stone)]">
+                  <LockGlyph />
+                </span>
+              )}
+              {it.completed && (
+                <span className="absolute right-3 top-3 text-[var(--success)]">
+                  <CheckGlyph />
+                </span>
+              )}
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--stone)]">
+                {it.day}
               </span>
-            )}
-            <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--stone)]">
-              {it.day}
-            </span>
-            <div className="mt-3 text-[var(--ink)]">
-              <Icon kind={it.icon} />
-            </div>
-            <div className="mt-2 text-[13px] font-medium leading-snug text-[var(--ink)]">
-              {it.title}
-            </div>
-          </li>
-        ))}
+              <div className="mt-3 text-[var(--ink)]">
+                <Icon kind={it.icon} />
+              </div>
+              <div className="mt-2 text-[13px] font-medium leading-snug text-[var(--ink)]">
+                {it.title}
+              </div>
+            </>
+          );
+          const sharedClassName =
+            "relative block rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 transition-colors";
+          return (
+            <li key={it.day} style={{ opacity: it.locked ? 0.6 : 1 }}>
+              {clickable ? (
+                <Link
+                  href={it.href!}
+                  className={`${sharedClassName} hover:border-[var(--line-hover)]`}
+                >
+                  {inner}
+                </Link>
+              ) : (
+                <div className={sharedClassName} style={{ cursor: "default" }}>
+                  {inner}
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ol>
     </section>
   );

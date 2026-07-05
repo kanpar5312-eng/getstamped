@@ -59,7 +59,7 @@ export default async function DashboardHome({
               <MockTeaserCard />
             </div>
             <div className="col-span-12">
-              <WeekOneStrip />
+              <WeekOneStrip progress={progress} nextStepNumber={data.nextStep?.number} />
             </div>
           </>
         ) : isImminent ? (
@@ -93,7 +93,11 @@ export default async function DashboardHome({
               <MockTeaserCard staggerIndex={4} />
             </div>
             <div className="col-span-12">
-              <WeekOneStrip staggerIndex={5} />
+              <WeekOneStrip
+                staggerIndex={5}
+                progress={progress}
+                nextStepNumber={data.nextStep?.number}
+              />
             </div>
           </>
         )}
