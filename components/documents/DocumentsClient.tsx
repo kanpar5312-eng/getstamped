@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { CHECKLIST, PHASES, PHASE_TITLES, getChecklistItem } from "@/lib/documents/checklist";
 import { CountUp } from "@/components/dashboard/CountUp";
 import { ExampleModal } from "@/components/documents/ExampleModal";
@@ -662,13 +663,21 @@ function DetailPanel({
   const [mimeType, setMimeType] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Was previously untracked — any non-ok response or thrown error just
+  // `return`ed silently, so `url` stayed null forever and the panel was
+  // stuck on "Loading preview…" with no indication anything had failed.
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    setPreviewError(null);
     (async () => {
       try {
         const r = await fetch(`/api/documents/${docId}/signed-url`, { cache: "no-store" });
-        if (!r.ok) return;
+        if (!r.ok) {
+          if (!cancelled) setPreviewError("Preview unavailable right now.");
+          return;
+        }
         const data = await r.json();
         if (!cancelled) {
           setUrl(data.url);
@@ -676,7 +685,7 @@ function DetailPanel({
           setDisplayName(data.displayName);
         }
       } catch {
-        /* ignore */
+        if (!cancelled) setPreviewError("Preview unavailable right now.");
       }
     })();
     return () => {
@@ -690,7 +699,16 @@ function DetailPanel({
     onDeleted(row.slug);
   };
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  // Portaled to document.body — <main> in app/dashboard/layout.tsx is
+  // `relative z-10`, which makes it a stacking-context boundary. Any
+  // fixed-position element rendered *inside* main (like this drawer used
+  // to be) gets its z-index compared only within that z-10 context, so
+  // the whole drawer rendered underneath the sticky top nav (z-40)
+  // regardless of the drawer's own z-50. Portaling escapes that context
+  // entirely, the same fix already used by SlidePanel/Modal elsewhere.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex justify-end"
       style={{ background: "rgba(28,27,26,0.35)" }}
@@ -722,6 +740,10 @@ function DetailPanel({
             <img src={url} alt={displayName} className="w-full" />
           ) : url ? (
             <iframe src={url} className="w-full h-[480px]" title={displayName} />
+          ) : previewError ? (
+            <div className="px-5 py-10 text-[13px] text-[var(--stone)]">
+              {previewError} The file itself is still saved — try closing and reopening this panel.
+            </div>
           ) : (
             <div className="px-5 py-10 text-[13px] text-[var(--stone)]">
               Loading preview…
@@ -829,7 +851,8 @@ function DetailPanel({
           </div>
         )}
       </aside>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -838,7 +861,10 @@ function DetailPanel({
 // =============================================================================
 
 function PaywallModal({ onClose }: { onClose: () => void }) {
-  return (
+  if (typeof document === "undefined") return null;
+  // Same stacking-context fix as DetailPanel above — portal past <main>'s
+  // z-10 boundary so this renders above the sticky top nav (z-40).
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center px-6"
       style={{ background: "rgba(28,27,26,0.5)" }}
@@ -871,7 +897,8 @@ function PaywallModal({ onClose }: { onClose: () => void }) {
           </Link>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

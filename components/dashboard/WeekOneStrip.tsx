@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { STEPS } from "@/lib/steps";
-import type { StepProgress } from "@/lib/dashboard-state";
+import type { StepProgress, Plan } from "@/lib/dashboard-state";
 
 type StripItem = {
   day: string;
@@ -19,8 +19,8 @@ function Icon({ kind }: { kind: StripItem["icon"] }) {
     strokeWidth: 1.6,
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
-    width: 20,
-    height: 20,
+    width: 16,
+    height: 16,
     "aria-hidden": true,
   };
   switch (kind) {
@@ -62,8 +62,8 @@ function LockGlyph() {
   return (
     <svg
       viewBox="0 0 24 24"
-      width={11}
-      height={11}
+      width={10}
+      height={10}
       fill="none"
       stroke="currentColor"
       strokeWidth={1.8}
@@ -73,24 +73,6 @@ function LockGlyph() {
     >
       <rect x="5" y="11" width="14" height="9" rx="2" />
       <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-    </svg>
-  );
-}
-
-function CheckGlyph() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width={11}
-      height={11}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M5 12l5 5 9-11" />
     </svg>
   );
 }
@@ -105,33 +87,42 @@ function iconFor(title: string): StripItem["icon"] {
   return "user";
 }
 
-/* Real next steps for this user — the four steps starting at whatever
-   step they're actually on, pulled from lib/steps.ts (the canonical
-   47-step source), not a fixed "Profile / University docs / Financial
-   docs / First mock" placeholder that didn't match any real step title. */
-function buildFromProgress(progress: StepProgress[], nextStepNumber: number): StripItem[] {
+type BuiltItem = StripItem & { phaseName: string };
+
+/* Real upcoming steps for this user — the four steps right after
+   whatever step they're actually on, pulled from lib/steps.ts. Starts
+   at nextStepNumber + 1 (not nextStepNumber itself) since the current
+   step already gets its own full card above this strip; repeating it
+   here read as a duplicate, not a preview. "Locked" reflects the
+   product's real gate (Phase 2+ requires a paid plan), not a fictional
+   day-by-day unlock. */
+function buildFromProgress(
+  progress: StepProgress[],
+  nextStepNumber: number,
+  plan: Plan,
+): BuiltItem[] {
   const completeSet = new Set(
     progress.filter((p) => p.status === "complete").map((p) => p.stepNumber),
   );
   const startIndex = Math.max(
     STEPS.findIndex((s) => s.number === nextStepNumber),
     0,
-  );
-  return STEPS.slice(startIndex, startIndex + 4).map((s, i) => ({
+  ) + 1;
+  return STEPS.slice(startIndex, startIndex + 4).map((s) => ({
     day: `Step ${s.number}`,
     title: s.title,
     icon: iconFor(s.title),
     completed: completeSet.has(s.number),
-    // Only the current step is actionable today; the rest are upcoming,
-    // not done — same rule Block2NextStep uses for "next step".
-    locked: i > 0,
+    locked: plan === "free" && !s.isFree,
     href: `/dashboard/timeline?step=${s.number}`,
+    phaseName: s.phaseName,
   }));
 }
 
 export function WeekOneStrip({
   progress,
   nextStepNumber,
+  plan,
   items,
   staggerIndex = 4,
 }: {
@@ -140,10 +131,12 @@ export function WeekOneStrip({
   progress?: StepProgress[];
   /** The user's current step number (DashboardData.nextStep?.number). */
   nextStepNumber?: number;
-  items?: StripItem[];
+  /** Determines the real Phase-2+ paywall lock, not a fictional one. */
+  plan?: Plan;
+  items?: (StripItem & { phaseName?: string })[];
   staggerIndex?: number;
 }) {
-  const data: StripItem[] = items ?? buildFromProgress(progress ?? [], nextStepNumber ?? 1);
+  const data = items ?? buildFromProgress(progress ?? [], nextStepNumber ?? 1, plan ?? "free");
 
   return (
     <section
@@ -151,41 +144,61 @@ export function WeekOneStrip({
       style={{ "--stagger-index": staggerIndex } as React.CSSProperties}
       className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5"
     >
-      <p data-eyebrow="">Up next</p>
+      <div className="flex items-baseline justify-between">
+        <p data-eyebrow="">Up next</p>
+        <p className="text-[11px] text-[var(--stone)]">After your current step</p>
+      </div>
       <ol className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {data.map((it) => {
           const clickable = Boolean(it.href) && !it.locked;
           const inner = (
             <>
-              {it.locked && (
-                <span className="absolute right-3 top-3 text-[var(--stone)]">
-                  <LockGlyph />
+              <div className="flex items-start justify-between gap-2">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--stone)]">
+                  {it.day}
                 </span>
-              )}
-              {it.completed && (
-                <span className="absolute right-3 top-3 text-[var(--success)]">
-                  <CheckGlyph />
-                </span>
-              )}
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--stone)]">
-                {it.day}
-              </span>
-              <div className="mt-3 text-[var(--ink)]">
-                <Icon kind={it.icon} />
+                {it.locked ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-sunken)] px-1.5 py-[3px] text-[var(--stone)]">
+                    <LockGlyph />
+                  </span>
+                ) : it.completed ? (
+                  <span className="inline-flex items-center rounded-full bg-[var(--success)]/15 px-1.5 py-[3px] text-[9px] font-semibold uppercase tracking-[0.06em] text-[var(--success)]">
+                    Done
+                  </span>
+                ) : null}
               </div>
-              <div className="mt-2 text-[13px] font-medium leading-snug text-[var(--ink)]">
-                {it.title}
+
+              <div className="mt-3 flex items-start gap-2.5">
+                <span
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                  style={{
+                    background: it.locked ? "var(--surface-sunken)" : "var(--ember-soft)",
+                    color: it.locked ? "var(--stone)" : "var(--ember-hover)",
+                  }}
+                >
+                  <Icon kind={it.icon} />
+                </span>
+                <div className="min-w-0">
+                  <div className="text-[13px] font-medium leading-snug text-[var(--ink)]">
+                    {it.title}
+                  </div>
+                  {it.phaseName && (
+                    <div className="mt-0.5 text-[11px] text-[var(--stone)]">
+                      {it.phaseName}
+                    </div>
+                  )}
+                </div>
               </div>
             </>
           );
           const sharedClassName =
-            "relative block rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 transition-colors";
+            "relative flex h-full flex-col rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 transition-colors";
           return (
-            <li key={it.day} style={{ opacity: it.locked ? 0.6 : 1 }}>
+            <li key={it.day} style={{ opacity: it.locked ? 0.65 : 1 }}>
               {clickable ? (
                 <Link
                   href={it.href!}
-                  className={`${sharedClassName} hover:border-[var(--line-hover)]`}
+                  className={`${sharedClassName} hover:border-[var(--line-hover)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)]`}
                 >
                   {inner}
                 </Link>
