@@ -80,7 +80,7 @@ export function AccountMenu({ initials, email }: Props) {
             height: 10,
             borderRadius: "50%",
             background: "#FF5B2E",
-            boxShadow: "0 0 0 2px #FFFFFF",
+            boxShadow: "0 0 0 2px var(--surface, #FFFFFF)",
           }}
         />
       </button>

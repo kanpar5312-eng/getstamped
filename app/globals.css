@@ -1409,6 +1409,24 @@ img[data-fade].loaded { opacity: 1; }
   );
   pointer-events: none;
 }
+/* .gs-card was always the light-mode white glass card — a separate
+   .gs-card-dark class exists with the right values but nothing ever
+   switches to it automatically, so e.g. PaywallOverlay (which only ever
+   uses "gs-card") rendered a white card with var(--color-ink) text that
+   flips to near-white in dark mode: invisible text on a white card. */
+html.dark .gs-card {
+  background: rgba(28, 25, 23, 0.92);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+html.dark .gs-card::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 20%,
+    rgba(255, 255, 255, 0.06) 80%,
+    transparent 100%
+  );
+}
 
 .gs-card-dark {
   position: relative;
@@ -1476,6 +1494,22 @@ img[data-fade].loaded { opacity: 1; }
   );
   pointer-events: none;
   border-radius: var(--gs-radius-xl) var(--gs-radius-xl) 0 0;
+}
+/* Same issue as .gs-card above — always-light modal surface with
+   var(--color-ink) text inside (e.g. ExampleModal), which flips to
+   near-white in dark mode. */
+html.dark .gs-modal-card {
+  background: rgba(18, 17, 16, 0.92);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+html.dark .gs-modal-card::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 20%,
+    rgba(255, 255, 255, 0.06) 80%,
+    transparent 100%
+  );
 }
 
 /* ── Inputs ──────────────────────────────────────────────────────────── */
@@ -1572,6 +1606,15 @@ img[data-fade].loaded { opacity: 1; }
           backdrop-filter: var(--gs-glass-blur);
   border-bottom: 0.5px solid var(--gs-glass-border-light);
   box-shadow: var(--gs-shadow-sm);
+}
+/* --gs-glass-dark / --gs-glass-border-dark existed but were never wired
+   up anywhere — the dashboard nav (DashboardNav.tsx) switches to this
+   class the moment you scroll, so in dark mode it turned the header
+   into an opaque cream/white bar over an otherwise dark page on every
+   scroll, on every dashboard page. */
+html.dark .gs-glass-header {
+  background: var(--gs-glass-dark);
+  border-bottom-color: var(--gs-glass-border-dark);
 }
 
 /* ── Badges / chips ──────────────────────────────────────────────────── */

@@ -51,6 +51,13 @@ type Props = {
 
 // Brand
 const INK = "#1C1917";
+// Literal, not var(--color-ink-soft) — this screen is styled as an
+// always-light printed report (see PAPER/INK/score-ramp colors below,
+// none of which respond to the site theme either). A few spots had
+// accidentally used the theme-reactive token instead, which flips to a
+// pale gray in dark mode and went unreadable against this component's
+// permanently-white backgrounds.
+const INK_SOFT = "#55524F";
 const PERSIMMON = "#E8622A";
 const PAPER = "#FAF8F4";
 
@@ -232,7 +239,7 @@ export function FeedbackScreen({
             fontFamily: "var(--font-sans-stack)",
             fontSize: 12,
             lineHeight: 1.55,
-            color: "var(--color-ink-soft, rgba(28,25,23,0.6))",
+            color: INK_SOFT,
             margin: 0,
           }}
         >
@@ -252,7 +259,7 @@ export function FeedbackScreen({
                   fontFamily: "var(--font-sans-stack)",
                   fontSize: 14,
                   lineHeight: 1.6,
-                  color: "var(--color-ink-soft)",
+                  color: INK_SOFT,
                   margin: 0,
                 }}
               >
@@ -299,7 +306,7 @@ export function FeedbackScreen({
               style={{
                 fontFamily: "var(--font-sans-stack)",
                 fontSize: 11,
-                color: "var(--color-ink-soft)",
+                color: INK_SOFT,
                 textTransform: "uppercase",
                 letterSpacing: "0.3em",
                 fontWeight: 600,
@@ -312,7 +319,7 @@ export function FeedbackScreen({
               style={{
                 fontFamily: "var(--font-sans-stack)",
                 fontSize: 11,
-                color: "var(--color-ink-soft)",
+                color: INK_SOFT,
                 margin: 0,
               }}
             >
@@ -535,7 +542,7 @@ function QuestionCard({ turn, index }: { turn: TurnSummary; index: number }) {
           style={{
             fontFamily: "var(--font-sans-stack)",
             fontSize: 10,
-            color: "var(--color-ink-soft)",
+            color: INK_SOFT,
             background: "rgba(28,25,23,0.06)",
             padding: "3px 8px",
             borderRadius: 4,
@@ -623,7 +630,7 @@ function QuestionCard({ turn, index }: { turn: TurnSummary; index: number }) {
             style={{
               fontFamily: "var(--font-sans-stack)",
               fontSize: 9,
-              color: "var(--color-ink-soft)",
+              color: INK_SOFT,
               textTransform: "uppercase",
               letterSpacing: "0.2em",
               margin: 0,
@@ -652,7 +659,7 @@ function QuestionCard({ turn, index }: { turn: TurnSummary; index: number }) {
             style={{
               fontFamily: "var(--font-sans-stack)",
               fontSize: 9,
-              color: "var(--color-ink-soft)",
+              color: INK_SOFT,
               textTransform: "uppercase",
               letterSpacing: "0.2em",
               margin: 0,
@@ -780,7 +787,7 @@ function NextStep({ index, title, detail }: { index: number; title: string; deta
             fontFamily: "var(--font-sans-stack)",
             fontSize: 13,
             lineHeight: 1.5,
-            color: "var(--color-ink-soft)",
+            color: INK_SOFT,
             marginTop: 4,
             marginBottom: 0,
           }}
