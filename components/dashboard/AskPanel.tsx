@@ -267,7 +267,7 @@ export function AskPanel({ open, onClose, stepNumber, freeTier = false }: Props)
             return (
               <div
                 key={m.id}
-                className="animate-bubble-in-right ml-auto max-w-[85%] rounded-2xl rounded-tr-md bg-[var(--color-accent)] text-[var(--color-paper-soft)] px-4 py-2.5 text-sm leading-relaxed"
+                className="animate-bubble-in-right ml-auto max-w-[85%] rounded-2xl rounded-tr-md bg-[var(--color-persimmon-deep)] text-white px-4 py-2.5 text-sm leading-relaxed"
               >
                 {m.text}
               </div>

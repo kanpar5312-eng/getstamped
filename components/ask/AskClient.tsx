@@ -558,7 +558,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                   if (m.role === "user") {
                     return (
                       <div key={m.id} className="ml-auto max-w-[80%] animate-bubble-in-right">
-                        <div className="rounded-2xl rounded-tr-md bg-[var(--color-accent)] text-[var(--color-paper-soft)] px-4 py-2.5 text-sm leading-relaxed">
+                        <div className="rounded-2xl rounded-tr-md bg-[var(--color-persimmon-deep)] text-white px-4 py-2.5 text-sm leading-relaxed">
                           {m.content}
                         </div>
                         <div className="mt-1 flex justify-end pr-1">

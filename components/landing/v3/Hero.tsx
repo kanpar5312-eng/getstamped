@@ -261,7 +261,7 @@ export function Hero() {
 
         {/* ── Layer A · headline stack ── */}
         <div ref={headRef} className="gs-hx-head">
-          <p className="gs-hx-eyebrow">F-1 · From 10 countries · One payment</p>
+          <p className="gs-hx-eyebrow">F-1 · 47 steps · One payment</p>
           <h1 className="gs-hx-h1">
             Every step from <em>home</em>
             <br />
@@ -274,20 +274,18 @@ export function Hero() {
             interviews, in one place.
           </p>
           <p className="gs-hx-sub">
-            The full F-1 route, sequenced for your home country — every form,
-            fee, and interview between you and the stamp. AI document checks.
-            Voice mock interviews. One workspace until your passport says yes.
+            AI-checked documents. Real mock interviews. Every step, in order.
           </p>
           <div className="gs-hx-ctas">
             <Link href="/sign-up" className="gs-hx-primary">
               Start free — Phase 1 forever
             </Link>
             <span className="gs-hx-hint">
-              Scroll to fast-forward the journey <span aria-hidden>↓</span>
+              Scroll to fast-forward <span aria-hidden>↓</span>
             </span>
           </div>
           <p className="gs-hx-trust">
-            Phase 1 free forever&ensp;·&ensp;No subscription&ensp;·&ensp;14-day refund
+            Free forever&ensp;·&ensp;No subscription&ensp;·&ensp;14-day refund
           </p>
         </div>
 
@@ -671,8 +669,15 @@ export function Hero() {
           /* Compact the headline stack so it clears the card preview that
              starts rising at ~62vh — previously the CTA/trust line could
              sit right at that boundary and read as crowded/cut off. */
-          .gs-hx-head { padding: clamp(56px, 9vh, 88px) 20px 0; }
-          .gs-hx-eyebrow { font-size: 10px; letter-spacing: 0.32em; }
+          .gs-hx-head { padding: clamp(76px, 13vh, 108px) 20px 0; }
+          /* The fixed nav pill sits at top:14px, height 64px (~78px total).
+             At 0.42em letter-spacing the full-width eyebrow line overflowed
+             past the viewport edge, right under the nav — tighten spacing
+             and let it wrap instead of clipping. */
+          .gs-hx-eyebrow {
+            font-size: 10px; letter-spacing: 0.18em;
+            white-space: normal; overflow-wrap: break-word;
+          }
           .gs-hx-h1 { margin-top: 14px; font-size: clamp(34px, 9vw, 48px); }
           .gs-hx-sub { margin-top: 14px; font-size: 15px; line-height: 1.5; }
           .gs-hx-ctas { margin-top: 22px; gap: 12px; }

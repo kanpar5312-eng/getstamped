@@ -1236,6 +1236,23 @@ html.dark [data-surface="dashboard"] {
   from { opacity: 0; transform: translateX(-50%) translateY(20px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
+/* Dark mode: the warm peach glow reads as an odd, out-of-place orange
+   patch floating over an otherwise black dashboard — drop it entirely
+   for a flat, constant-black header instead of trying to retint it. */
+html.dark [data-surface="dashboard"] .horizon-sun {
+  background: none;
+  animation: none;
+  opacity: 0;
+}
+
+/* Without color-scheme, native <input type="date">/"time"> chrome (the
+   calendar icon, its picker) renders in the browser's default light theme
+   regardless of our own dark styling — it shows up as a mismatched pale
+   rectangle overhanging the custom dark input (e.g. InterviewDetailsModal). */
+html.dark input[type="date"],
+html.dark input[type="time"] {
+  color-scheme: dark;
+}
 
 /* Card hover lift across the dashboard surface */
 [data-surface="dashboard"] .rounded-2xl.bg-\[var\(--surface\)\]:hover,
