@@ -358,10 +358,14 @@ export function Hero() {
 
         .gs-hx-runway {
           position: relative;
-          height: 460vh;
+          /* Was 460vh — a visitor had to scroll nearly 5 screens before
+             reaching any real feature content (Document Vault, Mock
+             Interview, Parent Share) below. Same three acts, same
+             easing, just compressed so the payoff arrives sooner. */
+          height: 340vh;
           background: var(--color-cream);
         }
-        @media (max-width: 767px) { .gs-hx-runway { height: 340vh; } }
+        @media (max-width: 767px) { .gs-hx-runway { height: 260vh; } }
 
         .gs-hx-sticky {
           position: sticky; top: 0;

@@ -28,6 +28,7 @@ import { Footer } from "@/components/landing/Footer";
 import type { Currency } from "@/lib/pricing";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
+import { Pricing } from "./Pricing";
 import { Testimonials } from "./Testimonials";
 import { Reviews } from "./Reviews";
 import { FAQ } from "./FAQ";
@@ -43,12 +44,25 @@ type Props = {
   earlyBirdClaimed: number;
 };
 
-export function MarketingLanding(_props: Props) {
+/* Real, gated signup count — never a fabricated number. getWaitlistCount()
+   already returns 0 when the backing table isn't configured, so hiding on
+   totalSignups <= 0 means this only ever shows a true count. */
+function LiveSignupLine({ totalSignups }: { totalSignups: number }) {
+  if (totalSignups <= 0) return null;
+  return (
+    <p className="py-3 text-center font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--color-muted)]">
+      {totalSignups.toLocaleString("en-US")} students already building their playbook
+    </p>
+  );
+}
+
+export function MarketingLanding({ currency, totalSignups }: Props) {
   return (
     <div className="v3-root">
       <Header />
       <main>
         <Hero />
+        <LiveSignupLine totalSignups={totalSignups} />
         {/* Anchor target for #features / #how-it-works links (Header, Footer,
             Pricing) — kept as a separate no-op marker instead of adding an id
             inside StackedFeatureCards so that component stays untouched. */}
@@ -58,6 +72,10 @@ export function MarketingLanding(_props: Props) {
             story right after the hero. */}
         <StackedFeatureCards />
         <VsConsultants />
+        {/* Pricing was built (v3/Pricing.tsx) but never wired into this page
+            — restoring it here, right after the differentiation section it
+            was designed to follow (see VsConsultants.tsx's own comment). */}
+        <Pricing currency={currency} />
         <Testimonials />
         {/* Reviews hidden for MVP — fictional testimonials replaced when
             we have ≥3 real student quotes from beta. Re-add <Reviews />
