@@ -256,6 +256,7 @@ export function Hero() {
         <div className="gs-hx-bg" aria-hidden>
           <span className="gs-hx-blob gs-hx-blob-a" />
           <span className="gs-hx-blob gs-hx-blob-b" />
+          <span className="gs-hx-blob gs-hx-blob-c" />
           <span className="gs-hx-grain" />
         </div>
 
@@ -377,7 +378,11 @@ export function Hero() {
           position: absolute; inset: 0 0 auto 0;
           display: flex; flex-direction: column; align-items: center;
           text-align: center;
-          padding: clamp(96px, 13vh, 150px) 24px 0;
+          /* Was clamp(96px, 13vh, 150px) — left a dead gap between the nav
+             and the eyebrow line. Pulled the whole stack up so it sits
+             closer to the pooled glow behind it instead of floating in
+             empty cream. */
+          padding: clamp(64px, 9vh, 108px) 24px 0;
           z-index: 2;
           will-change: transform, opacity;
         }
@@ -409,14 +414,25 @@ export function Hero() {
           animation: gs-hx-up 700ms var(--ease-out) 360ms both;
         }
         .gs-hx-primary {
-          background: var(--color-persimmon); color: #FAF8F4;
+          position: relative;
+          background: linear-gradient(180deg, var(--color-persimmon-soft) 0%, var(--color-persimmon) 62%, var(--color-persimmon-deep) 100%);
+          color: #FAF8F4;
           font-family: var(--font-sans-stack); font-size: 15px; font-weight: 600;
           padding: 16px 30px; border-radius: 999px; text-decoration: none;
-          box-shadow: 0 10px 28px -10px rgba(232,98,42,0.55);
-          transition: transform 200ms var(--ease-out), background 200ms var(--ease-out);
+          box-shadow:
+            0 16px 36px -12px rgba(232,98,42,0.55),
+            0 4px 10px -4px rgba(232,98,42,0.4),
+            inset 0 1px 0 rgba(255,255,255,0.35);
+          transition: transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out);
         }
         @media (hover: hover) {
-          .gs-hx-primary:hover { transform: translateY(-1px); background: var(--color-persimmon-deep); }
+          .gs-hx-primary:hover {
+            transform: translateY(-2px);
+            box-shadow:
+              0 20px 44px -12px rgba(232,98,42,0.6),
+              0 6px 14px -4px rgba(232,98,42,0.45),
+              inset 0 1px 0 rgba(255,255,255,0.35);
+          }
         }
         .gs-hx-hint {
           font-family: var(--font-mono-stack, var(--font-sans-stack));
@@ -585,16 +601,27 @@ export function Hero() {
         }
         .gs-hx-blob-a {
           width: 620px; height: 620px; left: -10%; top: -14%;
-          background: radial-gradient(circle, rgba(245, 213, 144, 0.5) 0%, transparent 65%);
-          opacity: 0.6;
+          background: radial-gradient(circle, rgba(245, 213, 144, 0.58) 0%, transparent 65%);
+          opacity: 0.68;
         }
         .gs-hx-blob-b {
           width: 520px; height: 520px; right: -8%; top: 24%;
-          background: radial-gradient(circle, rgba(232, 98, 42, 0.16) 0%, transparent 65%);
-          opacity: 0.7;
+          background: radial-gradient(circle, rgba(232, 98, 42, 0.2) 0%, transparent 65%);
+          opacity: 0.75;
+        }
+        /* Both blobs above sit near the page edges — neither actually
+           pools behind the headline itself, which is why the top of the
+           hero read as an empty cream void. This one sits centered right
+           behind the eyebrow/headline stack. */
+        .gs-hx-blob-c {
+          width: 720px; height: 480px; left: 50%; top: -8%;
+          transform: translateX(-50%);
+          background: radial-gradient(ellipse, rgba(245, 213, 144, 0.42) 0%, transparent 68%);
+          opacity: 0.8;
         }
         html.dark .gs-hx-blob-a { opacity: 0.12; }
         html.dark .gs-hx-blob-b { opacity: 0.2; }
+        html.dark .gs-hx-blob-c { opacity: 0.08; }
         .gs-hx-grain {
           position: absolute; inset: 0; opacity: 0.035;
           background-image:
@@ -612,6 +639,7 @@ export function Hero() {
           .gs-hx-blob { filter: blur(20px); }
           .gs-hx-blob-a { width: 380px; height: 380px; }
           .gs-hx-blob-b { width: 340px; height: 340px; }
+          .gs-hx-blob-c { width: 420px; height: 320px; }
           .gs-hx-grain { display: none; }
           .gs-hx-book-grain { display: none; }
         }
