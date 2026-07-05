@@ -7,7 +7,7 @@ import type { DocReview } from "@/lib/feedback-data";
 
 export function DocumentIssues({ failed }: { failed: DocReview[] }) {
   return (
-    <section className="mt-6 rounded-[12px] bg-white border border-[rgba(28,25,23,0.08)] p-8">
+    <section className="mt-6 rounded-[12px] bg-[var(--color-cream-soft)] border border-[var(--color-border-soft)] p-8">
       <div className="flex items-center gap-2">
         <span
           aria-hidden

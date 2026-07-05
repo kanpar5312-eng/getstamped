@@ -35,7 +35,7 @@ export function ScoreCards({ data }: { data: StudentFeedback }) {
       viewport={inViewOnce}
     >
       {/* Card 1 — Steps */}
-      <motion.div variants={fadeUp} className="bg-white border border-[rgba(28,25,23,0.08)] rounded-[12px] p-7">
+      <motion.div variants={fadeUp} className="bg-[var(--color-cream-soft)] border border-[var(--color-border-soft)] rounded-[12px] p-7">
         <div className="flex items-center gap-2 mb-3">
           <ChecklistIcon />
           <span className="font-sans text-[12px] uppercase text-[var(--color-ink-soft)] tracking-wide">
@@ -57,7 +57,7 @@ export function ScoreCards({ data }: { data: StudentFeedback }) {
       </motion.div>
 
       {/* Card 2 — Documents */}
-      <motion.div variants={fadeUp} className="bg-white border border-[rgba(28,25,23,0.08)] rounded-[12px] p-7">
+      <motion.div variants={fadeUp} className="bg-[var(--color-cream-soft)] border border-[var(--color-border-soft)] rounded-[12px] p-7">
         <div className="flex items-center gap-2 mb-3">
           <DocCheckIcon />
           <span className="font-sans text-[12px] uppercase text-[var(--color-ink-soft)] tracking-wide">
@@ -109,7 +109,7 @@ export function ScoreCards({ data }: { data: StudentFeedback }) {
       </motion.div>
 
       {/* Card 3 — Interview */}
-      <motion.div variants={fadeUp} className="bg-white border border-[rgba(28,25,23,0.08)] rounded-[12px] p-7">
+      <motion.div variants={fadeUp} className="bg-[var(--color-cream-soft)] border border-[var(--color-border-soft)] rounded-[12px] p-7">
         <div className="flex items-center gap-2 mb-3">
           <MicIcon />
           <span className="font-sans text-[12px] uppercase text-[var(--color-ink-soft)] tracking-wide">
@@ -150,7 +150,7 @@ export function ScoreCards({ data }: { data: StudentFeedback }) {
 
 function Bar({ pct, color }: { pct: number; color: string }) {
   return (
-    <div className="h-1.5 rounded-full bg-[rgba(28,25,23,0.08)] overflow-hidden mt-3">
+    <div className="h-1.5 rounded-full bg-[var(--color-border-soft)] overflow-hidden mt-3">
       <motion.div
         initial={{ width: 0 }}
         animate={{ width: `${pct}%` }}
@@ -169,7 +169,7 @@ function ScoreRow({ label, score }: { label: string; score: number | null }) {
         <span className="font-sans text-[11px] text-[var(--color-ink-soft)]">{label}</span>
         <span className="font-sans text-[11px] text-[var(--color-ink)]">{v}</span>
       </div>
-      <div className="h-1 rounded-full bg-[rgba(28,25,23,0.08)] overflow-hidden mt-1">
+      <div className="h-1 rounded-full bg-[var(--color-border-soft)] overflow-hidden mt-1">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${v}%` }}

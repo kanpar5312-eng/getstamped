@@ -93,7 +93,7 @@ function SessionRow({ session, index }: { session: SessionSummary; index: number
   };
 
   return (
-    <li className="rounded-[12px] bg-white border border-[rgba(28,25,23,0.08)] overflow-hidden">
+    <li className="rounded-[12px] bg-[var(--color-cream-soft)] border border-[var(--color-border-soft)] overflow-hidden">
       <button
         type="button"
         onClick={toggle}
@@ -202,7 +202,7 @@ function SubScore({ label, score }: { label: string; score: number | null }) {
         <span className="font-sans text-[11px] text-[var(--color-ink-soft)]">{label}</span>
         <span className="font-sans text-[11px] text-[var(--color-ink)]">{v}</span>
       </div>
-      <div className="h-1 rounded-full bg-[rgba(28,25,23,0.08)] overflow-hidden mt-1">
+      <div className="h-1 rounded-full bg-[var(--color-border-soft)] overflow-hidden mt-1">
         <div style={{ width: `${v}%`, height: "100%", background: "var(--color-persimmon)" }} />
       </div>
     </div>
@@ -213,7 +213,7 @@ function AnswerCard({ a }: { a: SessionAnswer }) {
   const [showAnswer, setShowAnswer] = useState(false);
   const tone = scoreTone(a.score);
   return (
-    <div className="rounded-[8px] bg-white border border-[rgba(28,25,23,0.08)] p-5">
+    <div className="rounded-[8px] bg-[var(--color-cream-soft)] border border-[var(--color-border-soft)] p-5">
       <div className="flex items-center justify-between">
         {a.category ? (
           <span

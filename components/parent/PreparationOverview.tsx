@@ -73,7 +73,7 @@ export async function PreparationOverview({ studentUserId }: { studentUserId: st
   const scoreColor = LABEL_COLORS[summary.readiness_label];
 
   return (
-    <section className="mt-6 rounded-2xl border border-[rgba(28,25,23,0.08)] bg-white p-8">
+    <section className="mt-6 rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-cream-soft)] p-8">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-[20px] text-[var(--color-ink)] leading-none">
           Preparation Overview

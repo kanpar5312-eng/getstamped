@@ -29,7 +29,7 @@ export function PriorityActions() {
   }, []);
 
   return (
-    <section className="mt-6 rounded-[12px] bg-white border border-[rgba(28,25,23,0.08)] p-8">
+    <section className="mt-6 rounded-[12px] bg-[var(--color-cream-soft)] border border-[var(--color-border-soft)] p-8">
       <h2 className="font-display text-[24px] text-[var(--color-ink)]">
         Your Priority Actions
       </h2>
@@ -58,7 +58,7 @@ export function PriorityActions() {
             <motion.article
               key={a.priority}
               variants={fadeUp}
-              className="rounded-[12px] bg-[var(--color-paper)] border border-[rgba(28,25,23,0.08)] p-6"
+              className="rounded-[12px] bg-[var(--color-paper)] border border-[var(--color-border-soft)] p-6"
             >
               <p
                 className="font-display"
@@ -103,14 +103,14 @@ export function PriorityActions() {
 
 function SkeletonCard() {
   return (
-    <div className="rounded-[12px] bg-[var(--color-paper)] border border-[rgba(28,25,23,0.08)] p-6 animate-pulse">
-      <div className="h-7 w-8 rounded bg-[rgba(28,25,23,0.08)]" />
-      <div className="h-4 w-3/4 rounded bg-[rgba(28,25,23,0.08)] mt-4" />
+    <div className="rounded-[12px] bg-[var(--color-paper)] border border-[var(--color-border-soft)] p-6 animate-pulse">
+      <div className="h-7 w-8 rounded bg-[var(--color-border-soft)]" />
+      <div className="h-4 w-3/4 rounded bg-[var(--color-border-soft)] mt-4" />
       <div className="h-3 w-full rounded bg-[rgba(28,25,23,0.06)] mt-3" />
       <div className="h-3 w-5/6 rounded bg-[rgba(28,25,23,0.06)] mt-1.5" />
       <div className="flex gap-2 mt-4">
-        <div className="h-5 w-16 rounded bg-[rgba(28,25,23,0.08)]" />
-        <div className="h-5 w-12 rounded bg-[rgba(28,25,23,0.08)]" />
+        <div className="h-5 w-16 rounded bg-[var(--color-border-soft)]" />
+        <div className="h-5 w-12 rounded bg-[var(--color-border-soft)]" />
       </div>
     </div>
   );
