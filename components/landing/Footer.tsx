@@ -6,6 +6,14 @@ import { BrandMark } from "@/components/ui/BrandMark";
 
 const EMAIL = "founder@getstamped.app";
 
+/* Animated underline — a hairline that grows in smoothly from the left on
+   hover/focus, instead of a static always-on underline or a hard color
+   snap. Shared across every footer link for a consistent feel. */
+const LINK_HOVER =
+  "relative inline-block after:absolute after:left-0 after:-bottom-0.5 after:h-px after:w-full " +
+  "after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 " +
+  "after:ease-out hover:after:scale-x-100 focus-visible:after:scale-x-100 after:content-['']";
+
 type LinkItem = { label: string; href: string; external?: boolean };
 
 const PRODUCT: LinkItem[] = [
@@ -39,7 +47,7 @@ function LinkOut({ item }: { item: LinkItem }) {
         href={item.href}
         target={item.href.startsWith("mailto:") ? undefined : "_blank"}
         rel="noopener noreferrer"
-        className="text-sm text-[#F7F3EC]/85 hover:text-[var(--color-persimmon-soft)] transition-colors"
+        className={`text-sm text-[#F7F3EC]/85 hover:text-[var(--color-persimmon-soft)] transition-colors ${LINK_HOVER}`}
       >
         {item.label}
       </a>
@@ -48,7 +56,7 @@ function LinkOut({ item }: { item: LinkItem }) {
   return (
     <Link
       href={item.href}
-      className="text-sm text-[#F7F3EC]/85 hover:text-[var(--color-persimmon-soft)] transition-colors"
+      className={`text-sm text-[#F7F3EC]/85 hover:text-[var(--color-persimmon-soft)] transition-colors ${LINK_HOVER}`}
     >
       {item.label}
     </Link>
@@ -101,7 +109,7 @@ export function Footer() {
               Built by a 17-year-old.{" "}
               <Link
                 href="/about"
-                className="underline underline-offset-2 hover:text-[var(--color-persimmon-soft)] transition-colors"
+                className={`hover:text-[var(--color-persimmon-soft)] transition-colors ${LINK_HOVER}`}
               >
                 Read the story →
               </Link>
@@ -125,7 +133,7 @@ export function Footer() {
                   href="https://twitter.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-[#F7F3EC]/85 hover:text-[var(--color-persimmon-soft)] transition-colors"
+                  className={`text-sm text-[#F7F3EC]/85 hover:text-[var(--color-persimmon-soft)] transition-colors ${LINK_HOVER}`}
                 >
                   Twitter / X
                 </a>
@@ -135,7 +143,7 @@ export function Footer() {
                   href="https://instagram.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-[#F7F3EC]/85 hover:text-[var(--color-persimmon-soft)] transition-colors"
+                  className={`text-sm text-[#F7F3EC]/85 hover:text-[var(--color-persimmon-soft)] transition-colors ${LINK_HOVER}`}
                 >
                   Instagram
                 </a>
@@ -143,7 +151,7 @@ export function Footer() {
               <li>
                 <a
                   href={`mailto:${EMAIL}`}
-                  className="text-sm text-[#F7F3EC]/85 hover:text-[var(--color-persimmon-soft)] transition-colors"
+                  className={`text-sm text-[#F7F3EC]/85 hover:text-[var(--color-persimmon-soft)] transition-colors ${LINK_HOVER}`}
                 >
                   {EMAIL}
                 </a>

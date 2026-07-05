@@ -73,12 +73,29 @@ export function DashboardFooter() {
           flex-wrap: wrap;
           gap: 12px 22px;
         }
+        /* Animated underline — a hairline that grows in from the left on
+           hover instead of a hard color snap. */
         .ds-footer-links a {
+          position: relative;
           color: var(--color-ink-soft);
           text-decoration: none;
           transition: color 200ms var(--ease-soft);
         }
+        .ds-footer-links a::after {
+          content: "";
+          position: absolute;
+          left: 0;
+          bottom: -2px;
+          width: 100%;
+          height: 1px;
+          background: currentColor;
+          transform: scaleX(0);
+          transform-origin: left;
+          transition: transform 300ms var(--ease-out);
+        }
         .ds-footer-links a:hover { color: var(--color-persimmon); }
+        .ds-footer-links a:hover::after,
+        .ds-footer-links a:focus-visible::after { transform: scaleX(1); }
         @media (max-width: 640px) {
           .ds-footer { padding: 18px 20px 28px; }
           .ds-footer-inner { gap: 10px 20px; }

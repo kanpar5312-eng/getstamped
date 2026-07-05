@@ -450,7 +450,14 @@ async function buildExportPdf(
   }
 
   /* ─────────────────────── Step progress ─────────────────────── */
-  pageBreak();
+  // Was an unconditional pageBreak() before every section below,
+  // regardless of how much room was left — that's why the export had
+  // mostly-blank pages with a couple of lines at the top of each.
+  // need() only breaks when there genuinely isn't room, so short
+  // sections flow onto the same page instead of wasting one each.
+  need(8);
+  y -= 16;
+  drawLine({ y: y + 8 });
   eyebrow("47-step playbook");
   h1("Your step progress");
 
@@ -482,7 +489,9 @@ async function buildExportPdf(
 
   /* ─────────────────────── Documents ─────────────────────── */
   if (docs.length > 0) {
-    pageBreak();
+    need(8);
+    y -= 16;
+    drawLine({ y: y + 8 });
     eyebrow("Document vault");
     h1("Uploaded documents");
     for (const d of docs) {
@@ -500,7 +509,9 @@ async function buildExportPdf(
 
   /* ─────────────────────── Mock interviews ─────────────────────── */
   if (sessions.length > 0) {
-    pageBreak();
+    need(8);
+    y -= 16;
+    drawLine({ y: y + 8 });
     eyebrow("Mock interview history");
     h1("Recorded sessions");
     for (const s of sessions) {
@@ -521,7 +532,9 @@ async function buildExportPdf(
 
   /* ─────────────────────── AI chats ─────────────────────── */
   if (threads.length > 0) {
-    pageBreak();
+    need(8);
+    y -= 16;
+    drawLine({ y: y + 8 });
     eyebrow("Ask GetStamped");
     h1("AI chat threads");
     body(`You have ${threads.length} thread${threads.length === 1 ? "" : "s"} and ${messages.length} recent message${messages.length === 1 ? "" : "s"} on record. The most recent threads are summarised below.`);
@@ -541,7 +554,9 @@ async function buildExportPdf(
 
   /* ─────────────────────── Activity ─────────────────────── */
   if (activity.length > 0) {
-    pageBreak();
+    need(8);
+    y -= 16;
+    drawLine({ y: y + 8 });
     eyebrow("Activity log");
     h1("Recent activity");
     body("Most recent 50 step events, newest first.");
