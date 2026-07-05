@@ -15,11 +15,12 @@ import { getServerSupabase } from "@/lib/supabase/server";
      per plan (see MOCK_INTERVIEW_WEEKLY_LIMIT), not just free tier
    • document_review hard-blocked for free, unlimited on any paid plan
 
-   Note on Family's "6 each": the product only tracks one profile per
-   paid account today — there's no seats/sub-accounts data model, so a
-   per-student split can't be enforced server-side yet. The 12/week cap
-   below is the combined total for the account; splitting it 6-and-6
-   requires an actual multi-seat feature.
+   Family's "6 each, 12/week combined" is now real: supabase/migrations/
+   0011_family_seats.sql gives every accepted family member their own
+   profile row (family_group_id links them), so usage_logs is counted
+   per-account same as everyone else. Setting the family limit to 6 here
+   means each of the up-to-2 seats gets 6/week — 12/week combined falls
+   out naturally, no special-casing needed.
    ════════════════════════════════════════════════════════════════════════ */
 
 export type LimitedAction =
@@ -45,7 +46,7 @@ const FREE_LIMITS = {
 const MOCK_INTERVIEW_WEEKLY_LIMIT: Record<"free" | "solo" | "family", number> = {
   free: FREE_LIMITS.mock_interview,
   solo: 5,
-  family: 12,
+  family: 6,
 };
 
 /** Midnight UTC of today, ISO. */

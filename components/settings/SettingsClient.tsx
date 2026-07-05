@@ -17,6 +17,12 @@ import {
   updateNotifPrefs,
   updatePassword,
 } from "@/app/actions/account";
+import {
+  inviteFamilyMember,
+  revokeFamilyInvite,
+  removeFamilyMember,
+  leaveFamilyGroup,
+} from "@/app/actions/family";
 
 type Plan = "free" | "solo" | "family";
 
@@ -46,9 +52,19 @@ type ReferralProps = {
   creditUsdCents: number;
 };
 
+export type FamilyMemberView = { userId: string; firstName: string | null; isOwner: boolean; isYou: boolean };
+export type FamilyPendingInvite = { id: string; email: string };
+export type FamilySummary = {
+  role: "owner" | "member" | "none";
+  maxSeats: number;
+  seats: FamilyMemberView[];
+  pendingInvites: FamilyPendingInvite[];
+};
+
 type Props = {
   initial: Profile;
   referral?: ReferralProps;
+  family?: FamilySummary;
 };
 
 const SECTIONS = [
@@ -83,9 +99,19 @@ const input = "w-full rounded-xl border border-[var(--color-border)] bg-[var(--c
 // box-border force it to shrink to the container like every other input.
 const dateInput = `${input} appearance-none min-w-0 max-w-full box-border`;
 
-export function SettingsClient({ initial, referral }: Props) {
+const isSectionId = (v: string): v is SectionId => SECTIONS.some((s) => s.id === v);
+
+export function SettingsClient({ initial, referral, family }: Props) {
   const router = useRouter();
   const [active, setActive] = useState<SectionId>("profile");
+
+  // Deep links like /dashboard/settings#plan (used by the upgrade page's
+  // "Invite your second student" link and the referral-reward email)
+  // land on the right tab instead of always defaulting to Profile.
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (isSectionId(hash)) setActive(hash);
+  }, []);
   const [data, setData] = useState<Profile>(initial);
   const [baseline, setBaseline] = useState<Profile>(initial);
   const [saved, setSaved] = useState<SectionId | null>(null);
@@ -563,22 +589,7 @@ export function SettingsClient({ initial, referral }: Props) {
                 )}
                 {data.plan === "family" && (
                   <div className="mt-6 border-t border-[var(--color-border-soft)] pt-5">
-                    <Eyebrow>Family members</Eyebrow>
-                    <ul className="mt-3 space-y-2">
-                      {[
-                        { name: "Arya Patel (you)", status: "Active" },
-                        { name: "Riya Patel", status: "Active" },
-                        { name: "—", status: "Open slot" },
-                      ].map((m, i) => (
-                        <li key={i} className="flex items-center justify-between gap-3 text-sm">
-                          <span className="text-[var(--color-ink)]">{m.name}</span>
-                          <span className="text-[11px] text-[var(--color-muted)]">{m.status}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <button type="button" className="mt-3 text-xs text-[var(--color-accent-deep)] hover:text-[var(--color-accent)] transition-colors">
-                      Invite another student
-                    </button>
+                    <FamilyMembersSection family={family} />
                   </div>
                 )}
               </div>
@@ -982,6 +993,157 @@ function SaveRow({ show, section, saving, saved, onSave }: { show: boolean; sect
       >
         {saving ? "Saving…" : saved ? "Saved ✓" : "Save changes"}
       </button>
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   Family members — real seats now (supabase/migrations/0011_family_seats.
+   sql), not the old hardcoded "Arya Patel / Riya Patel" mock. Owners can
+   invite by email (revoking pending invites) and remove members; members
+   can only leave. State comes from lib/family.ts via the settings page
+   server component.
+   ────────────────────────────────────────────────────────────────────── */
+function FamilyMembersSection({ family }: { family?: FamilySummary }) {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const role = family?.role ?? "none";
+  const seats = family?.seats ?? [];
+  const pending = family?.pendingInvites ?? [];
+  const maxSeats = family?.maxSeats ?? 2;
+  const openSlots = Math.max(0, maxSeats - seats.length - pending.length);
+
+  const runInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || busyKey) return;
+    setBusyKey("invite");
+    setError(null);
+    setNotice(null);
+    const res = await inviteFamilyMember(email.trim());
+    setBusyKey(null);
+    if (res.ok) {
+      setEmail("");
+      setNotice("Invite sent.");
+      router.refresh();
+    } else {
+      setError(res.error);
+    }
+  };
+
+  const runRevoke = async (inviteId: string) => {
+    setBusyKey(`revoke-${inviteId}`);
+    setError(null);
+    const res = await revokeFamilyInvite(inviteId);
+    setBusyKey(null);
+    if (res.ok) router.refresh();
+    else setError(res.error);
+  };
+
+  const runRemove = async (userId: string) => {
+    setBusyKey(`remove-${userId}`);
+    setError(null);
+    const res = await removeFamilyMember(userId);
+    setBusyKey(null);
+    if (res.ok) router.refresh();
+    else setError(res.error);
+  };
+
+  const runLeave = async () => {
+    setBusyKey("leave");
+    setError(null);
+    const res = await leaveFamilyGroup();
+    setBusyKey(null);
+    if (res.ok) router.refresh();
+    else setError(res.error);
+  };
+
+  return (
+    <div>
+      <Eyebrow>Family members</Eyebrow>
+      <ul className="mt-3 space-y-2">
+        {seats.map((m) => (
+          <li key={m.userId} className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-[var(--color-ink)]">
+              {m.firstName ?? "Student"}
+              {m.isYou ? " (you)" : ""}
+              {m.isOwner ? " · owner" : ""}
+            </span>
+            {role === "owner" && !m.isOwner ? (
+              <button
+                type="button"
+                onClick={() => runRemove(m.userId)}
+                disabled={busyKey === `remove-${m.userId}`}
+                className="text-[11px] text-[var(--color-muted)] hover:text-red-600 transition-colors disabled:opacity-50"
+              >
+                {busyKey === `remove-${m.userId}` ? "Removing…" : "Remove"}
+              </button>
+            ) : (
+              <span className="text-[11px] text-[var(--color-muted)]">Active</span>
+            )}
+          </li>
+        ))}
+        {pending.map((inv) => (
+          <li key={inv.id} className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-[var(--color-ink-soft)]">{inv.email}</span>
+            {role === "owner" ? (
+              <button
+                type="button"
+                onClick={() => runRevoke(inv.id)}
+                disabled={busyKey === `revoke-${inv.id}`}
+                className="text-[11px] text-[var(--color-muted)] hover:text-red-600 transition-colors disabled:opacity-50"
+              >
+                {busyKey === `revoke-${inv.id}` ? "Cancelling…" : "Cancel invite"}
+              </button>
+            ) : (
+              <span className="text-[11px] text-[var(--color-muted)]">Invited</span>
+            )}
+          </li>
+        ))}
+        {Array.from({ length: openSlots }).map((_, i) => (
+          <li key={`open-${i}`} className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-[var(--color-muted)]">—</span>
+            <span className="text-[11px] text-[var(--color-muted)]">Open slot</span>
+          </li>
+        ))}
+      </ul>
+
+      {role === "owner" && openSlots > 0 && (
+        <form onSubmit={runInvite} className="mt-4 flex items-center gap-2">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Student's email"
+            className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted)]/70 outline-none focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent)]/10"
+            disabled={busyKey === "invite"}
+          />
+          <button
+            type="submit"
+            disabled={busyKey === "invite" || !email.trim()}
+            className="rounded-lg bg-[var(--color-persimmon)] px-4 py-2 text-sm font-medium text-[var(--color-paper-soft)] hover:bg-[var(--color-persimmon-deep)] transition-colors disabled:opacity-50"
+          >
+            {busyKey === "invite" ? "Sending…" : "Invite"}
+          </button>
+        </form>
+      )}
+
+      {role === "member" && (
+        <button
+          type="button"
+          onClick={runLeave}
+          disabled={busyKey === "leave"}
+          className="mt-4 text-xs text-[var(--color-muted)] hover:text-red-600 transition-colors disabled:opacity-50"
+        >
+          {busyKey === "leave" ? "Leaving…" : "Leave family plan"}
+        </button>
+      )}
+
+      {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
+      {notice && !error && <p className="mt-3 text-xs text-[var(--color-accent-deep)]">{notice}</p>}
     </div>
   );
 }

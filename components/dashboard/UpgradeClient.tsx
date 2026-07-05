@@ -214,6 +214,14 @@ function PlanStatusBanner({ plan }: { plan: Plan }) {
           : "Every phase, every step is already unlocked — one-time payment, no renewals."}
         {plan === "solo" && " Need a second seat? Family is below."}
       </p>
+      {plan === "family" && (
+        <Link
+          href="/dashboard/settings#plan"
+          className="mt-4 inline-flex text-sm font-medium text-[var(--color-accent-deep)] hover:text-[var(--color-accent)] transition-colors"
+        >
+          Invite your second student →
+        </Link>
+      )}
     </section>
   );
 }

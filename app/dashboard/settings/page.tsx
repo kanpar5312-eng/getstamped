@@ -4,6 +4,8 @@ import { getCurrentUser } from "@/lib/current-user";
 import { getSessionUser } from "@/lib/supabase/server";
 import { SettingsClient } from "@/components/settings/SettingsClient";
 import { getReferralStats } from "@/lib/referrals";
+import { getFamilyState } from "@/lib/family";
+import type { FamilySummary } from "@/components/settings/SettingsClient";
 
 export const metadata: Metadata = {
   title: "Settings — GetStamped",
@@ -30,6 +32,34 @@ export default async function SettingsPage({
     process.env.NEXT_PUBLIC_SITE_ORIGIN ??
     `https://${hdrs.get("host") ?? "getstamped.app"}`;
 
+  let family: FamilySummary | undefined;
+  if (sessionUser && profile.plan === "family") {
+    const state = await getFamilyState(sessionUser.id);
+    family =
+      state.role === "none"
+        ? // plan === "family" but no group row exists yet — nobody's been
+          // invited. lib/family.ts creates the group lazily on first
+          // invite, so this account IS the prospective owner; show them
+          // as the sole seat so far, with open slots to invite into.
+          {
+            role: "owner",
+            maxSeats: 2,
+            seats: [{ userId: sessionUser.id, firstName: profile.firstName, isOwner: true, isYou: true }],
+            pendingInvites: [],
+          }
+        : {
+            role: state.role,
+            maxSeats: state.maxSeats,
+            seats: state.seats.map((s) => ({
+              userId: s.userId,
+              firstName: s.firstName,
+              isOwner: s.isOwner,
+              isYou: s.userId === sessionUser.id,
+            })),
+            pendingInvites: state.pendingInvites.map((i) => ({ id: i.id, email: i.email })),
+          };
+  }
+
   return (
     <SettingsClient
       referral={{
@@ -40,6 +70,7 @@ export default async function SettingsPage({
         creditInrPaise: referral.creditInrPaise,
         creditUsdCents: referral.creditUsdCents,
       }}
+      family={family}
       initial={{
         firstName: profile.firstName,
         lastName: "Patel",

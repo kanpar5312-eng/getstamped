@@ -15,6 +15,7 @@ const DISALLOW = [
   "/dashboard/",
   "/onboarding",
   "/parent/",
+  "/family/",
   "/sign-up/verify",
   "/dev/",
   "/celebration",

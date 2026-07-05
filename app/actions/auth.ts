@@ -6,6 +6,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { attachReferralFromCookie } from "@/lib/referrals";
+import { attachFamilyInviteFromCookie } from "@/lib/family";
 import { getAdminSupabase } from "@/lib/documents/admin";
 import { TOS_VERSION } from "@/lib/legal/tos";
 
@@ -76,6 +77,15 @@ export async function signUp(formData: FormData): Promise<AuthResult> {
       await attachReferralFromCookie(signUpData.user.id);
     } catch (err) {
       console.error("[signUp] referral attach failed:", err);
+    }
+
+    // If a /family/join/<token> cookie is on the request, accept the
+    // invite now that the account exists. Best-effort — a broken invite
+    // link must never block signup.
+    try {
+      await attachFamilyInviteFromCookie(signUpData.user.id);
+    } catch (err) {
+      console.error("[signUp] family invite attach failed:", err);
     }
 
     // DPDP Act compliance — append-only record of the affirmative age
