@@ -1245,6 +1245,13 @@ html.dark [data-surface="dashboard"] .horizon-sun {
   opacity: 0;
 }
 
+/* Timeline Planner — checkmark pop on "mark done" (components/timeline-planner). */
+@keyframes check-pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 /* Without color-scheme, native <input type="date">/"time"> chrome (the
    calendar icon, its picker) renders in the browser's default light theme
    regardless of our own dark styling — it shows up as a mismatched pale

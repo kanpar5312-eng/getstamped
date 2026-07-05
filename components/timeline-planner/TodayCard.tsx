@@ -40,18 +40,21 @@ export function TodayCard({ view, today }: Props) {
           ? "Time is tight — focus here."
           : "What to do today"}
       </h2>
-      {view.isCompressed && (
-        <p className="mt-2 text-sm text-[var(--color-ink-soft)]">
-          There isn&rsquo;t enough runway left for an evenly-spaced plan, so
-          this is only the highest-priority work — not the full list.
-        </p>
-      )}
+      <p className="mt-2 text-sm text-[var(--color-ink-soft)] leading-relaxed">
+        {view.isCompressed
+          ? "There isn't enough time left for an even pace, so this is only the most urgent work — not the full list."
+          : "A short, hand-picked list — just what's due today or this week, pulled from your full plan below."}
+      </p>
 
       <ul className="mt-5 flex flex-col gap-3">
         {view.today.map((item) => (
           <PlannerItemRow key={item.step.number} item={item} today={today} />
         ))}
       </ul>
+
+      <p className="mt-5 text-xs text-[var(--color-muted)]">
+        Tap the circle next to a step to mark it done — it updates instantly.
+      </p>
     </section>
   );
 }

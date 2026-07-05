@@ -1,3 +1,4 @@
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { PlannerItemRow, formatDue } from "@/components/timeline-planner/PlannerItemRow";
 import type { PlannerView } from "@/lib/timeline-planner";
 
@@ -40,19 +41,29 @@ export function FullTimelineView({ view, today }: Props) {
 
   return (
     <section className="rounded-2xl border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-6 sm:p-7">
-      <ol className="flex flex-col gap-6">
-        {groups.map((group) => (
-          <li key={group.key}>
+      <Eyebrow>Full schedule</Eyebrow>
+      <p className="mt-2 text-sm text-[var(--color-ink-soft)] leading-relaxed max-w-2xl">
+        Every remaining step, grouped by the day it&rsquo;s scheduled for. Steps
+        marked &ldquo;After interview&rdquo; happen once your visa is stamped, so
+        they&rsquo;re listed after your target date rather than before it.
+      </p>
+
+      <ol className="mt-6 flex flex-col gap-6">
+        {groups.map((group, i) => (
+          <li key={group.key} className={i > 0 ? "pt-6 border-t border-[var(--color-border-soft)]" : ""}>
             <div className="flex items-baseline gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-muted)]">
+              <span className="text-sm font-semibold text-[var(--color-ink)]">
                 {group.label}
               </span>
-              <span className="text-[11px] text-[var(--color-muted)]">
+              <span className="text-xs text-[var(--color-muted)]">
                 {group.items[0].dueDate.toLocaleDateString(undefined, {
+                  weekday: "short",
                   month: "short",
                   day: "numeric",
-                  year: "numeric",
                 })}
+              </span>
+              <span className="text-xs text-[var(--color-muted)]">
+                · {group.items.length} {group.items.length === 1 ? "step" : "steps"}
               </span>
             </div>
             <ul className="mt-3 flex flex-col gap-2">
