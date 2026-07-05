@@ -10,8 +10,26 @@ import { BrandMark } from "@/components/ui/BrandMark";
    mobile fallback, the client swaps once mounted. */
 
 const NAV_ITEMS = [
-  { label: "workspace", href: "/sign-in", ariaLabel: "Workspace" },
-  { label: "pricing", href: "/pricing", ariaLabel: "Pricing" },
+  {
+    label: "workspace",
+    href: "/sign-in",
+    ariaLabel: "Workspace",
+    dropdown: [
+      { label: "Timeline", description: "Every step, dated and in order.", href: "/sign-up" },
+      { label: "Document Vault", description: "AI-checked uploads before they cost you a reappointment.", href: "/sign-up" },
+      { label: "Mock Interview", description: "Practice out loud, scored like a real F-1 interview.", href: "/sign-up" },
+    ],
+  },
+  {
+    label: "pricing",
+    href: "/pricing",
+    ariaLabel: "Pricing",
+    dropdown: [
+      { label: "Free", description: "Phase 1 forever — 6 steps, 3 AI questions a day.", href: "/pricing" },
+      { label: "Solo", description: "All 47 steps, unlimited AI, one-time payment.", href: "/pricing" },
+      { label: "Family", description: "Two students, one payment, shared vault.", href: "/pricing" },
+    ],
+  },
   { label: "faq", href: "#faq", ariaLabel: "FAQ" },
   { label: "sign in", href: "/sign-in", ariaLabel: "Sign in" },
   { label: "start free", href: "/sign-up", ariaLabel: "Start free" },

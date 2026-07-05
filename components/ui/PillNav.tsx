@@ -14,10 +14,19 @@ import "./PillNav.css";
    this component only renders desktop markup.
    ═════════════════════════════════════════════════════════════════════════ */
 
+export type PillNavDropdownCard = {
+  label: string;
+  description: string;
+  href: string;
+};
+
 export type PillNavItem = {
   label: string;
   href: string;
   ariaLabel?: string;
+  /** Optional glass hover panel (desktop only) previewing 2-3 destinations
+   *  under this pill, Vertus-style. Omit for a plain link. */
+  dropdown?: PillNavDropdownCard[];
 };
 
 type Props = {
@@ -73,6 +82,27 @@ export default function PillNav({
   const navItemsRef = useRef<HTMLDivElement | null>(null);
   const logoRef = useRef<HTMLAnchorElement | null>(null);
   const [, setMounted] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
+
+  const cancelClose = () => {
+    if (closeTimerRef.current != null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  };
+  const openDropdownNow = (i: number) => {
+    cancelClose();
+    setOpenDropdown(i);
+  };
+  const scheduleClose = () => {
+    cancelClose();
+    // Small delay so the mouse can travel from the pill down into the
+    // panel without it snapping shut the instant it leaves the pill.
+    closeTimerRef.current = window.setTimeout(() => setOpenDropdown(null), 150);
+  };
+
+  useEffect(() => cancelClose, []);
 
   useEffect(() => {
     setMounted(true);
@@ -286,16 +316,35 @@ export default function PillNav({
               const active = activeHref === item.href;
               const className = `pill${active ? " is-active" : ""}`;
               const ariaLabel = item.ariaLabel || item.label;
+              const hasDropdown = Boolean(item.dropdown?.length);
+              const itemHoverProps = hasDropdown
+                ? {
+                    onMouseEnter: () => { handleEnter(i); openDropdownNow(i); },
+                    onMouseLeave: () => { handleLeave(i); scheduleClose(); },
+                    onFocus: () => openDropdownNow(i),
+                    onBlur: () => scheduleClose(),
+                  }
+                : {
+                    onMouseEnter: () => handleEnter(i),
+                    onMouseLeave: () => handleLeave(i),
+                  };
               return (
-                <li key={item.href || `item-${i}`} role="none">
+                <li
+                  key={item.href || `item-${i}`}
+                  role="none"
+                  className={hasDropdown ? "pill-item-wrap" : undefined}
+                  onMouseEnter={hasDropdown ? () => openDropdownNow(i) : undefined}
+                  onMouseLeave={hasDropdown ? scheduleClose : undefined}
+                >
                   {isExternalLink(item.href) ? (
                     <a
                       role="menuitem"
                       href={item.href}
                       className={className}
                       aria-label={ariaLabel}
-                      onMouseEnter={() => handleEnter(i)}
-                      onMouseLeave={() => handleLeave(i)}
+                      aria-haspopup={hasDropdown || undefined}
+                      aria-expanded={hasDropdown ? openDropdown === i : undefined}
+                      {...itemHoverProps}
                     >
                       {renderPillContent(item.label, i)}
                     </a>
@@ -305,11 +354,33 @@ export default function PillNav({
                       href={item.href}
                       className={className}
                       aria-label={ariaLabel}
-                      onMouseEnter={() => handleEnter(i)}
-                      onMouseLeave={() => handleLeave(i)}
+                      aria-haspopup={hasDropdown || undefined}
+                      aria-expanded={hasDropdown ? openDropdown === i : undefined}
+                      {...itemHoverProps}
                     >
                       {renderPillContent(item.label, i)}
                     </Link>
+                  )}
+
+                  {hasDropdown && (
+                    <div
+                      className={`pill-dropdown${openDropdown === i ? " is-open" : ""}`}
+                      role="menu"
+                    >
+                      <div className="pill-dropdown-grid">
+                        {item.dropdown!.map((card) => (
+                          <Link
+                            key={card.label}
+                            href={card.href}
+                            role="menuitem"
+                            className="pill-dropdown-card"
+                          >
+                            <span className="pill-dropdown-card-label">{card.label}</span>
+                            <span className="pill-dropdown-card-desc">{card.description}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </li>
               );

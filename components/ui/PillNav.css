@@ -160,3 +160,96 @@
   .pill-nav-container .pill .pill-label,
   .pill-nav-container .pill .pill-label-hover { transition: none !important; }
 }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Glass hover panel — Vertus-style preview cards under a pill. Stays
+   mounted at all times (visibility/opacity toggle, not conditional
+   render) so the open/close is a smooth transition, never a hard cut.
+   ───────────────────────────────────────────────────────────────────── */
+.pill-nav-container .pill-item-wrap {
+  position: relative;
+}
+
+.pill-nav-container .pill-dropdown {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  z-index: 50;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 260ms;
+}
+.pill-nav-container .pill-dropdown.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+  transition:
+    opacity 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0s;
+}
+
+.pill-nav-container .pill-dropdown-grid {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 22px;
+  width: max-content;
+
+  /* Apple-glass surface: frosted, saturated blur over whatever sits
+     behind it, with a hairline edge and a soft ambient shadow instead
+     of a flat card border. */
+  background: rgba(28, 25, 23, 0.55);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+          backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 24px 60px -20px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.pill-nav-container .pill-dropdown-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 190px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  text-decoration: none;
+  transition: background 200ms ease;
+}
+.pill-nav-container .pill-dropdown-card:hover,
+.pill-nav-container .pill-dropdown-card:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pill-nav-container .pill-dropdown-card-label {
+  font-family: var(--font-display-stack);
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: #FAF8F4;
+}
+.pill-nav-container .pill-dropdown-card-desc {
+  font-family: var(--font-sans-stack);
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: rgba(250, 248, 244, 0.65);
+  white-space: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill-nav-container .pill-dropdown,
+  .pill-nav-container .pill-dropdown.is-open {
+    transition: opacity 0.01ms linear, visibility 0.01ms linear !important;
+  }
+}
