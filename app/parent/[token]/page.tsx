@@ -281,7 +281,7 @@ export default async function ParentPublicView({ params }: { params: Params }) {
                   current={formatPrice(soloP)}
                   original={soloP.originalAmount ? `${soloP.symbol}${soloP.originalAmount}` : null}
                   discountPct={soloP.discountPct ?? null}
-                  perks={["All 47 steps", "Unlimited AI Q&A", "Unlimited voice mocks", "Document AI checks"]}
+                  perks={["All 47 steps", "Unlimited AI Q&A", "Voice mocks · up to 5/week", "Document AI checks"]}
                   ctaHref={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Pay for ${firstName}'s Solo plan`)}&body=${encodeURIComponent(`Hi GetStamped team,\n\nI'd like to pay for ${firstName}'s Solo plan ($19, one-time).\n\nStudent's account email: \n\nThanks.`)}`}
                   ctaLabel={`Pay ${formatPrice(soloP)} for Solo`}
                   highlight
@@ -291,7 +291,7 @@ export default async function ParentPublicView({ params }: { params: Params }) {
                   current={formatPrice(familyP)}
                   original={familyP.originalAmount ? `${familyP.symbol}${familyP.originalAmount}` : null}
                   discountPct={familyP.discountPct ?? null}
-                  perks={["Everything in Solo", "2 student seats", "Shared parent overview", "Best for siblings"]}
+                  perks={["Everything in Solo", "2 student seats", "Voice mocks · up to 12/week (6 each)", "Shared parent overview"]}
                   ctaHref={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`Pay for ${firstName}'s Family plan`)}&body=${encodeURIComponent(`Hi GetStamped team,\n\nI'd like to pay for ${firstName}'s Family plan ($69, one-time, up to 2 students).\n\nStudent's account email: \n\nThanks.`)}`}
                   ctaLabel={`Pay ${formatPrice(familyP)} for Family`}
                 />

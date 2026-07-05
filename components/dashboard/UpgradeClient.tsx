@@ -67,14 +67,14 @@ const TIERS: Tier[] = [
     cta: "Get Solo",
     ctaClass: "upg-cta-solo",
     priceClass: "upg-price-solo",
-    quota: { headline: "Unlimited AI", sub: "Unlimited voice mocks · all 47 steps · every phase" },
+    quota: { headline: "Unlimited AI", sub: "Up to 5 voice mocks/week · all 47 steps · every phase" },
     features: [
       { label: "All 47 steps · every phase", included: true },
       { label: "Unlimited AI Q&A", included: true },
-      { label: "Voice mock · unlimited", included: true, chip: "GROQ-SCORED" },
+      { label: "Voice mock · up to 5/week", included: true, chip: "GROQ-SCORED" },
       { label: "Document vault · 2 GB", included: true },
       { label: "Auto Interview Day PDF", included: true },
-      { label: "Email + WhatsApp reminders", included: true },
+      { label: "Email reminders", included: true },
     ],
   },
   {
@@ -90,9 +90,10 @@ const TIERS: Tier[] = [
     cta: "Get Family",
     ctaClass: "upg-cta-family",
     priceClass: "upg-price-fam",
-    quota: { headline: "2 seats · shared vault", sub: "Unlimited AI pooled · parent dashboard included" },
+    quota: { headline: "2 seats · shared vault", sub: "Up to 12 voice mocks/week (6 each) · parent dashboard included" },
     features: [
       { label: "Up to 2 student seats", included: true },
+      { label: "Voice mock · up to 6/week each", included: true, chip: "12/WEEK TOTAL" },
       { label: "Shared document vault · 6 GB", included: true },
       { label: "Parent dashboard · live progress", included: true },
       { label: "Switch seats anytime", included: true },
@@ -177,7 +178,7 @@ function DiscountBanner() {
           Special {DISCOUNT_PCT}% OFF
         </span>
         <h2 className="mt-4 font-display text-[28px] sm:text-[40px] leading-[1.04] tracking-tight">
-          Unlimited AI mocks &amp; advisor review.
+          Unlimited AI Q&amp;A. Weekly mock interviews.
           <br />
           <span className="text-white/85">All 47 steps · 30% off this week.</span>
         </h2>

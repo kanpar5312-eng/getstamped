@@ -2,7 +2,7 @@ import "server-only";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 /* ════════════════════════════════════════════════════════════════════════
-   checkLimit — single source of truth for free-tier metering.
+   checkLimit — single source of truth for usage metering.
 
    Never trust client-side state; every metered API route calls this
    server-side, returns the response unchanged on `allowed: true`, and
@@ -11,8 +11,15 @@ import { getServerSupabase } from "@/lib/supabase/server";
 
    Reset semantics:
    • ai_question     daily,  reset = next UTC midnight
-   • mock_interview  weekly, reset = next Monday UTC midnight
-   • document_review hard-blocked for free, no reset
+   • mock_interview  weekly, reset = next Monday UTC midnight — capped
+     per plan (see MOCK_INTERVIEW_WEEKLY_LIMIT), not just free tier
+   • document_review hard-blocked for free, unlimited on any paid plan
+
+   Note on Family's "6 each": the product only tracks one profile per
+   paid account today — there's no seats/sub-accounts data model, so a
+   per-student split can't be enforced server-side yet. The 12/week cap
+   below is the combined total for the account; splitting it 6-and-6
+   requires an actual multi-seat feature.
    ════════════════════════════════════════════════════════════════════════ */
 
 export type LimitedAction =
@@ -32,6 +39,14 @@ const FREE_LIMITS = {
   mock_interview: 1,
   document_review: 0,
 } as const;
+
+/** Weekly mock-interview cap by plan — Solo and Family are metered too,
+ *  not unlimited (ai_question / document_review stay unlimited on paid). */
+const MOCK_INTERVIEW_WEEKLY_LIMIT: Record<"free" | "solo" | "family", number> = {
+  free: FREE_LIMITS.mock_interview,
+  solo: 5,
+  family: 12,
+};
 
 /** Midnight UTC of today, ISO. */
 function todayUtcStart(): Date {
@@ -71,23 +86,30 @@ export async function checkLimit(
     return { allowed: true, used: 0, limit: 0, reset_at: NEVER };
   }
 
-  // Paid plans short-circuit — everything unlimited, no counting cost.
   const { data: prof } = await sb
     .from("profiles")
     .select("plan")
     .eq("id", userId)
     .maybeSingle();
   const plan = (prof?.plan as "free" | "solo" | "family" | undefined) ?? "free";
-  if (plan !== "free") {
+  const isPaid = plan !== "free";
+
+  // Document review is a binary unlock — free tier never gets it, any
+  // paid plan is unlimited. No usage_logs read needed either way.
+  if (action === "document_review") {
+    return isPaid
+      ? { allowed: true, used: 0, limit: Infinity, reset_at: NEVER }
+      : { allowed: false, used: 0, limit: 0, reset_at: NEVER };
+  }
+
+  // AI Q&A stays unlimited on any paid plan — only mock_interview is
+  // metered per plan below.
+  if (action === "ai_question" && isPaid) {
     return { allowed: true, used: 0, limit: Infinity, reset_at: NEVER };
   }
 
-  const limit = FREE_LIMITS[action];
-
-  // Document review is a binary unlock — no usage_logs read needed.
-  if (action === "document_review") {
-    return { allowed: false, used: 0, limit: 0, reset_at: NEVER };
-  }
+  const limit =
+    action === "mock_interview" ? MOCK_INTERVIEW_WEEKLY_LIMIT[plan] : FREE_LIMITS[action];
 
   const windowStart =
     action === "mock_interview" ? lastMondayUtcStart() : todayUtcStart();

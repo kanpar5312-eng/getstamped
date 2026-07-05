@@ -17,7 +17,7 @@ const CATEGORIES: Category[] = [
     icon: "M13 10V3L4 14h7v7l9-11h-7z",
     items: [
       { q: "What exactly is GetStamped?", a: "GetStamped is a step-by-step guide for the entire F-1 US student visa process. All 47 steps — from choosing universities to landing in the US — organized into one timeline with instructions, document checklists, AI Q&A, and voice mock interviews." },
-      { q: "Is GetStamped free?", a: "Phase 1 (the first 6 steps) is free forever — no card required. You also get 3 AI questions and 1 mock interview free. The remaining 41 steps, unlimited AI, and unlimited voice mock interviews unlock with a one-time payment." },
+      { q: "Is GetStamped free?", a: "Phase 1 (the first 6 steps) is free forever — no card required. You also get 3 AI questions and 1 mock interview free. The remaining 41 steps, unlimited AI, and weekly voice mock interviews (up to 5/week on Solo, 12/week on Family) unlock with a one-time payment." },
       { q: "How much does it cost?", a: "Solo is ₹2,999 / $39 one-time for one student. Family is ₹4,999 / $69 for up to 2 students. No subscription, no recurring charges. Lifetime access until your visa is stamped. The first 100 users get Solo at ₹799 / $9." },
       { q: "Do I need to download anything?", a: "No. GetStamped runs entirely in your browser on phone, tablet, or laptop. Your progress syncs across all devices automatically." },
       { q: "Which countries is GetStamped for?", a: "Any country. GetStamped is built for international students worldwide applying for the F-1 visa — India, China, Vietnam, Nigeria, Brazil, South Korea, Bangladesh, Mexico, and 50+ others. Consulate-specific details adjust based on your location." },

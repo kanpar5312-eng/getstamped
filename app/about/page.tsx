@@ -105,8 +105,9 @@ export default function AboutPage() {
               <p>
                 Phase 1 (the first 6 steps) is free forever. A single
                 one-time payment — no subscription — unlocks all 47 steps,
-                unlimited AI document checks, and unlimited voice mock
-                interviews. See the full{" "}
+                unlimited AI document checks, and weekly voice mock
+                interviews (up to 5/week on Solo, 12/week on Family). See
+                the full{" "}
                 <Link href="/pricing" className="text-[var(--color-accent-deep)] underline underline-offset-2">
                   pricing breakdown
                 </Link>{" "}

@@ -45,7 +45,7 @@ export function softwareApplicationJsonLd() {
         price: "39",
         priceCurrency: "USD",
         description:
-          "All 47 F-1 visa steps unlocked, unlimited AI document checks, unlimited voice mock interviews, and parent share view. One-time payment, no subscription.",
+          "All 47 F-1 visa steps unlocked, unlimited AI document checks, up to 5 voice mock interviews per week, and parent share view. One-time payment, no subscription.",
       },
       {
         "@type": "Offer",
@@ -53,7 +53,7 @@ export function softwareApplicationJsonLd() {
         price: "69",
         priceCurrency: "USD",
         description:
-          "Everything in Solo for two students, combined parent view, and priority email support. One-time payment, no subscription.",
+          "Everything in Solo for two students (up to 12 voice mock interviews per week combined, 6 each), combined parent view, and priority email support. One-time payment, no subscription.",
       },
     ],
   };
@@ -84,7 +84,7 @@ export function pricingProductsJsonLd() {
         position: 2,
         name: "GetStamped Solo",
         description:
-          "All 47 F-1 visa steps, unlimited AI document checks, and unlimited voice mock interviews. One-time payment, lifetime access.",
+          "All 47 F-1 visa steps, unlimited AI document checks, and up to 5 voice mock interviews per week. One-time payment, lifetime access.",
         offers: {
           "@type": "Offer",
           price: "39",
@@ -98,7 +98,7 @@ export function pricingProductsJsonLd() {
         position: 3,
         name: "GetStamped Family",
         description:
-          "Everything in Solo, for two students, with a combined parent view. One-time payment, lifetime access.",
+          "Everything in Solo, for two students (up to 12 voice mock interviews per week combined, 6 each), with a combined parent view. One-time payment, lifetime access.",
         offers: {
           "@type": "Offer",
           price: "69",

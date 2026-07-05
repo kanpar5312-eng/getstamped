@@ -60,7 +60,7 @@ export function Pricing({ currency }: { currency: Currency }) {
           bullets={[
             "Every phase unlocked",
             "Unlimited AI questions",
-            "Unlimited voice mocks",
+            "Up to 5 voice mocks per week",
             "Document vault with AI checks",
             "Parent share view",
           ]}
@@ -73,7 +73,8 @@ export function Pricing({ currency }: { currency: Currency }) {
           caption="Two students. One payment."
           price={PRICES.family[currency]}
           bullets={[
-            "Everything in Solo, for 2",
+            "Everything in Solo, for 2 students",
+            "Up to 12 voice mocks per week (6 each)",
             "Combined parent view",
             "Sibling document re-use",
             "Priority email support",

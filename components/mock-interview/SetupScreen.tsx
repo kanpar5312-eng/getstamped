@@ -110,7 +110,7 @@ export function SetupScreen({
               You&rsquo;ve used your free mock interview.
             </p>
             <p className="mt-1 text-[13px] text-[var(--ink-soft)]">
-              Unlimited sessions on any paid plan.
+              Up to 5 sessions/week on Solo, 12/week on Family.
             </p>
           </div>
           <a
