@@ -126,13 +126,16 @@ function priceFor(id: Plan, currency: Currency): { full: number; sale?: number }
 function DiscountBanner() {
   return (
     <section className="relative overflow-hidden rounded-3xl mt-6 border border-[var(--color-border)]">
-      {/* Light gradient: forest */}
+      {/* Light gradient: forest. Hardcoded ink hex, not var(--color-ink) —
+          that token is a *text* color that flips to near-white in the
+          dashboard's dark mode, which turned this "dark ink card" into a
+          washed-out light gradient with barely-visible white text. */}
       <div
         aria-hidden
         className="upg-banner-light absolute inset-0"
         style={{
           background:
-            "radial-gradient(120% 80% at 0% 0%, var(--color-accent-tint) 0%, transparent 55%), linear-gradient(135deg, var(--color-ink) 0%, var(--color-ink-soft) 55%, var(--color-ink-deep) 100%)",
+            "radial-gradient(120% 80% at 0% 0%, var(--color-accent-tint) 0%, transparent 55%), linear-gradient(135deg, #1C1917 0%, #2E2A26 55%, #0F0E0D 100%)",
         }}
       />
       {/* Dark gradient: pink */}
@@ -171,7 +174,7 @@ function DiscountBanner() {
       </svg>
 
       <div className="relative px-6 sm:px-10 py-8 sm:py-12 text-white">
-        <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-mono uppercase tracking-wider text-[var(--color-ink)] dark:text-pink-700 shadow-[0_4px_14px_-4px_rgba(0,0,0,0.25)]">
+        <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-mono uppercase tracking-wider text-[#1C1917] shadow-[0_4px_14px_-4px_rgba(0,0,0,0.25)]">
           <svg viewBox="0 0 24 24" className="h-3 w-3" fill="currentColor" aria-hidden>
             <path d="M21 5l-2-2H10.4a2 2 0 0 0-1.4.6L3 9.6a2 2 0 0 0 0 2.8L11.6 21a2 2 0 0 0 2.8 0L21 14.4a2 2 0 0 0 0-2.8L21 5z" />
           </svg>
@@ -201,8 +204,12 @@ function PlanStatusBanner({ plan }: { plan: Plan }) {
     <section
       className="relative overflow-hidden rounded-3xl mt-6 border border-white/[0.06] p-6 sm:p-8 text-center"
       style={{
+        /* Hardcoded ink hex, not var(--color-ink) — that token is a *text*
+           color that flips to near-white in the dashboard's dark mode,
+           which turned this card into a washed-out light gradient with
+           invisible white text instead of the intended dark ink card. */
         background:
-          "radial-gradient(120% 90% at 50% 0%, var(--color-accent-tint) 0%, transparent 55%), linear-gradient(160deg, var(--color-ink) 0%, var(--color-ink-soft) 60%, var(--color-ink-deep) 100%)",
+          "radial-gradient(120% 90% at 50% 0%, var(--color-accent-tint) 0%, transparent 55%), linear-gradient(160deg, #1C1917 0%, #2E2A26 60%, #0F0E0D 100%)",
         boxShadow: "0 30px 70px -30px rgba(0, 0, 0, 0.5)",
       }}
     >
@@ -211,7 +218,7 @@ function PlanStatusBanner({ plan }: { plan: Plan }) {
         className="pointer-events-none absolute -top-16 left-1/2 h-40 w-72 -translate-x-1/2 rounded-full opacity-40"
         style={{ background: "radial-gradient(circle, var(--color-accent-soft), transparent 70%)", filter: "blur(28px)" }}
       />
-      <span className="relative inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[11px] font-mono uppercase tracking-wider text-[var(--color-ink)] shadow-[0_4px_14px_-4px_rgba(0,0,0,0.3)]">
+      <span className="relative inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[11px] font-mono uppercase tracking-wider text-[#1C1917] shadow-[0_4px_14px_-4px_rgba(0,0,0,0.3)]">
         <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="M5 12l5 5 9-11" />
         </svg>
