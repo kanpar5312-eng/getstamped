@@ -36,9 +36,30 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "tts_not_configured" }, { status: 503 });
   }
 
-  const body = (await req.json().catch(() => ({}))) as Body;
+  let rawBody = "";
+  let body: Body = {};
+  try {
+    // Read as text first (not .json() directly) so a parse failure still
+    // gives us the raw payload to log — .json().catch(() => ({})) was
+    // swallowing that entirely, which is exactly why the last round of
+    // "text required" 400s in production had no diagnosable cause.
+    rawBody = await req.text();
+    body = rawBody ? (JSON.parse(rawBody) as Body) : {};
+  } catch (err) {
+    console.error("[tts] body parse failed:", err, "raw:", rawBody.slice(0, 200));
+  }
   const text = (body.text ?? "").trim();
-  if (!text) return NextResponse.json({ error: "text required" }, { status: 400 });
+  if (!text) {
+    console.error(
+      "[tts] empty text — rawBody len:",
+      rawBody.length,
+      "rawBody snippet:",
+      rawBody.slice(0, 200),
+      "interviewer:",
+      body.interviewer,
+    );
+    return NextResponse.json({ error: "text required" }, { status: 400 });
+  }
   if (text.length > MAX_TEXT_CHARS) {
     return NextResponse.json({ error: "text too long" }, { status: 400 });
   }

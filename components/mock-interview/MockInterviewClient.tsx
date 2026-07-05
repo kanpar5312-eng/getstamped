@@ -105,13 +105,30 @@ type SpeechRecognitionLike = {
   continuous: boolean;
   interimResults: boolean;
   onresult: (e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void;
-  onerror: (e: unknown) => void;
+  onerror: (e: { error?: string }) => void;
   onend: () => void;
   onspeechstart?: () => void;
   onspeechend?: () => void;
   start: () => void;
   stop: () => void;
 };
+
+// Chrome/Safari's continuous SpeechRecognition is not actually continuous:
+// it unilaterally stops itself after network hiccups, brief silence the
+// engine misreads as end-of-speech, or an internal ~60s ceiling — none of
+// which mean the user is done talking. Treating every onend/onerror as
+// "finish the turn" (the previous behavior) is why the interview would
+// cut answers short and eventually "break": a recognition hiccup ended
+// the turn early, and if it happened right as a question was about to be
+// spoken, the turn would flip forward faster than the audio pipeline
+// could keep up. Errors in this set mean the mic is genuinely gone —
+// only these should end the turn. Everything else restarts recognition
+// in place so listening is actually continuous from the user's side.
+const FATAL_RECOGNITION_ERRORS = new Set([
+  "not-allowed",
+  "service-not-allowed",
+  "audio-capture",
+]);
 
 export function MockInterviewClient({ plan, consulate }: Props) {
   const [phase, setPhase] = useState<Phase>("setup");
@@ -161,6 +178,13 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   const advanceTimerRef = useRef<number | null>(null);
   const startTsRef = useRef<number>(0);
   const lastTranscriptRef = useRef<string>("");
+  // SpeechRecognition's `results` list resets to empty every time it
+  // restarts — a restart-in-place (see FATAL_RECOGNITION_ERRORS) would
+  // silently discard everything the user said before it without this:
+  // holds the transcript committed from PRIOR recognition instances this
+  // turn, so the live instance's own results get appended after it
+  // instead of replacing it.
+  const segmentBaseRef = useRef<string>("");
   // Per-turn pacing state.
   const turnStartTsRef = useRef<number>(0);
   const lastSpeechAtRef = useRef<number>(0);
@@ -210,21 +234,40 @@ export function MockInterviewClient({ plan, consulate }: Props) {
    */
   const fetchTtsUrl = useCallback(
     (text: string): Promise<string | null> => {
-      const cacheKey = `${interviewer}:${difficulty}:${text}`;
+      // Never round-trip to the server for nothing to say — this was
+      // possible any time an upstream text value was accidentally empty,
+      // and the route correctly 400s on an empty string. Guarding here
+      // means that case degrades to the silent read-along fallback
+      // instead of burning a request and logging a false alarm.
+      const clean = text.trim();
+      if (!clean) return Promise.resolve(null);
+
+      const cacheKey = `${interviewer}:${difficulty}:${clean}`;
       const cached = prefetchRef.current.get(cacheKey);
       if (cached) return cached;
 
+      const attempt = async (): Promise<Response> =>
+        fetch("/api/mock-interview/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: clean,
+            interviewer,
+            tone: difficulty === "strict" ? "strict" : "standard",
+          }),
+        });
+
       const promise = (async () => {
         try {
-          const r = await fetch("/api/mock-interview/tts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              text,
-              interviewer,
-              tone: difficulty === "strict" ? "strict" : "standard",
-            }),
-          });
+          let r = await attempt();
+          // One retry for anything that isn't a permanent "not configured"
+          // or "bad request" — cold starts, transient upstream 5xx, and
+          // network blips all succeed on a second try far more often than
+          // they should be treated as a dead session.
+          if (!r.ok && r.status !== 503 && r.status !== 400) {
+            await new Promise((res) => setTimeout(res, 400));
+            r = await attempt();
+          }
           if (!r.ok) {
             const detail = await r.text().catch(() => "");
             console.error("[mock-interview] tts http error", r.status, detail.slice(0, 300));
@@ -543,6 +586,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     turnStartTsRef.current = performance.now();
     lastSpeechAtRef.current = performance.now();
     lastTranscriptRef.current = "";
+    segmentBaseRef.current = "";
     setSilenceCountdown(null);
 
     const silenceMax = silenceMaxFor(difficulty, questions[idx]);
@@ -569,7 +613,11 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     recog.onresult = (e) => {
       let text = "";
       for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
-      lastTranscriptRef.current = text;
+      // Prepend whatever was committed from a prior instance this turn
+      // (see segmentBaseRef) so a mid-answer restart appends rather than
+      // replaces.
+      const base = segmentBaseRef.current;
+      lastTranscriptRef.current = base ? `${base} ${text}` : text;
       lastSpeechAtRef.current = performance.now();
     };
     if ("onspeechstart" in recog) {
@@ -583,11 +631,35 @@ export function MockInterviewClient({ plan, consulate }: Props) {
         lastSpeechAtRef.current = performance.now();
       };
     }
-    recog.onerror = () => finishCurrentTurn(idx);
-    // onend fires when continuous recog is stopped externally OR when
-    // the engine itself decides to stop (some browsers do this after
-    // ~minute of silence). Treat it as a finish either way.
-    recog.onend = () => finishCurrentTurn(idx);
+    // Restart in place unless the turn is already finished (this IS the
+    // intentional stop) or the mic access itself is gone. See
+    // FATAL_RECOGNITION_ERRORS above for why most errors/onend firings
+    // here are transient engine hiccups, not "the user is done talking."
+    const restartOrFinish = (errorCode?: string) => {
+      if (turnFinishedRef.current) return;
+      if (errorCode && FATAL_RECOGNITION_ERRORS.has(errorCode)) {
+        finishCurrentTurn(idx);
+        return;
+      }
+      // Commit whatever this instance captured before restarting — the
+      // new instance's `results` list starts empty, so without this the
+      // restart would silently drop everything said so far this turn.
+      segmentBaseRef.current = lastTranscriptRef.current;
+      try {
+        recog.start();
+      } catch {
+        // Already running, or the engine truly won't restart — fall back
+        // to ending the turn rather than leaving the session stuck with
+        // a dead recognizer and no way to hear the rest of the answer.
+        finishCurrentTurn(idx);
+      }
+    };
+    recog.onerror = (e) => restartOrFinish(e?.error);
+    // onend fires when we intentionally stop() (turnFinishedRef already
+    // true by then) OR when the engine unilaterally stops on its own —
+    // restart in the latter case so listening is actually continuous
+    // from the user's side instead of silently ending their turn.
+    recog.onend = () => restartOrFinish();
     recogRef.current = recog;
     try {
       recog.start();
@@ -640,6 +712,9 @@ export function MockInterviewClient({ plan, consulate }: Props) {
       probeStartTsRef.current = probeStartTs;
       let probeLastSpeechAt = performance.now();
       let probeTranscript = "";
+      // Same restart-across-instances accumulation as the main turn's
+      // segmentBaseRef — a probe recognition restart also resets `results`.
+      let probeSegmentBase = "";
       let probeDone = false;
       let probeRecog: SpeechRecognitionLike | null = null;
       let probeTickId: number | null = null;
@@ -699,7 +774,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
       recog.onresult = (e) => {
         let text = "";
         for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
-        probeTranscript = text;
+        probeTranscript = probeSegmentBase ? `${probeSegmentBase} ${text}` : text;
         probeLastSpeechAt = performance.now();
       };
       if ("onspeechstart" in recog) {
@@ -712,8 +787,24 @@ export function MockInterviewClient({ plan, consulate }: Props) {
           probeLastSpeechAt = performance.now();
         };
       }
-      recog.onerror = () => finishProbe();
-      recog.onend = () => finishProbe();
+      // Same restart-in-place resilience as the main turn's recognition
+      // (see FATAL_RECOGNITION_ERRORS) — a probe answer is short, but the
+      // engine can still hiccup mid-sentence.
+      const restartOrFinishProbe = (errorCode?: string) => {
+        if (probeDone) return;
+        if (errorCode && FATAL_RECOGNITION_ERRORS.has(errorCode)) {
+          finishProbe();
+          return;
+        }
+        probeSegmentBase = probeTranscript;
+        try {
+          recog.start();
+        } catch {
+          finishProbe();
+        }
+      };
+      recog.onerror = (e) => restartOrFinishProbe(e?.error);
+      recog.onend = () => restartOrFinishProbe();
       probeRecog = recog;
       try {
         recog.start();
