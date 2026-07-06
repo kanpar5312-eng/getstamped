@@ -36,10 +36,29 @@ export async function getCurrentUser(stateParam?: string): Promise<{
           sb.from("step_progress").select("step_number, status, completed_at").eq("user_id", user.id),
         ]);
 
+        // Promo-code trials (e.g. BETA10) grant a plan for a fixed number
+        // of days, not forever — plan_trial_expires_at is set at redemption
+        // (see app/actions/promo.ts). Enforce it here, on every read, so
+        // access reverts to Basic the moment the trial passes rather than
+        // waiting for a cron tick. Persisted, not just computed in-memory,
+        // so every other read path (mock-interview quota, document checks,
+        // the upgrade page) sees the downgrade immediately too.
+        let plan = (profileRow?.plan as Plan) ?? "free";
+        const trialExpiresAt = profileRow?.plan_trial_expires_at
+          ? new Date(profileRow.plan_trial_expires_at)
+          : null;
+        if (plan !== "free" && trialExpiresAt && trialExpiresAt.getTime() <= Date.now()) {
+          plan = "free";
+          await sb
+            .from("profiles")
+            .update({ plan: "free", plan_trial_expires_at: null })
+            .eq("id", user.id);
+        }
+
         const profile: UserProfile = {
           id: user.id,
           firstName: profileRow?.first_name ?? user.email?.split("@")[0] ?? "Student",
-          plan: (profileRow?.plan as Plan) ?? "free",
+          plan,
           interviewDate: profileRow?.interview_date ? new Date(profileRow.interview_date) : null,
           consulateLocation: profileRow?.consulate ?? null,
           interviewTimeOfDay: null,

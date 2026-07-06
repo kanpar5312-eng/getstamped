@@ -52,14 +52,22 @@ export async function POST(req: Request) {
   }
 
   const rawScores = await computeOverall(turns, body.officerStyle, body.difficulty);
+  // Blank/no-audio turns previously just got excluded from the heuristic
+  // average and had no special handling in the Groq prompt either, so a
+  // session where the mic failed (or the user said nothing) could still
+  // score in the 60-80s — reading as "high" for an interview with no real
+  // answers. Deterministic, applied regardless of difficulty, so it can't
+  // depend on the LLM correctly inferring that an empty string means
+  // nothing was said.
+  const unansweredScores = applyUnansweredPenalty(rawScores, turns);
   // Strict-mode penalty: vague answers on financial / ties questions
   // take a measurable hit before the scores reach the client. Applied
   // here (not in Groq) so the deduction is deterministic and visible
   // in the DB row too.
   const scores =
     body.difficulty === "tough"
-      ? applyStrictPenalty(rawScores, turns)
-      : rawScores;
+      ? applyStrictPenalty(unansweredScores, turns)
+      : unansweredScores;
 
   if (userId && plan !== "free") {
     const sb = await getServerSupabase();
@@ -195,7 +203,11 @@ Scoring guidance:
 - Clarity: how directly each answer addressed the question, first-sentence anchoring.
 - Confidence: definite verbs, no hedging, no filler.
 - Red-flag: weak ties home, funding gaps, evasive answers — lower score = worse.
-- Overall: weighted average, lean toward red-flag.`;
+- Overall: weighted average, lean toward red-flag.
+- An empty or near-empty answer (blank, "n/a", a few filler words) means
+  the audio wasn't captured or nothing was said — treat it as a severe
+  red flag on every axis for that turn, never as neutral or ignorable.
+  If most answers are blank, every score must be low (below 30).`;
 
   try {
     const completion = await groq.chat.completions.create({
@@ -236,6 +248,53 @@ Scoring guidance:
 
 function clamp(n: number): number {
   return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+/* Deterministic guard against inflated scores when audio wasn't captured
+   (or the user genuinely said nothing) for some or all turns. Runs after
+   computeOverall() — whether that came from Groq or the heuristic
+   fallback — because neither one can be trusted to correctly discount an
+   empty-string answer on its own: the heuristic just excludes it from
+   the average (so 1 of 5 blank turns barely moves the score), and Groq
+   isn't told anything is missing unless we say so. */
+function applyUnansweredPenalty<
+  T extends {
+    clarity: number;
+    confidence: number;
+    redFlag: number;
+    overall: number;
+  }
+>(scores: T, turns: Turn[]): T {
+  const total = turns.length;
+  if (total === 0) return scores;
+  const answered = turns.filter((t) => (t.answer ?? "").trim().length >= 8).length;
+  if (answered === total) return scores;
+
+  // No audio captured for any turn at all — there's no real signal to
+  // score, so return a flat near-zero rather than a heuristic average
+  // that only ever reflects the (nonexistent) answered turns.
+  if (answered === 0) {
+    return {
+      ...scores,
+      clarity: 5,
+      confidence: 5,
+      redFlag: 5,
+      overall: 5,
+    };
+  }
+
+  // Partial: scale every axis down by how much of the interview was
+  // actually answered, so silent turns drag the score down instead of
+  // simply being left out of the average.
+  const answeredRatio = answered / total;
+  const scale = 0.5 + 0.5 * answeredRatio; // e.g. 3 of 5 answered -> 0.8x
+  return {
+    ...scores,
+    clarity: clamp(scores.clarity * scale),
+    confidence: clamp(scores.confidence * scale),
+    redFlag: clamp(scores.redFlag * scale),
+    overall: clamp(scores.overall * scale),
+  };
 }
 
 /* Strict-mode score adjustment.

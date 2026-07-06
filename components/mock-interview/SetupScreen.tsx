@@ -64,9 +64,17 @@ export function SetupScreen({
           sum += v * v;
         }
         const rms = Math.sqrt(sum / buf.length);
-        const next = levels.slice(1);
-        next.push(Math.min(1, rms * 4));
-        setLevels(next);
+        // Functional update — tick() is created once per startMicCheck()
+        // call and recurses via requestAnimationFrame, so it closes over
+        // whatever `levels` was on that render forever. Reading the
+        // captured variable here meant every frame rebuilt from the same
+        // stale (mostly-zero) array instead of a real rolling window —
+        // the meter bars never actually animated, just flickered.
+        setLevels((prev) => {
+          const next = prev.slice(1);
+          next.push(Math.min(1, rms * 4));
+          return next;
+        });
 
         if (rms > 0.04) {
           if (!aboveSince) aboveSince = performance.now();

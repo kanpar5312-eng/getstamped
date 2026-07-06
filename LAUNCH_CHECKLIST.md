@@ -141,6 +141,28 @@ In `lib/visa-countries.ts` (`UK_TB_TEST_REQUIRED`). UK adds/removes countries pe
 
 ---
 
+## 7. ☐ Run the BETA10 trial-expiry migration
+
+**Why blocking:** until this runs, redeeming BETA10 still grants
+permanent Solo access — the code accepts it (no crash), it just won't
+expire after 2 days or stop at 30 uses via the new mechanism.
+
+**You have to do this — Supabase auth is gated to your machine.**
+
+```bash
+cd /Users/parneetsinghsandhu/Desktop/visaapp
+supabase db push                      # applies supabase/migrations/0012_promo_trial_expiry.sql
+```
+
+This migration:
+- Adds `trial_days` to `promo_codes` and `plan_trial_expires_at` to `profiles`.
+- Changes `redeem_promo_code(text)` from returning a scalar to `table(plan_override, trial_days)` — already handled in `app/actions/promo.ts`.
+- Resets BETA10 to `max_uses = 30`, `trial_days = 2` (existing redemptions/uses_so_far are preserved, not reset).
+
+Verify: Supabase dashboard → Table Editor → `promo_codes` → BETA10 row shows `trial_days = 2`, `max_uses = 30`.
+
+---
+
 ## Quick "what's still missing" by component
 
 | Component | Status |
