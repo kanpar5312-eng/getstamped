@@ -29,14 +29,13 @@ import type { Currency } from "@/lib/pricing";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
 import { Pricing } from "./Pricing";
-import { Testimonials } from "./Testimonials";
-import { Reviews } from "./Reviews";
 import { FAQ } from "./FAQ";
 import { StampedCloser } from "./StampedCloser";
 import { ScrollTransitions } from "./ScrollTransitions";
 import { Styles } from "./Styles";
 import { StackedFeatureCards } from "./StackedFeatureCards";
 import { VsConsultants } from "./VsConsultants";
+import { SectionDivider } from "./SectionDivider";
 
 type Props = {
   currency: Currency;
@@ -67,20 +66,23 @@ export function MarketingLanding({ currency, totalSignups }: Props) {
             Pricing) — kept as a separate no-op marker instead of adding an id
             inside StackedFeatureCards so that component stays untouched. */}
         <span id="features" className="sr-only" aria-hidden="true" />
+        <SectionDivider label="The Playbook" />
         {/* Pinned, stacking feature cards come first — they carry the
             full Playbook / Document Vault / Mock Interview / Parent Share
             story right after the hero. */}
         <StackedFeatureCards />
+        <SectionDivider label="The Difference" />
         <VsConsultants />
+        <SectionDivider label="Pricing" />
         {/* Pricing was built (v3/Pricing.tsx) but never wired into this page
             — restoring it here, right after the differentiation section it
             was designed to follow (see VsConsultants.tsx's own comment). */}
         <Pricing currency={currency} />
-        <Testimonials />
-        {/* Reviews hidden for MVP — fictional testimonials replaced when
-            we have ≥3 real student quotes from beta. Re-add <Reviews />
-            here when ready. */}
+        {/* Testimonials removed for now — fictional quotes, to be replaced
+            with real ones once we have ≥3 from beta students. */}
+        <SectionDivider label="Questions" />
         <FAQ />
+        <SectionDivider label="Stamped" />
         <StampedCloser />
       </main>
       <Footer />
