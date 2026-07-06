@@ -35,8 +35,8 @@ export function InterviewHistory({ sessions }: { sessions: SessionSummary[] }) {
   if (sessions.length === 0) {
     return (
       <div
-        className="rounded-[12px] p-12 text-center"
-        style={{ background: "white", border: "1px dashed rgba(28,25,23,0.15)" }}
+        className="rounded-[12px] p-12 text-center bg-[var(--color-paper-soft)]"
+        style={{ border: "1px dashed var(--color-border)" }}
       >
         <h3 className="font-display text-[20px] text-[var(--color-ink-soft)]">No interviews yet</h3>
         <p
@@ -148,7 +148,7 @@ function SessionRow({ session, index }: { session: SessionSummary; index: number
             transition={{ duration: 0.36, ease: [0.23, 1, 0.32, 1] }}
             style={{ overflow: "hidden" }}
           >
-            <div className="px-6 pb-6 pt-1" style={{ background: "rgba(28,25,23,0.03)" }}>
+            <div className="px-6 pb-6 pt-1 bg-[var(--color-paper-deep)]">
               {session.ai_summary ? (
                 <p
                   className="font-display text-[16px] text-[var(--color-ink)] py-6 px-2"
@@ -241,10 +241,8 @@ function AnswerCard({ a }: { a: SessionAnswer }) {
           </button>
           {showAnswer ? (
             <div
-              className="mt-2 rounded-[6px] p-3 font-sans italic text-[13px]"
+              className="mt-2 rounded-[6px] p-3 font-sans italic text-[13px] bg-[var(--color-paper-deep)] text-[var(--color-ink-soft)]"
               style={{
-                background: "rgba(28,25,23,0.03)",
-                color: "rgba(28,25,23,0.7)",
                 lineHeight: 1.6,
                 maxHeight: 120,
                 overflowY: "auto",

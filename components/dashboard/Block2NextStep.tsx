@@ -51,7 +51,7 @@ export function Block2NextStep({ data }: Props) {
       <section
         data-stagger=""
         style={{ "--stagger-index": 2 } as React.CSSProperties}
-        className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 sm:p-8"
+        className="relative overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 sm:p-8"
       >
         <div
           className="absolute left-0 right-0 top-0 h-1 bg-[var(--surface-sunken)]"
@@ -70,10 +70,7 @@ export function Block2NextStep({ data }: Props) {
           Tell us your intake date and university. We&rsquo;ll generate your
           personalized 47-step timeline in seconds.
         </p>
-        {/* mt-auto pins the CTA to the card's bottom edge instead of
-            leaving the extra height (from matching the taller sibling
-            column in the grid row) as bare blank space below it. */}
-        <div className="mt-auto pt-7">
+        <div className="mt-7">
           <Link
             href="/dashboard/timeline"
             className="btn-ember inline-flex items-center gap-2 rounded-lg px-5 py-[10px] text-[13px] font-medium transition-colors"
@@ -102,7 +99,7 @@ export function Block2NextStep({ data }: Props) {
       <section
         data-stagger=""
         style={{ "--stagger-index": 2 } as React.CSSProperties}
-        className="flex h-full flex-col rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 sm:p-7"
+        className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 sm:p-7"
       >
         {isStuck && (
           <p className="text-xs italic text-[var(--color-accent-deep)] mb-3">
@@ -170,26 +167,22 @@ export function Block2NextStep({ data }: Props) {
           )}
         </div>
 
-        {/* mt-auto pins this to the card's bottom edge instead of leaving
-            the extra height (from matching the taller sibling column in
-            the grid row) as bare blank space below the content. */}
-        <div className="mt-auto pt-7">
-          <div className="border-t border-[var(--color-border-soft)]" />
-          <div className="mt-5 flex items-start gap-3">
-            <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent-tint)] text-[var(--color-accent-deep)]">
-              <InfoIcon />
-            </span>
-            {paywallReached ? (
-              <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
-                You&rsquo;re past the easy part. From here, every step matters.
-                Upgrade to continue.
-              </p>
-            ) : (
-              <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
-                {tipText}
-              </p>
-            )}
-          </div>
+        <div className="mt-7 border-t border-[var(--color-border-soft)]" />
+
+        <div className="mt-5 flex items-start gap-3">
+          <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent-tint)] text-[var(--color-accent-deep)]">
+            <InfoIcon />
+          </span>
+          {paywallReached ? (
+            <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
+              You&rsquo;re past the easy part. From here, every step matters.
+              Upgrade to continue.
+            </p>
+          ) : (
+            <p className="text-xs leading-relaxed text-[var(--color-ink-soft)]">
+              {tipText}
+            </p>
+          )}
         </div>
       </section>
 
