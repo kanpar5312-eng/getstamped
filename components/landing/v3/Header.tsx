@@ -78,11 +78,20 @@ export function Header() {
         items={NAV_ITEMS.map((item, i) => ({
           ...item,
           rotation: i % 2 === 0 ? -8 : 8,
-          hoverStyles: {
-            // Alternates persimmon / persimmon-deep for variety — NOT ink,
-            // since --color-ink inverts to a light color in dark mode and
-            // would render as a near-white hover background there.
+          // Resting color, not just hover — touch devices never trigger
+          // :hover, so without this every bubble sat at the same flat
+          // menuBg and was indistinguishable from its neighbors. Alternates
+          // persimmon / persimmon-deep — NOT ink, since --color-ink inverts
+          // to a light color in dark mode and would read as a near-white
+          // fill there.
+          baseStyles: {
             bgColor: i % 2 === 0 ? "var(--color-persimmon)" : "var(--color-persimmon-deep)",
+            textColor: "var(--color-cream-soft)",
+          },
+          // Swapped pair on hover/press, for the rare hybrid touch+pointer
+          // device that does trigger :hover.
+          hoverStyles: {
+            bgColor: i % 2 === 0 ? "var(--color-persimmon-deep)" : "var(--color-persimmon)",
             textColor: "var(--color-cream-soft)",
           },
         }))}

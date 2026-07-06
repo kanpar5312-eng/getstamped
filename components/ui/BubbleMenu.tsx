@@ -20,6 +20,11 @@ export type BubbleMenuItem = {
   href: string;
   ariaLabel?: string;
   rotation?: number;
+  /** Resting-state color. Without this every pill fell back to the same
+   *  flat menuBg/menuContentColor and only differed via hoverStyles —
+   *  useless on touch devices, which never trigger :hover, so every
+   *  bubble in the mobile menu looked identical. */
+  baseStyles?: { bgColor?: string; textColor?: string };
   hoverStyles?: { bgColor?: string; textColor?: string };
 };
 
@@ -298,8 +303,8 @@ export default function BubbleMenu({
                   onClick={(e) => handlePillClick(e, item.href)}
                   style={{
                     ["--item-rot" as string]: `${item.rotation ?? 0}deg`,
-                    ["--pill-bg" as string]: menuBg,
-                    ["--pill-color" as string]: menuContentColor,
+                    ["--pill-bg" as string]: item.baseStyles?.bgColor || menuBg,
+                    ["--pill-color" as string]: item.baseStyles?.textColor || menuContentColor,
                     ["--hover-bg" as string]: item.hoverStyles?.bgColor || "#f3f4f6",
                     ["--hover-color" as string]: item.hoverStyles?.textColor || menuContentColor,
                   } as CSSProperties}

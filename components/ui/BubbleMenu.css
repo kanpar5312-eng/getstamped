@@ -25,6 +25,11 @@
   height: var(--bubble-size);
   border-radius: 50%;
   background: #fff;
+  /* A pure-black shadow reads fine on a light page but is invisible on
+     a dark one, so in dark mode the bubble had no visible edge against
+     the page behind it at all. A neutral hairline border works in
+     both themes regardless of what's rendered behind it. */
+  border: 1px solid rgba(120, 113, 108, 0.28);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   display: inline-flex;
   align-items: center;
@@ -188,7 +193,6 @@
 .bubble-menu-items .pill-link {
   --pill-bg: #ffffff;
   --pill-color: #111;
-  --pill-border: rgba(0, 0, 0, 0.12);
   --item-rot: 0deg;
   --pill-min-h: 88px;
   --hover-bg: #f3f4f6;
@@ -202,6 +206,11 @@
   border-radius: 999px;
   background: var(--pill-bg);
   color: var(--pill-color);
+  /* Derived from each pill's own text color rather than a fixed value,
+     so it stays visible whether the pill (and the page behind it) is
+     light or dark — a hardcoded rgba(0,0,0,...) border disappears
+     against a dark pill entirely. */
+  border: 1px solid color-mix(in oklab, var(--pill-color) 22%, transparent);
   text-decoration: none;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
   display: flex;
