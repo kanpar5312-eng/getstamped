@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Eyebrow } from "./primitives/Eyebrow";
+import { InfoTip } from "@/components/ui/InfoTip";
 import {
   PRICES,
   formatPrice,
@@ -8,11 +9,13 @@ import {
   type PriceDisplay,
 } from "@/lib/pricing";
 
+type Bullet = { label: string; tip: string; included?: boolean };
+
 type PlanProps = {
   name: string;
   caption: string;
   price: PriceDisplay;
-  bullets: string[];
+  bullets: Bullet[];
   ctaHref: string;
   ctaLabel: string;
   variant: "free" | "solo" | "family";
@@ -44,10 +47,13 @@ export function Pricing({ currency }: { currency: Currency }) {
           caption="Phase 1 unlocked forever."
           price={PRICES.free[currency]}
           bullets={[
-            "All 6 Phase 1 steps",
-            "3 AI questions per day",
-            "1 voice mock per week",
-            "Document vault read-only",
+            { label: "Timeline · Phase 1 only", tip: "The full 47-step playbook, sequenced for your consulate — only the first phase (before your I-20) is unlocked on Free." },
+            { label: "Planner · Phase 1 only", tip: "A day-by-day schedule for your steps between today and your interview. Locked to Phase 1 until you upgrade." },
+            { label: "Ask AI · 3 questions/day", tip: "Ask anything about your visa process, in context of your own timeline. Capped at 3 questions a day on Free." },
+            { label: "Mock Interview · 1/week", tip: "Practice out loud with a voice AI officer, scored on clarity, confidence, and your ties-to-home story." },
+            { label: "Document Vault · view only", tip: "Upload and organize your documents for the interview. AI formatting checks are a paid-plan feature." },
+            { label: "Feedback", tip: "Your overall visa readiness, scored across study plan, financials, and ties to home.", included: false },
+            { label: "Parent Share", tip: "A read-only link so a parent can see your progress without needing their own account.", included: false },
           ]}
           ctaLabel="Start free"
           ctaHref="/sign-up"
@@ -58,11 +64,13 @@ export function Pricing({ currency }: { currency: Currency }) {
           caption="All 47 steps. Yours until stamped."
           price={PRICES.solo[currency]}
           bullets={[
-            "Every phase unlocked",
-            "Unlimited AI questions",
-            "Up to 5 voice mocks per week",
-            "Document vault with AI checks",
-            "Parent share view",
+            { label: "Timeline · all 47 steps", tip: "Every phase unlocked, sequenced for your consulate, from before your I-20 through post-approval." },
+            { label: "Planner · full schedule", tip: "Every remaining step scheduled day-by-day from today to your interview date." },
+            { label: "Ask AI · unlimited", tip: "Ask anything about your visa process, in context of your own timeline, as often as you want." },
+            { label: "Mock Interview · up to 5/week", tip: "Practice out loud with a voice AI officer, scored on clarity, confidence, and your ties-to-home story." },
+            { label: "Document Vault · AI checks", tip: "AI reads every upload and flags missing signatures, expired dates, and wrong form versions." },
+            { label: "Feedback", tip: "Your overall visa readiness, scored across study plan, financials, and ties to home." },
+            { label: "Parent Share", tip: "A read-only link so a parent can see your progress without needing their own account." },
           ]}
           ctaLabel="Get Solo"
           ctaHref="/sign-up?plan=solo"
@@ -73,11 +81,14 @@ export function Pricing({ currency }: { currency: Currency }) {
           caption="Two students. One payment."
           price={PRICES.family[currency]}
           bullets={[
-            "Everything in Solo, for 2 students",
-            "Up to 12 voice mocks per week (6 each)",
-            "Combined parent view",
-            "Sibling document re-use",
-            "Priority email support",
+            { label: "Timeline · all 47 steps, 2 students", tip: "Every phase unlocked for both students, each with their own sequenced playbook." },
+            { label: "Planner · full schedule, both students", tip: "Every remaining step scheduled day-by-day, per student, from today to each interview date." },
+            { label: "Ask AI · unlimited, both students", tip: "Ask anything about your visa process, in context of your own timeline, as often as you want." },
+            { label: "Mock Interview · up to 12/week (6 each)", tip: "Practice out loud with a voice AI officer, scored on clarity, confidence, and ties to home." },
+            { label: "Document Vault · shared + AI checks", tip: "AI reads every upload and flags issues; siblings can re-use shared documents like proof of funds." },
+            { label: "Feedback · per student", tip: "Each student's overall visa readiness, scored across study plan, financials, and ties to home." },
+            { label: "Parent Share · combined view", tip: "One read-only link showing both students' progress side by side — no separate accounts." },
+            { label: "Priority email support", tip: "Family plan replies go to the front of the queue instead of the general support inbox." },
           ]}
           ctaLabel="Get Family"
           ctaHref="/sign-up?plan=family"
@@ -119,9 +130,10 @@ function Plan({
       </p>
       <ul className="v3-bullets v3-price-bullets">
         {bullets.map((b) => (
-          <li key={b}>
-            <span className="v3-check" aria-hidden />
-            {b}
+          <li key={b.label} className={b.included === false ? "is-excluded" : undefined}>
+            <span className={`v3-check${b.included === false ? " is-excluded" : ""}`} aria-hidden />
+            <span className="v3-bullet-label">{b.label}</span>
+            <InfoTip text={b.tip} />
           </li>
         ))}
       </ul>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { usePricing } from "@/lib/PricingContext";
 import { PRICES, type Currency } from "@/lib/pricing";
 import { applyPromoCode } from "@/app/actions/promo";
+import { InfoTip } from "@/components/ui/InfoTip";
 
 type Plan = "free" | "solo" | "family";
 
@@ -30,7 +31,7 @@ type Tier = {
   ringClass: string;      // upg-popular-ring / upg-value-ring
   bannerClass?: string;
   bannerLabel?: string;
-  features: { label: string; included: boolean; chip?: string }[];
+  features: { label: string; included: boolean; chip?: string; tip?: string }[];
   quota: { headline: string; sub: string };
 };
 
@@ -46,12 +47,13 @@ const TIERS: Tier[] = [
     ringClass: "",
     quota: { headline: "3 AI questions / day", sub: "1 voice mock per week · Phase 1 (7 of 47 steps)" },
     features: [
-      { label: "First 7 steps unlocked", included: true },
-      { label: "DS-160 walkthrough", included: true },
-      { label: "Voice mock · 1 / week", included: true },
-      { label: "All 47 steps", included: false },
-      { label: "Unlimited AI Q&A", included: false },
-      { label: "Interview Day PDF", included: false },
+      { label: "Timeline · Phase 1 only", included: true, tip: "The full 47-step playbook, sequenced for your consulate — only the first phase (before your I-20) is unlocked." },
+      { label: "Planner · Phase 1 only", included: true, tip: "A day-by-day schedule for your steps between today and your interview. Locked to Phase 1 until you upgrade." },
+      { label: "Ask AI · 3 questions/day", included: true, tip: "Ask anything about your visa process, in context of your own timeline. Capped at 3 questions a day." },
+      { label: "Mock Interview · 1/week", included: true, tip: "Practice out loud with a voice AI officer, scored on clarity, confidence, and your ties-to-home story." },
+      { label: "Document Vault · view only", included: true, tip: "Upload and organize documents for the interview. AI formatting checks are a paid-plan feature." },
+      { label: "Feedback", included: false, tip: "Your overall visa readiness, scored across study plan, financials, and ties to home." },
+      { label: "Parent Share", included: false, tip: "A read-only link so a parent can see your progress without needing their own account." },
     ],
   },
   {
@@ -69,12 +71,14 @@ const TIERS: Tier[] = [
     priceClass: "upg-price-solo",
     quota: { headline: "Unlimited AI", sub: "Up to 5 voice mocks/week · all 47 steps · every phase" },
     features: [
-      { label: "All 47 steps · every phase", included: true },
-      { label: "Unlimited AI Q&A", included: true },
-      { label: "Voice mock · up to 5/week", included: true, chip: "GROQ-SCORED" },
-      { label: "Document vault · 2 GB", included: true },
-      { label: "Auto Interview Day PDF", included: true },
-      { label: "Email reminders", included: true },
+      { label: "Timeline · all 47 steps", included: true, tip: "Every phase unlocked, sequenced for your consulate, from before your I-20 through post-approval." },
+      { label: "Planner · full schedule", included: true, tip: "Every remaining step scheduled day-by-day from today to your interview date." },
+      { label: "Ask AI · unlimited", included: true, tip: "Ask anything about your visa process, in context of your own timeline, as often as you want." },
+      { label: "Mock Interview · up to 5/week", included: true, chip: "GROQ-SCORED", tip: "Practice out loud with a voice AI officer, scored on clarity, confidence, and your ties-to-home story." },
+      { label: "Document Vault · AI checks · 2 GB", included: true, tip: "AI reads every upload and flags missing signatures, expired dates, and wrong form versions." },
+      { label: "Feedback", included: true, tip: "Your overall visa readiness, scored across study plan, financials, and ties to home." },
+      { label: "Parent Share", included: true, tip: "A read-only link so a parent can see your progress without needing their own account." },
+      { label: "Email reminders", included: true, tip: "Deadline and next-step nudges sent to your inbox so nothing slips." },
     ],
   },
   {
@@ -92,13 +96,14 @@ const TIERS: Tier[] = [
     priceClass: "upg-price-fam",
     quota: { headline: "2 seats · shared vault", sub: "Up to 12 voice mocks/week (6 each) · parent dashboard included" },
     features: [
-      { label: "Up to 2 student seats", included: true },
-      { label: "Voice mock · up to 6/week each", included: true, chip: "12/WEEK TOTAL" },
-      { label: "Shared document vault · 6 GB", included: true },
-      { label: "Parent dashboard · live progress", included: true },
-      { label: "Switch seats anytime", included: true },
-      { label: "Everything in Solo · per seat", included: true },
-      { label: "Lowest cost per seat", included: true, chip: "70% CHEAPER" },
+      { label: "Timeline · all 47 steps, 2 students", included: true, tip: "Every phase unlocked for both students, each with their own sequenced playbook." },
+      { label: "Planner · full schedule, both students", included: true, tip: "Every remaining step scheduled day-by-day, per student, from today to each interview date." },
+      { label: "Ask AI · unlimited, both students", included: true, tip: "Ask anything about your visa process, in context of your own timeline, as often as you want." },
+      { label: "Mock Interview · up to 6/week each", included: true, chip: "12/WEEK TOTAL", tip: "Practice out loud with a voice AI officer, scored on clarity, confidence, and ties to home." },
+      { label: "Document Vault · shared · 6 GB", included: true, tip: "AI reads every upload and flags issues; siblings can re-use shared documents like proof of funds." },
+      { label: "Feedback · per student", included: true, tip: "Each student's overall visa readiness, scored across study plan, financials, and ties to home." },
+      { label: "Parent Share · combined view", included: true, tip: "One read-only link showing both students' progress side by side — no separate accounts." },
+      { label: "Lowest cost per seat", included: true, chip: "70% CHEAPER", tip: "Per-student cost is lower than two separate Solo plans." },
     ],
   },
 ];
@@ -403,6 +408,7 @@ function TierCard({
                   {f.chip}
                 </span>
               )}
+              {f.tip && <InfoTip text={f.tip} />}
             </span>
           </li>
         ))}

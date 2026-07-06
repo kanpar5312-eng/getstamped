@@ -446,6 +446,13 @@ export function Styles() {
         border-bottom: 1.5px solid var(--color-persimmon);
         transform: rotate(45deg);
       }
+      /* Not-included feature on this plan — muted circle, no checkmark,
+         label reads as struck-through instead of just disappearing, so
+         every card shows the same full feature list. */
+      .v3-bullets li.is-excluded { color: var(--color-muted); }
+      .v3-bullets li.is-excluded .v3-bullet-label { text-decoration: line-through; }
+      .v3-check.is-excluded { border-color: var(--color-border); }
+      .v3-check.is-excluded::after { display: none; }
 
       /* Shared mock surface */
       .v3-mock {
