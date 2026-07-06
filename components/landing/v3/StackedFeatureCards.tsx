@@ -1156,25 +1156,36 @@ export function StackedFeatureCards() {
         .gs-vt-result { animation: gs-vt-result 6.5s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
 
         /* ── CARD 3 · MOCK INTERVIEW (6s loop) ──────────────────────────
-           Stage 320 tall. Start button: position top:22, right:18, size
-           ~78×34 — so its center is around 720-18-39 from left = depends
-           on demo width. We use a coordinate that visually lands the
-           cursor on the button in the rendered demo at ~640px wide.
-           For the cursor: translate to a right-aligned approx (560, 32).
+           Stage 320 tall. Start button is right-anchored (top:22, right:18)
+           so its actual on-screen position depends on the demo's real
+           rendered width — which varies a lot (single fixed-px column on
+           mobile vs a ~1.1fr grid track on desktop, up to 720px). The
+           previous version used a hardcoded transform: translate(540px…)
+           that only lined up with the button at one specific width
+           (~640px) and drifted everywhere else — that's the "cursor
+           doesn't go to the right place" bug.
+
+           Fix: animate left/top (real CSS offset properties) instead
+           of transform: translate(). Unlike transform's percentages
+           (relative to the element's own box), left's percentage is
+           relative to the containing block — the same box the button's
+           own right: 18px resolves against — so calc(100% - Npx) tracks
+           the button's real position at any width, matching it exactly
+           instead of guessing one number for one screen size.
         */
         @keyframes gs-iv-cursor {
-          0%, 8%    { transform: translate(60px, 270px); }
-          30%, 36%  { transform: translate(540px, 32px); }
-          40%, 92%  { transform: translate(540px, 32px); }
-          100%      { transform: translate(60px, 270px); }
+          0%, 8%    { left: 60px; top: 270px; }
+          30%, 36%  { left: calc(100% - 60px); top: 32px; }
+          40%, 92%  { left: calc(100% - 60px); top: 32px; }
+          100%      { left: 60px; top: 270px; }
         }
         .gs-iv-cursor { animation: gs-iv-cursor 6s var(--gs-cursor-ease) infinite; }
 
         @keyframes gs-iv-ripple {
-          0%, 36%  { opacity: 0; transform: translate(550px, 38px) scale(0.3); }
-          39%      { opacity: 0.7; transform: translate(550px, 38px) scale(0.4); }
-          50%      { opacity: 0; transform: translate(550px, 38px) scale(2); }
-          100%     { opacity: 0; transform: translate(550px, 38px) scale(0.3); }
+          0%, 36%  { opacity: 0; left: calc(100% - 50px); top: 38px; transform: scale(0.3); }
+          39%      { opacity: 0.7; left: calc(100% - 50px); top: 38px; transform: scale(0.4); }
+          50%      { opacity: 0; left: calc(100% - 50px); top: 38px; transform: scale(2); }
+          100%     { opacity: 0; left: calc(100% - 50px); top: 38px; transform: scale(0.3); }
         }
         .gs-iv-ripple { animation: gs-iv-ripple 6s ease-out infinite; }
 
@@ -1229,23 +1240,26 @@ export function StackedFeatureCards() {
         }
 
         /* ── CARD 4 · PARENT SHARE (6s loop) ────────────────────────────
-           Copy button is at the right of the URL row. For a ~640px wide
-           rendered demo with 18px padding, the button center sits at
-           roughly (560, 50).
+           Same bug and same fix as Card 3 above: the Copy button is
+           right-anchored inside the URL row, so its real position
+           depends on the demo's actual rendered width, not a fixed
+           number. Animate left/top (resolves against the real
+           containing-block width) instead of a hardcoded
+           transform: translate(560px…) that only matched one screen size.
         */
         @keyframes gs-pv-cursor {
-          0%, 8%    { transform: translate(70px, 250px); }
-          30%, 36%  { transform: translate(560px, 50px); }
-          40%, 92%  { transform: translate(560px, 50px); }
-          100%      { transform: translate(70px, 250px); }
+          0%, 8%    { left: 70px; top: 250px; }
+          30%, 36%  { left: calc(100% - 65px); top: 50px; }
+          40%, 92%  { left: calc(100% - 65px); top: 50px; }
+          100%      { left: 70px; top: 250px; }
         }
         .gs-pv-cursor { animation: gs-pv-cursor 6s var(--gs-cursor-ease) infinite; }
 
         @keyframes gs-pv-ripple {
-          0%, 36%  { opacity: 0; transform: translate(570px, 56px) scale(0.3); }
-          39%      { opacity: 0.7; transform: translate(570px, 56px) scale(0.45); }
-          50%      { opacity: 0; transform: translate(570px, 56px) scale(2); }
-          100%     { opacity: 0; transform: translate(570px, 56px) scale(0.3); }
+          0%, 36%  { opacity: 0; left: calc(100% - 55px); top: 56px; transform: scale(0.3); }
+          39%      { opacity: 0.7; left: calc(100% - 55px); top: 56px; transform: scale(0.45); }
+          50%      { opacity: 0; left: calc(100% - 55px); top: 56px; transform: scale(2); }
+          100%     { opacity: 0; left: calc(100% - 55px); top: 56px; transform: scale(0.3); }
         }
         .gs-pv-ripple { animation: gs-pv-ripple 6s ease-out infinite; }
 
