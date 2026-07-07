@@ -140,14 +140,18 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
     const labelOf = (a: HTMLAnchorElement | null) =>
       (a?.querySelector("[data-nav-label]") as HTMLElement | null) ?? a;
 
-    // Desktop indicator
+    // Desktop indicator. The nav can now scroll horizontally (see
+    // overflow-x-auto above, added so tabs don't spill out at typical
+    // laptop widths) — same as the mobile strip below, the left offset
+    // needs + navScroll or the bar drifts from the tab once scrolled.
     const nav = navRef.current;
     const tab = labelOf(tabRefs.current[activeHref]);
     if (nav && tab) {
       const navRect = nav.getBoundingClientRect();
+      const navScroll = nav.scrollLeft;
       const tabRect = tab.getBoundingClientRect();
       setIndicator({
-        left: tabRect.left - navRect.left,
+        left: tabRect.left - navRect.left + navScroll,
         width: tabRect.width,
         // Anchor to the active tab's bottom edge (relative to nav)
         // so the bar sits directly under the text regardless of nav
@@ -214,11 +218,17 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
           </span>
         </Link>
 
-        {/* Tabs — no scroll, single row; shared gliding underline */}
+        {/* Tabs — shared gliding underline. min-w-0 lets this flex child
+            actually shrink instead of forcing the row wider than the
+            viewport; overflow-x-auto contains that shrink as a scroll
+            strip. Without both, at typical laptop widths (~1280-1440px)
+            the 9 whitespace-nowrap tabs didn't shrink or wrap when
+            squeezed — they just spilled out past the nav's own box and
+            overlapped the search/plan/bell/avatar cluster on the right. */}
         <nav
           ref={navRef}
           aria-label="Dashboard sections"
-          className="relative hidden lg:flex items-center gap-5 ml-8 min-w-0"
+          className="relative hidden lg:flex items-center gap-5 ml-8 min-w-0 flex-1 overflow-x-auto scrollbar-none"
         >
           {TABS.map((t) => {
             const active = isActive(t.href);

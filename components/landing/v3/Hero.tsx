@@ -85,6 +85,19 @@ export function Hero() {
   const nowlineRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef(0);
   const [reduced, setReduced] = useState(false);
+  // Scroll-jacking is inherently more fragile on mobile than desktop:
+  // Android's address bar hides/shows during scroll, which changes
+  // window.innerHeight mid-gesture (desktop's viewport is stable, no
+  // address-bar resize). This hero recomputes `total = runwayHeight -
+  // innerHeight` every frame and bails out without updating anything if
+  // that goes non-positive — so a viewport-height blip mid-scroll could
+  // freeze the headline/card clip-path at a stale frame while native
+  // scroll kept moving underneath, which is what produced the headline
+  // and playbook card overlapping mid-transition on Android. Rather than
+  // chase a specific device's viewport-resize timing, use the same safe
+  // static hero (already built for prefers-reduced-motion) on mobile
+  // widths outright — desktop has none of this fragility.
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -95,7 +108,15 @@ export function Hero() {
   }, []);
 
   useEffect(() => {
-    if (reduced) return;
+    const mq = window.matchMedia("(min-width: 768px)");
+    const apply = () => setIsDesktop(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    if (reduced || !isDesktop) return;
     const runway = runwayRef.current;
     const head = headRef.current;
     const book = bookRef.current;
@@ -244,9 +265,9 @@ export function Hero() {
       window.removeEventListener("resize", onResize);
       runway.removeEventListener("click", onClick);
     };
-  }, [reduced]);
+  }, [reduced, isDesktop]);
 
-  if (reduced) return <HeroStatic />;
+  if (reduced || !isDesktop) return <HeroStatic />;
 
   return (
     <section ref={runwayRef} aria-label="Hero" className="gs-hx-runway">
