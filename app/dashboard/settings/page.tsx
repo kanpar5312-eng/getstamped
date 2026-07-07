@@ -5,6 +5,7 @@ import { getSessionUser } from "@/lib/supabase/server";
 import { SettingsClient } from "@/components/settings/SettingsClient";
 import { getReferralStats } from "@/lib/referrals";
 import { getFamilyState } from "@/lib/family";
+import { getPriorRefusal } from "@/lib/prior-refusal";
 import type { FamilySummary } from "@/components/settings/SettingsClient";
 
 export const metadata: Metadata = {
@@ -27,6 +28,10 @@ export default async function SettingsPage({
   const referral = sessionUser
     ? await getReferralStats(sessionUser.id)
     : { code: null, totalReferred: 0, totalCompleted: 0, creditInrPaise: 0, creditUsdCents: 0 };
+
+  // Best-effort — defaults to { priorRefusal: false, reason: null, ... }
+  // if migration 0013_prior_refusal.sql hasn't been applied yet.
+  const priorRefusal = sessionUser ? await getPriorRefusal(sessionUser.id) : null;
 
   const origin =
     process.env.NEXT_PUBLIC_SITE_ORIGIN ??
@@ -71,6 +76,9 @@ export default async function SettingsPage({
         creditUsdCents: referral.creditUsdCents,
       }}
       family={family}
+      priorRefusalInitial={
+        priorRefusal ? { priorRefusal: priorRefusal.priorRefusal, reason: priorRefusal.reason } : undefined
+      }
       initial={{
         firstName: profile.firstName,
         lastName: "Patel",

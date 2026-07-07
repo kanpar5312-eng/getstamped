@@ -117,6 +117,11 @@ export const STEPS: Step[] = [
           body:
             "Where you interview depends on your home country, not the school — but knowing your consulate's interview patterns helps you prep. Approval patterns for STEM applicants can vary between consulates in the same country. Use that data when comparing fit.",
         },
+        {
+          title: "Score each shortlisted program on 4 factors — not just school ranking",
+          body:
+            "For every school on your list, fill in these 4 for the SPECIFIC PROGRAM (not just the university): (1) Total cost including living expenses for the full program length. (2) STEM OPT status — 12 vs. 36 months of post-grad US work authorization. (3) Curriculum fit — does the required coursework actually match the career you want, or just the department name? Read the actual course list, not just the program title. (4) I-20 timeline and consulate wait time for your specific interview location. A lower-ranked school that's STEM-designated with a program that matches your career goals often beats a 'better' school with a non-STEM program you're lukewarm on. Build this as a simple table — one row per school, one column per factor — before you commit to any application fees.",
+        },
       ],
       outro:
         "Spend a full work-week on this list. The cost of a bad shortlist is months of your life and a meaningful amount of money in application + test fees.",
@@ -135,9 +140,13 @@ export const STEPS: Step[] = [
         title: "Ignoring STEM OPT eligibility",
         body: "A non-STEM master's gives you 12 months of post-grad US work. A STEM master's gives you 36 months. Same school, different program — completely different career outcome.",
       },
+      {
+        title: "Comparing schools by ranking alone, not by program",
+        body: "A top-20 school's weak program in your field is a worse choice than a top-100 school's strong, STEM-designated program that matches your career goals. Rankings are university-wide averages — they say almost nothing about the specific department you're actually applying to. Compare programs, not name recognition.",
+      },
     ],
     whyItMatters:
-      "Your university choice determines which consulate you interview at, when your I-20 arrives, what your STEM OPT trajectory looks like, and what story you can credibly tell the officer about why this specific school. A school you can't justify is a school the officer doesn't approve.",
+      "Your university choice determines which consulate you interview at, when your I-20 arrives, what your STEM OPT trajectory looks like, and what story you can credibly tell the officer about why this specific school. A school you can't justify is a school the officer doesn't approve. The program you enroll in matters as much as the school's name — 'why this university' and 'why this program' are really the same question at the interview window.",
     relatedSteps: [2, 3, 6],
     officialSources: [
       {
@@ -3025,6 +3034,11 @@ export const STEPS: Step[] = [
           body:
             "APPROVED: officer keeps passport for visa stamping. 'Your visa is approved' or similar. Don't celebrate at the window. DENIED: officer hands back passport with a section (usually 214(b)). Accept calmly. 221(g): officer hands you a colored slip — pink/white/green — explaining what additional documents or processing are needed. Not a denial; administrative.",
         },
+        {
+          title: "If you're refused: there is no waiting period, but reapplying unchanged repeats the denial",
+          body:
+            "A 214(b) refusal isn't a formal ban and there's no mandatory cooling-off period at most posts — you can request a new appointment right away. But showing up again with the same answers, the same documents, and the same ties-to-home story gets the same result. Before you rebook: identify what the officer's cited reason actually was (financial insufficiency vs. weak ties vs. unclear study plan — ask for the refusal sheet/reason if you weren't given a clear one), then find something concrete that's genuinely different this time — a new job offer, stronger property/family documentation, a clearer post-graduation plan, corrected paperwork. A reapplication with no material change is close to a coin flip repeating itself; one with a specific, provable change in circumstances is a real second attempt. Run at least one new mock interview under 'strict officer' mode before rebooking, and flag the prior refusal in Settings so your prep and mock interview scoring account for it specifically.",
+        },
       ],
       outro:
         "Bring ALL documents even if you don't expect to be asked. 'I have it here' closes officer questions; 'I don't have it' opens them. The documents are insurance — the strong answer is the policy.",
@@ -3047,9 +3061,13 @@ export const STEPS: Step[] = [
         title: "Arguing if denied",
         body: "If the officer denies, accept calmly and exit. Arguing at the window doesn't change the outcome — it just makes the experience worse for everyone behind you.",
       },
+      {
+        title: "Reapplying immediately with an unchanged file",
+        body: "Rebooking the next available slot with the exact same documents and answers wastes the appointment and the fee. Fix what was actually weak first — see 'If you're refused' above.",
+      },
     ],
     whyItMatters:
-      "This is the moment everything before it was prep for. 3-7 minutes that determine whether the next 2-6 years of your life happen in the US or don't. Prep makes this feel automatic. Without prep, it's a coin flip.",
+      "This is the moment everything before it was prep for. 3-7 minutes that determine whether the next 2-6 years of your life happen in the US or don't. Prep makes this feel automatic. Without prep, it's a coin flip. And if it doesn't go your way, what you do in the following weeks matters as much as the interview itself.",
     relatedSteps: [32, 35, 39, 42],
     officialSources: [
       {

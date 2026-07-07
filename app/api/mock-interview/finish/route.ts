@@ -4,6 +4,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getGroq, GROQ_MODEL } from "@/lib/groq";
 import { recomputeReadiness } from "@/lib/recompute-readiness";
 import { pushNotification } from "@/lib/notifications";
+import { getPriorRefusal } from "@/lib/prior-refusal";
 
 type Turn = {
   question: string;
@@ -34,6 +35,7 @@ export async function POST(req: Request) {
 
   let userId: string | null = null;
   let plan: "free" | "solo" | "family" = "free";
+  let priorRefusal = false;
 
   if (isSupabaseConfigured()) {
     const sb = await getServerSupabase();
@@ -47,11 +49,14 @@ export async function POST(req: Request) {
           .eq("id", userId)
           .maybeSingle();
         plan = (profileRow?.plan as "free" | "solo" | "family") ?? "free";
+        // Isolated, best-effort — see lib/prior-refusal.ts. Defaults to
+        // false if migration 0013_prior_refusal.sql hasn't run yet.
+        priorRefusal = (await getPriorRefusal(userId)).priorRefusal;
       }
     }
   }
 
-  const rawScores = await computeOverall(turns, body.officerStyle, body.difficulty);
+  const rawScores = await computeOverall(turns, body.officerStyle, body.difficulty, priorRefusal);
   // Blank/no-audio turns previously just got excluded from the heuristic
   // average and had no special handling in the Groq prompt either, so a
   // session where the mic failed (or the user said nothing) could still
@@ -167,6 +172,7 @@ async function computeOverall(
   turns: Turn[],
   officerStyle?: string,
   difficulty?: string,
+  priorRefusal?: boolean,
 ): Promise<{
   clarity: number;
   confidence: number;
@@ -188,6 +194,14 @@ async function computeOverall(
       ? "You are a STRICT consular officer. Be direct and critical. Do not soften wording. Penalize vague answers on FINANCIAL story and TIES-TO-HOME especially heavily — lower the redFlag axis sharply when the user cannot name specific numbers, sponsors, or anchors."
       : "You are reviewing a mock interview constructively. Be encouraging where it's warranted, honest where it isn't.";
 
+  // This applicant has flagged a prior visa refusal. Their second attempt
+  // lives or dies on whether the officer can see something concrete that
+  // changed — grading should weight that specifically, not just re-run
+  // the generic rubric.
+  const priorRefusalInstruction = priorRefusal
+    ? "\nThis applicant has been refused a visa before. When grading, specifically check whether each answer demonstrates something concrete that changed since the prior attempt (new funding, new job offer, stronger ties evidence, corrected paperwork) rather than repeating the same generic answer. A strong answer here names the specific change; a weak one doesn't acknowledge there was a prior refusal at all. Reflect this in topStrength/topWeakness and the summary."
+    : "";
+
   const system = `You are a US F-1 visa officer reviewing a full mock interview.
 Return STRICT JSON only:
 {
@@ -199,7 +213,7 @@ Return STRICT JSON only:
   "topStrength": "1 sentence, max 18 words",
   "topWeakness": "1 sentence, max 18 words"
 }
-${toneInstruction}
+${toneInstruction}${priorRefusalInstruction}
 Officer style: ${officerStyle ?? "friendly"}. Difficulty: ${difficulty ?? "standard"}.
 Scoring guidance:
 - Clarity: how directly each answer addressed the question, first-sentence anchoring.

@@ -8,6 +8,7 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 import { useEffect } from "react";
 import { updateProfile, type ProfileUpdate } from "@/app/actions/profile";
+import { updatePriorRefusal } from "@/app/actions/prior-refusal";
 import {
   exportUserData,
   requestEmailChange,
@@ -65,6 +66,9 @@ type Props = {
   initial: Profile;
   referral?: ReferralProps;
   family?: FamilySummary;
+  // Optional: absent or defaulted when migration 0013_prior_refusal.sql
+  // hasn't been applied yet — see lib/prior-refusal.ts.
+  priorRefusalInitial?: { priorRefusal: boolean; reason: string | null };
 };
 
 const SECTIONS = [
@@ -101,8 +105,36 @@ const dateInput = `${input} appearance-none min-w-0 max-w-full box-border`;
 
 const isSectionId = (v: string): v is SectionId => SECTIONS.some((s) => s.id === v);
 
-export function SettingsClient({ initial, referral, family }: Props) {
+export function SettingsClient({ initial, referral, family, priorRefusalInitial }: Props) {
   const router = useRouter();
+
+  // Isolated from `data`/`baseline`/`save` on purpose — this field writes
+  // through its own server action (app/actions/prior-refusal.ts) against
+  // its own migration, so it can't affect the existing Application save.
+  const [prFlag, setPrFlag] = useState(priorRefusalInitial?.priorRefusal ?? false);
+  const [prReason, setPrReason] = useState(priorRefusalInitial?.reason ?? "");
+  const [prBaseline, setPrBaseline] = useState({
+    flag: priorRefusalInitial?.priorRefusal ?? false,
+    reason: priorRefusalInitial?.reason ?? "",
+  });
+  const [prSaving, setPrSaving] = useState(false);
+  const [prSaved, setPrSaved] = useState(false);
+  const prDirty = prFlag !== prBaseline.flag || prReason !== prBaseline.reason;
+
+  const savePriorRefusal = () => {
+    setPrSaving(true);
+    startTransition(async () => {
+      const result = await updatePriorRefusal({ priorRefusal: prFlag, reason: prReason.trim() || null });
+      setPrSaving(false);
+      if (result.ok) {
+        setPrBaseline({ flag: prFlag, reason: prReason });
+        setPrSaved(true);
+        setTimeout(() => setPrSaved(false), 2000);
+      } else {
+        showToast(result.error);
+      }
+    });
+  };
   const [active, setActive] = useState<SectionId>("profile");
 
   // Deep links like /dashboard/settings#plan (used by the upgrade page's
@@ -550,6 +582,38 @@ export function SettingsClient({ initial, referral, family }: Props) {
                 </Field>
               </div>
               <SaveRow show={dirty} section="application" saving={savingSection === "application"} saved={saved === "application"} onSave={() => save("application")} />
+
+              {/* Separate card + separate save action on purpose — see the
+                  isolation note on app/actions/prior-refusal.ts. */}
+              <div className="mt-6 pt-6 border-t border-[var(--color-border-soft)]">
+                <h3 className="text-sm font-medium text-[var(--color-ink)]">Prior visa refusal</h3>
+                <p className="mt-0.5 text-xs text-[var(--color-muted)]">
+                  Optional. If you&rsquo;ve been refused a US visa before, flagging it here lets the mock interview weight what&rsquo;s different about this attempt.
+                </p>
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Have you been refused before?">
+                    <select
+                      className={input}
+                      value={prFlag ? "yes" : "no"}
+                      onChange={(e) => setPrFlag(e.target.value === "yes")}
+                    >
+                      <option value="no">No</option>
+                      <option value="yes">Yes</option>
+                    </select>
+                  </Field>
+                  {prFlag && (
+                    <Field label="What changed since then?" hint="Optional — helps tailor mock interview feedback.">
+                      <input
+                        className={input}
+                        value={prReason}
+                        onChange={(e) => setPrReason(e.target.value)}
+                        placeholder="e.g. new sponsor letter, job offer, stronger ties evidence"
+                      />
+                    </Field>
+                  )}
+                </div>
+                <SaveRow show={prDirty} section="prior-refusal" saving={prSaving} saved={prSaved} onSave={savePriorRefusal} />
+              </div>
             </section>
           )}
 
