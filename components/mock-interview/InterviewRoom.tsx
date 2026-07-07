@@ -94,9 +94,18 @@ export function InterviewRoom({
   const secs = elapsedSec % 60;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col" style={{ background: "#141312", color: "rgba(255,255,255,0.92)" }}>
+    <div
+      className="fixed inset-0 z-[60] flex flex-col overflow-y-auto"
+      style={{
+        background: "#141312",
+        color: "rgba(255,255,255,0.92)",
+        // overscroll-behavior keeps a scroll-bounce here from ever
+        // reaching the (deliberately scroll-locked) page behind it.
+        overscrollBehavior: "contain",
+      }}
+    >
       {/* Top meta strip */}
-      <div className="flex items-center justify-between px-6 py-4 text-[11px] tracking-[0.14em] uppercase text-white/55">
+      <div className="shrink-0 flex items-center justify-between px-6 py-4 text-[11px] tracking-[0.14em] uppercase text-white/55">
         <span>U.S. Consulate · F-1 mock · {difficulty === "strict" ? "Strict officer" : "Standard"}</span>
         <span className="tabular-nums">
           Question {questionIdx + 1} of {totalQuestions}
@@ -116,13 +125,20 @@ export function InterviewRoom({
         </div>
       )}
 
-      {/* Stage */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6">
+      {/* Stage — min-h-0 lets this flex-1 child actually shrink below its
+          content's natural size instead of forcing the whole room taller
+          than the viewport. Without it, a flex item's default min-height
+          is "auto" (= its content size), so on a short viewport this
+          pushed the bottom controls (Done answering / End interview)
+          past the edge with no way to reach them, since the page behind
+          is deliberately scroll-locked while the room is open. */}
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 py-4">
         <div
           className="relative w-full overflow-hidden rounded-2xl"
           style={{
             maxWidth: 880,
             aspectRatio: "16 / 9",
+            maxHeight: "min(50vh, 55dvh)",
             border: "1px solid rgba(255,255,255,0.08)",
             boxShadow: "0 30px 80px -30px rgba(0,0,0,0.6)",
           }}
@@ -177,7 +193,7 @@ export function InterviewRoom({
         </div>
 
         {/* Considering indicator OR captions */}
-        <div className="mt-7 w-full max-w-[760px] min-h-[64px] text-center">
+        <div className="mt-4 sm:mt-7 w-full max-w-[760px] min-h-[64px] text-center">
           {state === "considering" ? (
             <ConsideringDots />
           ) : (
@@ -192,9 +208,14 @@ export function InterviewRoom({
         </div>
       </div>
 
-      {/* Bottom user strip */}
-      <div className="px-6 pb-6 pt-3">
-        <div className="mx-auto max-w-[880px] flex items-center justify-between gap-4">
+      {/* Bottom user strip — shrink-0 so it always renders at full size
+          (never gets squeezed by the flex layout); safe-area padding
+          keeps it clear of Android/iOS gesture bars. */}
+      <div
+        className="shrink-0 px-6 pt-3"
+        style={{ paddingBottom: "max(24px, env(safe-area-inset-bottom))" }}
+      >
+        <div className="mx-auto max-w-[880px] flex flex-wrap items-center justify-between gap-4">
           {/* Mic state */}
           <div className="flex items-center gap-3">
             <div
@@ -308,9 +329,13 @@ export function InterviewRoom({
         </div>
       </div>
 
-      {/* Paused overlay */}
+      {/* Paused overlay — fixed, not absolute: the room can now scroll
+          (see overflow-y-auto above), and an absolute inset-0 child
+          covers the scrollable content area, not just what's currently
+          visible, so it could render off-screen if the user had
+          scrolled. fixed always covers the actual viewport. */}
       {state === "paused" && (
-        <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(20,19,18,0.85)" }}>
+        <div className="fixed inset-0 flex items-center justify-center" style={{ background: "rgba(20,19,18,0.85)" }}>
           <div className="text-center max-w-md px-6">
             <p className="font-display italic text-[22px] text-white/90">
               The officer has stepped away.
@@ -325,7 +350,7 @@ export function InterviewRoom({
         <div
           role="dialog"
           aria-modal="true"
-          className="absolute inset-0 flex items-center justify-center px-6"
+          className="fixed inset-0 flex items-center justify-center px-6"
           style={{ background: "rgba(20,19,18,0.7)" }}
         >
           <div className="w-full max-w-md rounded-2xl p-6" style={{ background: "#1F1E1C", border: "1px solid rgba(255,255,255,0.08)" }}>
