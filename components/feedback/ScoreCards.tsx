@@ -187,8 +187,8 @@ function VerdictBadge({ verdict }: { verdict: "ready" | "almost_ready" | "needs_
     almost_ready: { fg: "#3B82F6", bg: "rgba(59,130,246,0.15)", border: "rgba(59,130,246,0.30)" },
     needs_work:   { fg: "#F59E0B", bg: "rgba(245,158,11,0.15)", border: "rgba(245,158,11,0.30)" },
   }[verdict];
-  const pretty = verdict === "ready" ? "READY"
-               : verdict === "almost_ready" ? "ALMOST READY" : "NEEDS WORK";
+  const pretty = verdict === "ready" ? "PRACTICE READY"
+               : verdict === "almost_ready" ? "ALMOST THERE" : "NEEDS WORK";
   return (
     <span
       className="inline-block mt-4 font-sans text-[11px] uppercase font-medium px-3 py-1 rounded"

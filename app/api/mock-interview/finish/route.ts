@@ -142,9 +142,11 @@ export async function POST(req: Request) {
 
       // Notify the user with their score. Tone follows the verdict so
       // a strong run reads as a win and a weak one reads as actionable.
+      // Copy avoids implying a real officer's judgment — this is a
+      // practice-session readiness score, not a prediction of approval.
       const verdictBody =
         verdict === "ready"
-          ? "Officer-ready. Save this score and walk in."
+          ? "Strong practice score. Review it once more, then you're set."
           : verdict === "almost_ready"
             ? "Almost there. One more mock to lock it in."
             : "A few weak spots — review the fixes and run it again.";
@@ -193,7 +195,7 @@ Return STRICT JSON only:
   "confidence": <0-100>,
   "redFlag": <0-100, where 100 = no red flags, 0 = severe red flags>,
   "overall": <0-100>,
-  "summary": "1 sentence overall verdict, max 24 words",
+  "summary": "1 sentence overall summary of the practice session, max 24 words",
   "topStrength": "1 sentence, max 18 words",
   "topWeakness": "1 sentence, max 18 words"
 }

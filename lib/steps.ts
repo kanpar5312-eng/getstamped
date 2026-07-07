@@ -2564,7 +2564,7 @@ export const STEPS: Step[] = [
     commonMistakes: [
       {
         title: "Ignoring the feedback because the score 'felt unfair'",
-        body: "The AI evaluates against the same criteria officers use. If it flagged your answer as weak, an officer would too. Ignoring the feedback is ignoring the warning.",
+        body: "The AI evaluates against the same criteria officers use, but it's a practice-session check, not a prediction of your real outcome. If it flagged your answer as weak, treat that as a cue to tighten it, not a verdict on your case.",
       },
       {
         title: "Rewriting answers without practicing them out loud",
@@ -2600,7 +2600,7 @@ export const STEPS: Step[] = [
         {
           title: "Choose 'strict officer' scenario",
           body:
-            "Strict officers ask follow-ups, interrupt, throw curveballs. If your prep survives strict officer at 80+, you're ready for the real consulate.",
+            "Strict officers ask follow-ups, interrupt, throw curveballs. If your prep survives strict officer at 80+, your answers are holding up under pressure — good sign, not a guarantee.",
         },
         {
           title: "Focus on the previously-weak answers",

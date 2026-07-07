@@ -1071,10 +1071,10 @@ export function MockInterviewClient({ plan, consulate }: Props) {
 
     const verdict =
       scores.overall >= 78
-        ? "You'd likely be approved."
+        ? "Strong practice run — you're well prepared."
         : scores.overall >= 62
-        ? "You'd likely be approved — with hesitation."
-        : "An officer would push back on several answers.";
+        ? "A solid session. A few answers still need tightening."
+        : "This answer needs real work before interview day.";
 
     // Pick the shortest non-empty answer as the weakest moment
     let weakestIdx = -1;

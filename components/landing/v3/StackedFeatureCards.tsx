@@ -730,7 +730,7 @@ function InterviewMock() {
             <span style={{ fontSize: 16, color: "rgba(250,248,244,0.5)" }}>/100</span>
           </span>
           <span style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: 12 }}>Officer-ready</span>
+            <span style={{ fontSize: 12 }}>Practice-ready</span>
             <span
               style={{
                 fontFamily: "var(--font-mono-stack, var(--font-sans-stack))",
@@ -974,7 +974,7 @@ export function StackedFeatureCards() {
           <CardShell bg={PAPER} ink={INK} demo={<DocVaultMock />}>
             <Chip dark={false}>02 / DOCUMENT VAULT</Chip>
             <Headline ink={INK}>
-              Drop a document. Get an officer&rsquo;s verdict.
+              Drop a document. Get a completeness check.
             </Headline>
             <Body ink="rgba(28,25,23,0.55)">
               Our vision model reads every page in seconds — checks for missing

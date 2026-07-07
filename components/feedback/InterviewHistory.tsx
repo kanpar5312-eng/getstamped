@@ -5,8 +5,8 @@ import { AnimatePresence, motion } from "motion/react";
 import type { SessionAnswer, SessionSummary } from "@/lib/feedback-data";
 
 const VERDICT_PRETTY = {
-  ready: "READY",
-  almost_ready: "ALMOST READY",
+  ready: "PRACTICE READY",
+  almost_ready: "ALMOST THERE",
   needs_work: "NEEDS WORK",
 } as const;
 

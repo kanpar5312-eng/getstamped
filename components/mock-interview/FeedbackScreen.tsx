@@ -70,10 +70,10 @@ function scoreColor(n: number): string {
 }
 
 function verdictFor(score: number): string {
-  if (score <= 40) return "An officer would likely push back.";
+  if (score <= 40) return "This answer needs real work before interview day.";
   if (score <= 65) return "You're partway there.";
   if (score <= 85) return "A solid session. Keep going.";
-  return "You're ready for the real thing.";
+  return "Strong practice run — you're well prepared.";
 }
 
 function fmtDuration(totalSec: number): string {
