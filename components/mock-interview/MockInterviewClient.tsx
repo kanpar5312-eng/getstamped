@@ -201,6 +201,30 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   // 4s minimum window enforced for main turns.
   const probeFinishRef = useRef<(() => void) | null>(null);
   const probeStartTsRef = useRef<number>(0);
+  // True from enterRoom() until endSession()/unmount tears the session
+  // down. Every point in the runQuestion → finishTurn → runQuestion async
+  // chain checks this after each `await` — without it, a chain already
+  // in flight when the user leaves (navigates away) or ends the session
+  // resumes anyway once its pending speak()/fetch settles, spinning up a
+  // brand-new SpeechRecognition + timers that nothing else knows to
+  // clean up. That's what kept the officer "asking questions in the
+  // background" after leaving, and could just as easily strand the last
+  // turn instead of calling endSession().
+  const sessionActiveRef = useRef(false);
+  // Guards endSession() itself against running twice (Done button +
+  // silence auto-end + unmount racing).
+  const sessionEndingRef = useRef(false);
+  // Bumped every time startRecognition() spins up a new recognizer
+  // instance (a fresh turn OR a manual retry). Callbacks on a stale
+  // instance compare against the live value and no-op instead of
+  // restarting/finishing — this is what makes "retry answer" safe: the
+  // old recognizer's onend still fires later, but it's inert once its
+  // generation is stale.
+  const turnGenRef = useRef(0);
+  // Live word-by-word transcript of the user's current answer, shown in
+  // the room so a misheard word is visible immediately instead of only
+  // surfacing after the whole session ends.
+  const [liveTranscript, setLiveTranscript] = useState("");
 
   // ─── ElevenLabs TTS state ────────────────────────────────────────────
   // ttsAvail flips false the first time /api/mock-interview/tts errors,
@@ -447,6 +471,11 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   }, []);
 
   useEffect(() => () => {
+    // Kill the async chain FIRST — every await-boundary check inside
+    // runQuestion/finishTurn reads this, so nothing that resumes after
+    // unmount can schedule a new recognizer, timer, or phase change.
+    sessionActiveRef.current = false;
+    turnGenRef.current += 1;
     audioCleanupRef.current?.();
     if (tickRef.current) window.clearInterval(tickRef.current);
     if (advanceTimerRef.current) window.clearTimeout(advanceTimerRef.current);
@@ -557,6 +586,8 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   };
 
   const enterRoom = () => {
+    sessionActiveRef.current = true;
+    sessionEndingRef.current = false;
     setQuestionIdx(0);
     setTranscripts([]);
     setElapsedSec(0);
@@ -570,6 +601,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   };
 
   const runQuestion = async (idx: number) => {
+    if (!sessionActiveRef.current) return;
     setQuestionIdx(idx);
     setRoomState("officer-speaking");
     const q = questions[idx] ?? "";
@@ -579,6 +611,9 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     // isn't (no API key / quota out), `speak` falls back to a read-along
     // timer so the visual pacing still feels right.
     await speak(q);
+    // The session may have ended or the component may have unmounted
+    // while we were awaiting speak() — don't resume into a dead session.
+    if (!sessionActiveRef.current) return;
 
     // Prefetch the NEXT question's audio while the user is answering this
     // one — by the time they finish, the next mp3 blob is already in the
@@ -621,6 +656,25 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     [clearTurnPacing],
   );
 
+  /** Discard whatever was captured for the CURRENT question and re-open
+   *  the mic for it, without re-asking the question or advancing the
+   *  index. Only valid for the main turn (not a strict-mode probe —
+   *  probeFinishRef being set means a probe is live, not the main
+   *  question). startRecognition() bumps turnGenRef, which makes the old
+   *  recognizer instance's pending onend/onerror inert (see the gen
+   *  check in restartOrFinish), so the stale instance can't race the
+   *  fresh one or resurrect the discarded transcript. */
+  const retryAnswer = useCallback(() => {
+    if (roomState !== "listening" || probeFinishRef.current) return;
+    clearTurnPacing();
+    try {
+      recogRef.current?.stop();
+    } catch {
+      /* ignore */
+    }
+    startRecognition(questionIdx);
+  }, [roomState, questionIdx, clearTurnPacing]);
+
   const startRecognition = (idx: number) => {
     // Reset per-turn state.
     turnFinishedRef.current = false;
@@ -629,6 +683,12 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     lastTranscriptRef.current = "";
     segmentBaseRef.current = "";
     setSilenceCountdown(null);
+    setLiveTranscript("");
+    // New generation: any callback still pending on a PRIOR recognizer
+    // instance (a stale restart, or the old instance from a manual retry)
+    // compares against turnGenRef and no-ops instead of acting on a turn
+    // that's no longer live.
+    const gen = ++turnGenRef.current;
 
     const silenceMax = silenceMaxFor(difficulty, questions[idx]);
 
@@ -652,6 +712,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     recog.continuous = true; // stays open across pauses
     recog.interimResults = true;
     recog.onresult = (e) => {
+      if (gen !== turnGenRef.current) return;
       let text = "";
       for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
       // Prepend whatever was committed from a prior instance this turn
@@ -660,6 +721,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
       const base = segmentBaseRef.current;
       lastTranscriptRef.current = base ? `${base} ${text}` : text;
       lastSpeechAtRef.current = performance.now();
+      setLiveTranscript(lastTranscriptRef.current);
     };
     if ("onspeechstart" in recog) {
       recog.onspeechstart = () => {
@@ -677,6 +739,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     // FATAL_RECOGNITION_ERRORS above for why most errors/onend firings
     // here are transient engine hiccups, not "the user is done talking."
     const restartOrFinish = (errorCode?: string) => {
+      if (gen !== turnGenRef.current) return;
       if (turnFinishedRef.current) return;
       if (errorCode && FATAL_RECOGNITION_ERRORS.has(errorCode)) {
         finishCurrentTurn(idx);
@@ -748,6 +811,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
    *  transcript so /finish grades it as part of that question. */
   const runProbeListen = (idx: number): Promise<void> => {
     return new Promise((resolve) => {
+      setLiveTranscript("");
       const silenceMax = silenceMaxFor(difficulty, questions[idx]);
       const probeStartTs = performance.now();
       probeStartTsRef.current = probeStartTs;
@@ -784,6 +848,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
         probeDone = true;
         probeFinishRef.current = null;
         cleanup();
+        setLiveTranscript("");
         const extra = probeTranscript.trim();
         if (extra) {
           setTranscripts((arr) => {
@@ -817,6 +882,7 @@ export function MockInterviewClient({ plan, consulate }: Props) {
         for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
         probeTranscript = probeSegmentBase ? `${probeSegmentBase} ${text}` : text;
         probeLastSpeechAt = performance.now();
+        setLiveTranscript(probeTranscript);
       };
       if ("onspeechstart" in recog) {
         recog.onspeechstart = () => {
@@ -883,7 +949,9 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   };
 
   const finishTurn = async (idx: number, answer: string) => {
+    if (!sessionActiveRef.current) return;
     clearTurnPacing();
+    setLiveTranscript("");
     setTranscripts((arr) => {
       const next = [...arr];
       next[idx] = answer;
@@ -899,11 +967,14 @@ export function MockInterviewClient({ plan, consulate }: Props) {
     // turn's transcript so it grades as part of that question.
     if (!isLast && difficulty === "strict" && Math.random() < STRICT_PROBE_CHANCE) {
       await new Promise((r) => setTimeout(r, 600));
+      if (!sessionActiveRef.current) return;
       const probe = FOLLOWUP_PROBES[Math.floor(Math.random() * FOLLOWUP_PROBES.length)];
       setRoomState("officer-speaking");
       await speak(probe);
+      if (!sessionActiveRef.current) return;
       setRoomState("listening");
       await runProbeListen(idx);
+      if (!sessionActiveRef.current) return;
       setRoomState("considering");
     }
 
@@ -916,12 +987,15 @@ export function MockInterviewClient({ plan, consulate }: Props) {
       // Brief beat before the officer responds so it doesn't feel
       // robot-quick on the heels of the user's last word.
       await new Promise((r) => setTimeout(r, 700));
+      if (!sessionActiveRef.current) return;
       setRoomState("officer-speaking");
       await speak(line);
     } else {
       // Last question — keep the original 1.6s think pause.
       await new Promise((r) => setTimeout(r, 1600));
     }
+
+    if (!sessionActiveRef.current) return;
 
     if (isLast) {
       endSession();
@@ -931,6 +1005,19 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   };
 
   const endSession = async () => {
+    // Idempotent: the Done button, the silence auto-end, and unmount can
+    // all race to call this for the same session. Without this guard a
+    // second call would re-enter the /finish + /score fetches and could
+    // flip phase back to "finishing" after the first call already
+    // reached "feedback".
+    if (sessionEndingRef.current) return;
+    sessionEndingRef.current = true;
+    // Kill the async question chain immediately so a runQuestion/finishTurn
+    // call already in flight (e.g. the user hit "End interview" right as a
+    // transition line was being spoken) can't resume and spin up a new
+    // recognizer after we've torn everything down below.
+    sessionActiveRef.current = false;
+    turnGenRef.current += 1;
     // If a strict-mode probe is mid-flight, end it cleanly so its recog
     // and silence interval don't leak past the session boundary.
     probeFinishRef.current?.();
@@ -974,6 +1061,12 @@ export function MockInterviewClient({ plan, consulate }: Props) {
 
     let groqResult: GroqFinishResult | null = null;
     try {
+      // A hung /finish call used to strand the user on the "finishing"
+      // spinner indefinitely — from the room it read as "the interview
+      // didn't end." Same bounded-wait principle as speak()'s hard
+      // ceiling: fall back to the heuristic score rather than wait forever.
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 20000);
       const r = await fetch("/api/mock-interview/finish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -983,7 +1076,8 @@ export function MockInterviewClient({ plan, consulate }: Props) {
           officerStyle,
           scenario: consulate ?? undefined,
         }),
-      });
+        signal: ctrl.signal,
+      }).finally(() => clearTimeout(to));
       if (r.ok) {
         const data = (await r.json()) as { ok: boolean; scores?: GroqFinishResult };
         if (data.ok && data.scores) groqResult = data.scores;
@@ -1005,6 +1099,8 @@ export function MockInterviewClient({ plan, consulate }: Props) {
         turnsPayload.map(async (t) => {
           if (!t.answer || t.answer.length < 8) return null;
           try {
+            const ctrl = new AbortController();
+            const to = setTimeout(() => ctrl.abort(), 12000);
             const r = await fetch("/api/mock-interview/score", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -1015,7 +1111,8 @@ export function MockInterviewClient({ plan, consulate }: Props) {
                 officerStyle,
                 difficulty: finishDifficulty,
               }),
-            });
+              signal: ctrl.signal,
+            }).finally(() => clearTimeout(to));
             if (!r.ok) return null;
             const data = (await r.json()) as {
               ok: boolean;
@@ -1325,6 +1422,8 @@ export function MockInterviewClient({ plan, consulate }: Props) {
         state={roomState}
         liveLevel={liveLevel}
         elapsedSec={elapsedSec}
+        liveTranscript={liveTranscript}
+        onRetryAnswer={probeFinishRef.current ? undefined : retryAnswer}
         onEnd={endSession}
         muted={muted}
         onToggleMute={() => {

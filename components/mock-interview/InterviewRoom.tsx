@@ -41,6 +41,15 @@ type Props = {
   /** True when SpeechRecognition isn't supported — surface a warning so
    *  the user knows we're falling back to a fixed 8s window. */
   noMic?: boolean;
+  /** Live word-by-word transcript of what the mic has picked up so far
+   *  this turn. Shown so a misheard word is visible immediately instead
+   *  of only surfacing in the feedback screen after the session ends. */
+  liveTranscript?: string;
+  /** Discards the current answer and reopens the mic for the same
+   *  question. Undefined while a strict-mode follow-up probe (not the
+   *  main question) is being listened for — retry only applies to the
+   *  main answer. */
+  onRetryAnswer?: () => void;
 };
 
 export function InterviewRoom({
@@ -58,6 +67,8 @@ export function InterviewRoom({
   onDoneAnswering,
   silenceCountdown,
   noMic,
+  liveTranscript,
+  onRetryAnswer,
 }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [caption, setCaption] = useState("");
@@ -208,6 +219,21 @@ export function InterviewRoom({
         </div>
       </div>
 
+      {/* Live transcript of the user's own answer — only while listening,
+          so a misheard word is visible right away instead of only
+          showing up after the whole session ends. */}
+      {state === "listening" && (
+        <div className="shrink-0 px-6 pb-1">
+          <p
+            role="status"
+            aria-live="polite"
+            className="mx-auto max-w-[760px] min-h-[20px] text-center text-[13px] leading-relaxed text-white/50"
+          >
+            {liveTranscript?.trim() || "Listening…"}
+          </p>
+        </div>
+      )}
+
       {/* Bottom user strip — shrink-0 so it always renders at full size
           (never gets squeezed by the flex layout); safe-area padding
           keeps it clear of Android/iOS gesture bars. */}
@@ -281,6 +307,17 @@ export function InterviewRoom({
                   {silenceCountdown}
                 </span>
               </span>
+            )}
+            {state === "listening" && onRetryAnswer && !!liveTranscript?.trim() && (
+              <button
+                type="button"
+                onClick={onRetryAnswer}
+                className="rounded-full px-4 py-[8px] text-[12px] font-semibold text-white/70 hover:text-white transition-colors"
+                style={{ border: "1px solid rgba(255,255,255,0.18)" }}
+                title="Discard this answer and re-record it"
+              >
+                Retry answer
+              </button>
             )}
             {state === "listening" && onDoneAnswering && (
               <button
