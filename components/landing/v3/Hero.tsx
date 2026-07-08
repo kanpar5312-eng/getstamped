@@ -85,19 +85,6 @@ export function Hero() {
   const nowlineRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef(0);
   const [reduced, setReduced] = useState(false);
-  // Scroll-jacking is inherently more fragile on mobile than desktop:
-  // Android's address bar hides/shows during scroll, which changes
-  // window.innerHeight mid-gesture (desktop's viewport is stable, no
-  // address-bar resize). This hero recomputes `total = runwayHeight -
-  // innerHeight` every frame and bails out without updating anything if
-  // that goes non-positive — so a viewport-height blip mid-scroll could
-  // freeze the headline/card clip-path at a stale frame while native
-  // scroll kept moving underneath, which is what produced the headline
-  // and playbook card overlapping mid-transition on Android. Rather than
-  // chase a specific device's viewport-resize timing, use the same safe
-  // static hero (already built for prefers-reduced-motion) on mobile
-  // widths outright — desktop has none of this fragility.
-  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -108,15 +95,7 @@ export function Hero() {
   }, []);
 
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
-    const apply = () => setIsDesktop(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, []);
-
-  useEffect(() => {
-    if (reduced || !isDesktop) return;
+    if (reduced) return;
     const runway = runwayRef.current;
     const head = headRef.current;
     const book = bookRef.current;
@@ -148,14 +127,30 @@ export function Hero() {
     let lastHeadT = "";
     let lastChromeOp = "";
     let lastNowlineOp = "";
+    // Android's address bar hides/shows *during* a scroll gesture, which
+    // changes window.innerHeight mid-frame (desktop's viewport is stable,
+    // no address-bar resize) — visualViewport.height tracks the actual
+    // visible area more consistently through that than innerHeight does.
+    // Bailing out on a bad reading used to freeze the headline/card
+    // clip-path at a stale frame while native scroll kept moving
+    // underneath (headline and playbook card overlapping mid-transition).
+    // Falling back to the last known-good total instead means a
+    // momentary bad reading just reuses the previous frame's geometry
+    // for one tick — imperceptible — rather than freezing entirely.
+    let lastGoodTotal = 0;
 
     const frame = () => {
       ticking = false;
-      const vh = window.innerHeight;
+      const vh = window.visualViewport?.height ?? window.innerHeight;
       const vw = window.innerWidth;
       const rect = runway.getBoundingClientRect();
-      const total = rect.height - vh;
-      if (total <= 0) return;
+      let total = rect.height - vh;
+      if (total <= 0) {
+        if (lastGoodTotal <= 0) return;
+        total = lastGoodTotal;
+      } else {
+        lastGoodTotal = total;
+      }
       const p = clamp01(-rect.top / total);
       progressRef.current = p;
 
@@ -265,9 +260,9 @@ export function Hero() {
       window.removeEventListener("resize", onResize);
       runway.removeEventListener("click", onClick);
     };
-  }, [reduced, isDesktop]);
+  }, [reduced]);
 
-  if (reduced || !isDesktop) return <HeroStatic />;
+  if (reduced) return <HeroStatic />;
 
   return (
     <section ref={runwayRef} aria-label="Hero" className="gs-hx-runway">
