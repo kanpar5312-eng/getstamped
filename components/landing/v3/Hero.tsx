@@ -780,6 +780,13 @@ function HeroStatic() {
         ))}
       </div>
       <style>{`
+        /* Self-contained on purpose — HeroStatic can mount without the
+           animated Hero() ever rendering (mobile widths, reduced-motion,
+           no-JS), so it can't rely on that component's own <style> block
+           for its base classes. Same class names as the runway version
+           (.gs-hx-eyebrow, .gs-hx-row, .gs-hx-mark, etc.) so both stay
+           visually consistent, but every rule those classes need lives
+           here rather than being split across two components. */
         .gs-hxs {
           display: flex; flex-direction: column; align-items: center;
           text-align: center;
@@ -788,6 +795,45 @@ function HeroStatic() {
         }
         .gs-hxs .gs-hx-eyebrow, .gs-hxs .gs-hx-h1, .gs-hxs .gs-hx-sub,
         .gs-hxs .gs-hx-ctas { animation: none !important; }
+        .gs-hx-eyebrow {
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 11px; letter-spacing: 0.42em; text-transform: uppercase;
+          color: var(--color-persimmon); font-weight: 600;
+        }
+        .gs-hx-h1 {
+          margin: 22px 0 0;
+          font-family: var(--font-display-stack); font-weight: 400;
+          font-size: clamp(46px, 7.4vw, 88px);
+          line-height: 1.02; letter-spacing: -0.028em;
+          color: var(--color-ink);
+          text-wrap: balance;
+        }
+        .gs-hx-h1 em { font-style: italic; color: var(--color-persimmon); }
+        .gs-hx-sub {
+          margin: 20px auto 0; max-width: 560px;
+          font-family: var(--font-sans-stack); font-size: 17px;
+          line-height: 1.55; color: var(--color-ink-soft);
+        }
+        .gs-hx-ctas {
+          margin-top: 32px; display: flex; flex-direction: column;
+          align-items: center; gap: 14px;
+        }
+        .gs-hx-primary {
+          position: relative;
+          background: linear-gradient(180deg, var(--color-persimmon-soft) 0%, var(--color-persimmon) 62%, var(--color-persimmon-deep) 100%);
+          color: #FAF8F4;
+          font-family: var(--font-sans-stack); font-size: 15px; font-weight: 600;
+          padding: 16px 30px; border-radius: 999px; text-decoration: none;
+          box-shadow:
+            0 16px 36px -12px rgba(232,98,42,0.55),
+            0 4px 10px -4px rgba(232,98,42,0.4),
+            inset 0 1px 0 rgba(255,255,255,0.35);
+        }
+        .gs-hx-hint {
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+          color: var(--color-muted);
+        }
         .gs-hxs-card {
           margin-top: 56px; width: 100%; max-width: 760px;
           border: 1px solid var(--color-border-soft); border-radius: 20px;
@@ -795,6 +841,52 @@ function HeroStatic() {
           text-align: left;
         }
         .gs-hxs-card .gs-hx-row:last-child { border-bottom: none; }
+        .gs-hx-row {
+          display: grid;
+          grid-template-columns: 24px 76px 1fr auto;
+          align-items: center; gap: 16px;
+          height: ${ROW_H}px;
+          padding: 0 clamp(18px, 4vw, 48px);
+          border-bottom: 1px solid var(--color-border-soft);
+          font-family: var(--font-sans-stack); font-size: 15px;
+          color: var(--color-ink);
+        }
+        .gs-hx-step {
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 10.5px; letter-spacing: 0.12em;
+          color: var(--color-persimmon-deep); opacity: 0.75;
+        }
+        .gs-hx-label { letter-spacing: -0.003em; }
+        .gs-hx-date {
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 11px; color: var(--color-muted);
+          font-variant-numeric: tabular-nums;
+        }
+        .gs-hx-mark {
+          width: 19px; height: 19px; border-radius: 999px;
+          display: inline-flex; align-items: center; justify-content: center;
+          border: 1.5px solid var(--color-border);
+          background: transparent; color: transparent;
+        }
+        .gs-hx-mark svg { width: 10px; height: 10px; }
+        .gs-hx-row.is-done .gs-hx-mark {
+          background: var(--color-persimmon);
+          border-color: var(--color-persimmon);
+          color: #FAF8F4;
+        }
+        .gs-hx-row.is-done .gs-hx-label { color: var(--color-ink-soft); }
+
+        @media (max-width: 767px) {
+          .gs-hxs { padding: clamp(76px, 13vh, 108px) 20px 56px; }
+          .gs-hx-eyebrow {
+            font-size: 10px; letter-spacing: 0.18em;
+            white-space: normal; overflow-wrap: break-word;
+          }
+          .gs-hx-h1 { margin-top: 14px; font-size: clamp(34px, 9vw, 48px); }
+          .gs-hx-sub { margin-top: 14px; font-size: 15px; line-height: 1.5; }
+          .gs-hx-ctas { margin-top: 22px; gap: 12px; }
+          .gs-hx-row { grid-template-columns: 20px 58px 1fr auto; gap: 10px; font-size: 13px; }
+        }
       `}</style>
     </section>
   );
