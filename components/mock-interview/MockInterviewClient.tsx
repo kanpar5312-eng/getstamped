@@ -231,6 +231,21 @@ export function MockInterviewClient({ plan, consulate }: Props) {
   // so a missing API key or quota exhaustion silently falls back to the
   // original length-heuristic timer (the session keeps working).
   const [ttsAvail, setTtsAvail] = useState(true);
+  // Serializes every /api/mock-interview/tts call through a single queue.
+  // runQuestion fires a prefetch for the NEXT question right after
+  // speaking the current one — while the user is still answering — so by
+  // the time finishTurn needs the transition line or the next question's
+  // audio, that prefetch is very often STILL in flight. Two simultaneous
+  // requests to ElevenLabs hit its per-account concurrent-request cap
+  // (commonly just 1-2 on the account tiers most people start on), and
+  // the second one gets rejected. The very first question never collides
+  // with anything (nothing else is in flight yet) — every question after
+  // it does, which is exactly why only the opening line was ever
+  // audible. Chaining every request through this queue means only one is
+  // ever in flight at a time; the prefetch just waits its turn instead of
+  // racing the live request, so it still lands before it's needed in the
+  // common case (the user is usually talking for several seconds).
+  const ttsQueueRef = useRef<Promise<unknown>>(Promise.resolve());
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(muted);
   mutedRef.current = muted;
@@ -293,7 +308,21 @@ export function MockInterviewClient({ plan, consulate }: Props) {
       // ever reaches the audio element.
       const MIN_PLAUSIBLE_AUDIO_BYTES = 800;
 
-      const promise = (async () => {
+      // Do the actual network work inside a closure and chain it onto the
+      // shared queue so only one /api/mock-interview/tts request is ever
+      // in flight at a time. runQuestion fires a fire-and-forget prefetch
+      // for the NEXT question right after speaking the current one, while
+      // the user is still answering — by the time finishTurn needs the
+      // transition line or the next question's audio, that prefetch was
+      // very often STILL in flight, so two simultaneous requests hit
+      // ElevenLabs' per-account concurrent-request cap and the second one
+      // got rejected. The very first question never collided with
+      // anything (nothing else in flight yet), which is exactly why only
+      // the opening line was ever audible. Serializing through the queue
+      // means the prefetch just waits its turn instead of racing the live
+      // request — it still lands before it's needed in the common case
+      // (the user is usually talking for several seconds).
+      const runFetch = async (): Promise<string | null> => {
         try {
           let r = await attempt();
           // One retry for anything that isn't a permanent "not configured"
@@ -331,7 +360,13 @@ export function MockInterviewClient({ plan, consulate }: Props) {
           prefetchRef.current.delete(cacheKey);
           return null;
         }
-      })();
+      };
+
+      // Chain onto the queue tail. The .catch guard on the tail we store
+      // ensures one failed/rejected fetch never permanently wedges the
+      // queue for every fetch that comes after it.
+      const promise = ttsQueueRef.current.then(runFetch, runFetch);
+      ttsQueueRef.current = promise.catch(() => {});
 
       prefetchRef.current.set(cacheKey, promise);
       return promise;

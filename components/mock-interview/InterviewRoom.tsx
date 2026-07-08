@@ -323,12 +323,30 @@ export function InterviewRoom({
               <button
                 type="button"
                 onClick={onDoneAnswering}
-                className="btn-ember rounded-full px-4 py-[8px] text-[12px] font-semibold"
-                style={{ background: "var(--ember)", color: "#fff" }}
+                className="btn-ember done-answering-btn rounded-full px-4 py-[8px] text-[12px] font-semibold transition-transform duration-150 hover:scale-[1.04] active:scale-[0.97]"
+                style={{
+                  background: "var(--ember)",
+                  color: "#fff",
+                  border: "1.5px solid rgba(255,255,255,0.55)",
+                }}
               >
                 Done answering
               </button>
             )}
+            <style jsx>{`
+              .done-answering-btn {
+                box-shadow: 0 0 0 3px rgba(232, 96, 44, 0.22), 0 4px 16px -4px rgba(232, 96, 44, 0.55);
+                animation: doneAnsweringPulse 2.2s ease-in-out infinite;
+              }
+              @keyframes doneAnsweringPulse {
+                0%, 100% {
+                  box-shadow: 0 0 0 3px rgba(232, 96, 44, 0.22), 0 4px 16px -4px rgba(232, 96, 44, 0.55);
+                }
+                50% {
+                  box-shadow: 0 0 0 6px rgba(232, 96, 44, 0.12), 0 4px 20px -2px rgba(232, 96, 44, 0.7);
+                }
+              }
+            `}</style>
           </div>
 
           <div className="flex items-center gap-1">
