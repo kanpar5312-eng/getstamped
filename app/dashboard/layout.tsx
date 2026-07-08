@@ -49,7 +49,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   const initials = initialsFrom(profile.firstName);
 
   return (
-    <div data-surface="dashboard" className="min-h-screen flex flex-col relative">
+    <div data-surface="dashboard" className="min-h-screen gs-dashboard-shell flex flex-col relative">
       <DashboardWake />
       <DashboardNav initials={initials} email={sessionUser?.email ?? null} plan={profile.plan} userId={sessionUser?.id ?? null} feedbackUrgent={feedbackUrgent} />
       <CommandPalette />

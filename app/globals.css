@@ -221,6 +221,28 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Sticky-pinned card in the landing page's ScrollStack (StackedFeatureCards).
+   Plain 100vh is measured against a viewport height that changes as a
+   mobile browser's address bar hides/shows mid-scroll — mismatched from
+   the actual visible area, which throws off this pinned/stacking layout
+   specifically on mobile Chrome/Android (desktop has no such resize).
+   Declared here (not as an inline style) so the fallback cascade works:
+   browsers without dvh support just keep the 100vh line above it. */
+.gs-scrollstack-item {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Dashboard page shell — same reasoning as .gs-scrollstack-item above.
+   Tailwind's min-h-screen (100vh) stays as the fallback; this rule's
+   plain min-height: 100dvh wins in the cascade for browsers that
+   support it, without depending on Tailwind's utility-generation order
+   (stacking two min-h-* utility classNames wouldn't reliably guarantee
+   which one comes later in the generated stylesheet). */
+.gs-dashboard-shell {
+  min-height: 100dvh;
+}
+
 /* ──────────────────────────────────────────────────────────────────────
    Notification dropdown — anchored to the bell on desktop (absolute,
    right-aligned), but pinned to the viewport edges on mobile so the

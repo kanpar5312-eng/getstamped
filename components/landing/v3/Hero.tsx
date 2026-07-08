@@ -386,7 +386,15 @@ export function Hero() {
 
         .gs-hx-sticky {
           position: sticky; top: 0;
-          height: 100vh; overflow: hidden;
+          /* 100vh on mobile Chrome/Android is measured against a
+             viewport height that changes as the address bar hides/shows
+             mid-scroll — mismatched from the actual visible area, which
+             is exactly the class of bug already fixed in this file's JS
+             (visualViewport.height). The box itself needs the same fix:
+             dvh tracks the real visible viewport. Desktop Safari/Chrome
+             has no address-bar resize, so this is a no-op there. */
+          height: 100vh; height: 100dvh;
+          overflow: hidden;
         }
 
         /* ── headline stack ── */

@@ -46,12 +46,13 @@ export function ScrollStackItem({ children, className, style }: Props) {
       style={{
         position: "sticky",
         top: 0,
-        height: "100vh",
+        // height set in globals.css (100vh, then 100dvh) — see the
+        // .gs-scrollstack-item rule for why this can't be an inline style.
         width: "100%",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "5vh 16px",
+        padding: "5dvh 16px",
       }}
     >
       <motion.div
@@ -62,7 +63,7 @@ export function ScrollStackItem({ children, className, style }: Props) {
         style={{
           // Card surface is shorter than the viewport so previous
           // cards have room to peek above when they translate up.
-          height: "min(80vh, 760px)",
+          height: "min(80dvh, 760px)",
           maxWidth: 1240,
           margin: "0 auto",
           borderRadius: 24,
