@@ -323,8 +323,11 @@ export function MockInterviewClient({ plan, consulate }: Props) {
       // request — it still lands before it's needed in the common case
       // (the user is usually talking for several seconds).
       const runFetch = async (): Promise<string | null> => {
+        // TEMP DIAGNOSTIC — remove once the queue fix is confirmed.
+        console.log("[tts-diag] request start", { cacheKey, text: clean.slice(0, 60) });
         try {
           let r = await attempt();
+          console.log("[tts-diag] attempt#1 status", { cacheKey, status: r.status, ok: r.ok });
           // One retry for anything that isn't a permanent "not configured"
           // or "bad request" — cold starts, transient upstream 5xx, and
           // network blips all succeed on a second try far more often than
@@ -332,31 +335,39 @@ export function MockInterviewClient({ plan, consulate }: Props) {
           if (!r.ok && r.status !== 503 && r.status !== 400) {
             await new Promise((res) => setTimeout(res, 400));
             r = await attempt();
+            console.log("[tts-diag] attempt#2 (retry) status", { cacheKey, status: r.status, ok: r.ok });
           }
           if (!r.ok) {
             const detail = await r.text().catch(() => "");
             console.error("[mock-interview] tts http error", r.status, detail.slice(0, 300));
+            console.log("[tts-diag] request FAILED (http)", { cacheKey, status: r.status, detail: detail.slice(0, 300) });
             if (r.status === 503) setTtsAvail(false); // not configured
             prefetchRef.current.delete(cacheKey);
             return null;
           }
           let blob = await r.blob();
+          console.log("[tts-diag] blob size", { cacheKey, size: blob.size, type: blob.type });
           if (blob.size < MIN_PLAUSIBLE_AUDIO_BYTES) {
             // Suspiciously small — retry once before giving up, same as
             // the HTTP-error path above.
             console.warn("[mock-interview] tts blob suspiciously small, retrying:", blob.size);
             await new Promise((res) => setTimeout(res, 400));
             const r2 = await attempt();
+            console.log("[tts-diag] small-blob retry status", { cacheKey, status: r2.status, ok: r2.ok });
             if (r2.ok) blob = await r2.blob();
+            console.log("[tts-diag] small-blob retry blob size", { cacheKey, size: blob.size });
             if (blob.size < MIN_PLAUSIBLE_AUDIO_BYTES) {
               console.error("[mock-interview] tts blob still too small after retry:", blob.size);
+              console.log("[tts-diag] request FAILED (still too small)", { cacheKey, size: blob.size });
               prefetchRef.current.delete(cacheKey);
               return null;
             }
           }
+          console.log("[tts-diag] request SUCCESS", { cacheKey, size: blob.size });
           return URL.createObjectURL(blob);
         } catch (err) {
           console.error("[mock-interview] tts fetch failed:", err);
+          console.log("[tts-diag] request THREW", { cacheKey, err: String(err) });
           prefetchRef.current.delete(cacheKey);
           return null;
         }
@@ -434,6 +445,19 @@ export function MockInterviewClient({ plan, consulate }: Props) {
           console.warn("[mock-interview] speak() hit its hard ceiling — forcing the turn to continue.");
           finish();
         }, 12000);
+        // Diagnosed root cause of "only the first question has voice":
+        // reassigning .src on a reused <audio> element without calling
+        // .load() leaves the element's internal media pipeline pointed at
+        // the FIRST source's decoded state on some engines (observed on
+        // Chrome/Safari alike with blob: URLs). play() still resolves and
+        // 'ended' still fires — often near-instantly — so speak() reports
+        // "done" and the interview correctly advances, but nothing was
+        // ever actually decoded/played for the new source. That's why the
+        // flow kept moving (captions, question count, listening all
+        // worked) while only the very first question was ever audible.
+        // .load() forces a full reset of the media element for the new
+        // source before play() is called, which is the standard fix for
+        // this class of bug when swapping sources on one reused element.
         audio.onended = finish;
         // NOT wiring onerror yet — see below. Reusing one <audio> element
         // across every turn means reassigning .src while a previous
@@ -441,19 +465,16 @@ export function MockInterviewClient({ plan, consulate }: Props) {
         // `error` event on the element even though nothing actually
         // failed. With onerror already wired at that point, this was
         // resolving "officer done speaking" instantly, before any audio
-        // had played — this is very likely why only the first question
-        // (nothing to interrupt yet) and the transition lines (spoken
-        // after a long recognition pause, plenty of time to settle) were
-        // audible, while the question spoken right after a src swap
-        // wasn't. onerror is now only wired once .play() has actually
+        // had played. onerror is now only wired once .play() has actually
         // resolved, so it only ever catches a REAL mid-playback failure.
         try {
           audio.pause();
-          audio.currentTime = 0;
         } catch {
-          /* ignore — Safari sometimes throws on currentTime reset */
+          /* ignore — Safari sometimes throws on pause() mid-transition */
         }
         audio.src = url;
+        audio.load();
+        audio.currentTime = 0;
         audio.muted = false;
         audio.volume = 1;
         audio
@@ -463,6 +484,14 @@ export function MockInterviewClient({ plan, consulate }: Props) {
             // later `error` event as a real failure instead of a spurious
             // one from the src reassignment above.
             if (!settled) audio.onerror = finish;
+            // Diagnostic: confirm actual audio duration/readiness so a
+            // regression of the exact bug above is visible in the console
+            // instead of silently reading as "the interview just moved on."
+            console.log("[tts-diag] audio playing", {
+              textSnippet: text.slice(0, 30),
+              duration: audio.duration,
+              readyState: audio.readyState,
+            });
           })
           .catch((err) => {
             // play() rejecting is almost always autoplay policy. Log so

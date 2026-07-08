@@ -68,19 +68,40 @@ export async function POST(req: Request) {
     body.interviewer === "male" ? "male" : "female";
   const tone: OfficerTone = body.tone === "strict" ? "strict" : "standard";
 
+  // TEMP DIAGNOSTIC — remove once the concurrency-queue fix is confirmed.
+  console.log("[tts-diag] upstream request start", {
+    textLen: text.length,
+    text: text.slice(0, 60),
+    interviewer,
+    tone,
+  });
+
   let upstream: Response;
   try {
     upstream = await streamTts({ text, voice: interviewer, tone });
+    console.log("[tts-diag] upstream response", {
+      status: upstream.status,
+      ok: upstream.ok,
+      textSnippet: text.slice(0, 30),
+    });
   } catch (err) {
     console.error("[tts] upstream call failed:", err);
+    console.log("[tts-diag] upstream THREW", { err: String(err), textSnippet: text.slice(0, 30) });
     return NextResponse.json({ error: "tts_failed" }, { status: 502 });
   }
 
   if (!upstream.ok || !upstream.body) {
     const msg = await upstream.text().catch(() => "");
     console.error("[tts] upstream status", upstream.status, msg.slice(0, 200));
+    console.log("[tts-diag] upstream FAILED", {
+      status: upstream.status,
+      body: msg.slice(0, 300),
+      textSnippet: text.slice(0, 30),
+    });
     return NextResponse.json({ error: "tts_failed", status: upstream.status }, { status: 502 });
   }
+
+  console.log("[tts-diag] upstream OK, streaming to client", { textSnippet: text.slice(0, 30) });
 
   // Hand the MP3 stream straight to the browser. Cache-Control:no-store so
   // proxies don't fan-out the same audio (each user pays their own way).
