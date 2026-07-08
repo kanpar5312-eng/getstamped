@@ -86,24 +86,31 @@ export async function proxy(req: NextRequest) {
   }
 
   // ---- Auth gate (only if Supabase is configured) ----
-  if (isSupabaseConfigured()) {
+  // Only /dashboard/*, /onboarding, and the auth routes actually need the
+  // session checked. Every other page (the marketing homepage, /pricing,
+  // /faq, /blog/*, etc.) was previously paying for a Supabase network
+  // round-trip (auth.getUser()) in middleware on *every* request, since
+  // the matcher below runs on effectively every route. Checking the path
+  // first and skipping the Supabase call entirely for public pages
+  // removes that latency from the vast majority of page loads.
+  const isProtected = path.startsWith("/dashboard") || path === "/onboarding";
+  // /sign-up/terms is intentionally accessible to signed-in users
+  // — the dashboard layout redirects them HERE when their stored
+  // tos_consent_version is stale. Excluding it from the
+  // "auth-route → /dashboard" bounce kills the infinite redirect
+  // loop the gate would otherwise create.
+  const isAuthRoute =
+    path === "/sign-in" ||
+    path === "/sign-up" ||
+    (path.startsWith("/sign-up/") && path !== "/sign-up/terms") ||
+    path === "/forgot-password";
+
+  if ((isProtected || isAuthRoute) && isSupabaseConfigured()) {
     const sb = getProxySupabase(req, res);
     if (sb) {
       // Refresh session token if expiring; this writes new cookies into `res`.
       const { data } = await sb.auth.getUser();
       const user = data.user;
-      const path = req.nextUrl.pathname;
-      const isProtected = path.startsWith("/dashboard") || path === "/onboarding";
-      // /sign-up/terms is intentionally accessible to signed-in users
-      // — the dashboard layout redirects them HERE when their stored
-      // tos_consent_version is stale. Excluding it from the
-      // "auth-route → /dashboard" bounce kills the infinite redirect
-      // loop the gate would otherwise create.
-      const isAuthRoute =
-        path === "/sign-in" ||
-        path === "/sign-up" ||
-        (path.startsWith("/sign-up/") && path !== "/sign-up/terms") ||
-        path === "/forgot-password";
 
       if (isProtected && !user) {
         const url = req.nextUrl.clone();
