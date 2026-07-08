@@ -41,6 +41,7 @@ export function SignInForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [showPassword, setShowPassword] = useState(false);
+  const [googlePending, setGooglePending] = useState(false);
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -55,9 +56,11 @@ export function SignInForm() {
 
   const signInWithGoogle = async () => {
     setError(null);
+    setGooglePending(true);
     const sb = getBrowserSupabase();
     if (!sb) {
       setError("Sign-in is temporarily unavailable. Try email + password.");
+      setGooglePending(false);
       return;
     }
     const origin = window.location.origin;
@@ -68,7 +71,13 @@ export function SignInForm() {
         queryParams: { prompt: "select_account" },
       },
     });
-    if (oauthErr) setError(oauthErr.message);
+    // On success the browser is navigating away to Google, so there's no
+    // "reset pending" path for that case — only clear it on failure so
+    // the button doesn't sit permanently disabled if it does resolve here.
+    if (oauthErr) {
+      setError(oauthErr.message);
+      setGooglePending(false);
+    }
   };
 
   return (
@@ -141,9 +150,10 @@ export function SignInForm() {
       <button
         type="button"
         onClick={signInWithGoogle}
-        className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-3 text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-tg)] transition-colors"
+        disabled={googlePending}
+        className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-3 text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-tg)] transition-colors disabled:opacity-60"
       >
-        <GoogleMark /> Continue with Google
+        {googlePending ? "Connecting…" : (<><GoogleMark /> Continue with Google</>)}
       </button>
     </form>
   );

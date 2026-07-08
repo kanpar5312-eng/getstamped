@@ -116,6 +116,7 @@ export function SignUpForm() {
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [googlePending, setGooglePending] = useState(false);
 
   const nameValid = name.trim().length >= 2;
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -165,9 +166,11 @@ export function SignUpForm() {
 
   const signUpWithGoogle = async () => {
     setError(null);
+    setGooglePending(true);
     const sb = getBrowserSupabase();
     if (!sb) {
       setError("Sign-in is temporarily unavailable. Try email + password.");
+      setGooglePending(false);
       return;
     }
     const origin = window.location.origin;
@@ -178,7 +181,13 @@ export function SignUpForm() {
         queryParams: { prompt: "select_account" },
       },
     });
-    if (oauthErr) setError(oauthErr.message);
+    // On success the browser is navigating away to Google — only clear
+    // the pending flag on failure so the button isn't stuck disabled if
+    // control does return here.
+    if (oauthErr) {
+      setError(oauthErr.message);
+      setGooglePending(false);
+    }
   };
 
   /* ------------------------- Success state ------------------------- */
@@ -402,9 +411,10 @@ export function SignUpForm() {
         <button
           type="button"
           onClick={signUpWithGoogle}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-[13px] font-medium text-[var(--color-ink)] hover:border-[var(--color-tg)] transition-colors"
+          disabled={googlePending}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-[13px] font-medium text-[var(--color-ink)] hover:border-[var(--color-tg)] transition-colors disabled:opacity-60"
         >
-          <GoogleMark /> Continue with Google
+          {googlePending ? "Connecting…" : (<><GoogleMark /> Continue with Google</>)}
         </button>
       </div>
     </form>

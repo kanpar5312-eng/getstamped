@@ -1,9 +1,28 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { signOut } from "@/app/actions/auth";
 import { ThemeToggle } from "@/components/dashboard/ThemeToggle";
+
+/* Must be a child of the <form action={signOut}> to read its pending
+   state — the button previously sat static (same label, not disabled)
+   for the whole server round-trip, which read as "the button did
+   nothing" even though the click had registered. */
+function SignOutButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      role="menuitem"
+      disabled={pending}
+      className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-60"
+    >
+      {pending ? "Signing out…" : "Sign out"}
+    </button>
+  );
+}
 
 type Props = {
   initials: string;
@@ -121,13 +140,7 @@ export function AccountMenu({ initials, email }: Props) {
             <ThemeToggle />
           </div>
           <form action={signOut} className="mt-1 border-t border-[var(--color-border-soft)] pt-1">
-            <button
-              type="submit"
-              role="menuitem"
-              className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
-            >
-              Sign out
-            </button>
+            <SignOutButton />
           </form>
         </div>
       )}

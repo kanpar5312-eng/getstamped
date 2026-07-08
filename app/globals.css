@@ -12,6 +12,26 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* -------------------------------------------------------------------------
+   Site-wide instant press feedback.
+   Previously this only existed under [data-surface="dashboard"] (see the
+   .btn-ember rules below), which meant every button on the marketing site,
+   sign-in, and sign-up screens had ZERO visual response to a click until
+   whatever async work it triggered finished — a button press with no
+   press-down cue reads as "dead" even when the click registered fine.
+   This is unscoped on purpose so it covers every <button> in the app;
+   more specific rules (like .btn-ember below) still win on specificity.
+   No transition-duration override here: elements that already declare a
+   transition (e.g. Tailwind's transition-colors) animate this smoothly;
+   elements that don't just snap instantly, which reads as *more*
+   responsive, not less. */
+button:not(:disabled):active {
+  transform: scale(0.97);
+}
+button:disabled:active {
+  transform: none;
+}
+
+/* -------------------------------------------------------------------------
    Color tokens
    Use via Tailwind arbitrary syntax: bg-[var(--color-cream)],
    text-[var(--color-ink)]/70, border-[var(--color-border)].

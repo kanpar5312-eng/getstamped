@@ -9,9 +9,10 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const base =
   "inline-flex items-center justify-center gap-2 font-medium tracking-tight " +
-  "transition-colors duration-200 ease-out " +
+  "transition-[background-color,border-color,color,transform] duration-150 ease-out " +
+  "active:scale-[0.97] " +
   "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--color-persimmon)]/12 " +
-  "disabled:opacity-50 disabled:cursor-not-allowed select-none";
+  "disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 select-none";
 
 const variants: Record<Variant, string> = {
   primary:
