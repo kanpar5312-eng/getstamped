@@ -562,6 +562,26 @@ function StepDetailMain({
         </div>
       </header>
 
+      {/* Discoverability for the university-fit quiz — only on Step 1,
+          where the shortlist content already lives. Isolated block, no
+          effect on any other step's rendering. */}
+      {step.number === 1 && (
+        <Link
+          href="/dashboard/university-fit"
+          className="mt-6 flex items-center justify-between gap-4 rounded-xl border border-[var(--color-border-soft)] bg-[var(--color-accent-tint)] px-5 py-4 text-left transition-colors hover:border-[var(--color-accent)]"
+        >
+          <span>
+            <span className="block text-sm font-medium text-[var(--color-ink)]">
+              Want a personalized reach/target/safety framework?
+            </span>
+            <span className="block mt-0.5 text-xs text-[var(--color-ink-soft)]">
+              Two-minute quiz on your field, budget, and scores &mdash; get a shortlist framework tailored to your profile.
+            </span>
+          </span>
+          <span aria-hidden className="text-[var(--color-accent-deep)] text-lg flex-shrink-0">→</span>
+        </Link>
+      )}
+
       <div className="mt-8 flex flex-col lg:flex-row lg:gap-10">
         {/* Main column */}
         <div className="flex-1 min-w-0 lg:max-w-3xl">
