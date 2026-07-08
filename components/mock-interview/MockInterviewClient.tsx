@@ -257,6 +257,18 @@ export function MockInterviewClient({ plan, consulate }: Props) {
           }),
         });
 
+      // A real MP3 for even a short phrase from ElevenLabs is several KB.
+      // Anything under this is almost certainly a stream cut short by a
+      // network blip between our server and ElevenLabs, or between the
+      // browser and our server (the /tts route proxies the upstream body
+      // straight through with no integrity check). A truncated blob like
+      // that doesn't reliably error in the <audio> element — some
+      // browsers just never fire 'ended' or 'error' for it, which is what
+      // was hanging speak()'s await forever and freezing the whole
+      // interview a few questions in. Catch it here instead, before it
+      // ever reaches the audio element.
+      const MIN_PLAUSIBLE_AUDIO_BYTES = 800;
+
       const promise = (async () => {
         try {
           let r = await attempt();
@@ -275,7 +287,20 @@ export function MockInterviewClient({ plan, consulate }: Props) {
             prefetchRef.current.delete(cacheKey);
             return null;
           }
-          const blob = await r.blob();
+          let blob = await r.blob();
+          if (blob.size < MIN_PLAUSIBLE_AUDIO_BYTES) {
+            // Suspiciously small — retry once before giving up, same as
+            // the HTTP-error path above.
+            console.warn("[mock-interview] tts blob suspiciously small, retrying:", blob.size);
+            await new Promise((res) => setTimeout(res, 400));
+            const r2 = await attempt();
+            if (r2.ok) blob = await r2.blob();
+            if (blob.size < MIN_PLAUSIBLE_AUDIO_BYTES) {
+              console.error("[mock-interview] tts blob still too small after retry:", blob.size);
+              prefetchRef.current.delete(cacheKey);
+              return null;
+            }
+          }
           return URL.createObjectURL(blob);
         } catch (err) {
           console.error("[mock-interview] tts fetch failed:", err);
@@ -332,8 +357,24 @@ export function MockInterviewClient({ plan, consulate }: Props) {
           settled = true;
           audio.onended = null;
           audio.onerror = null;
+          if (hardCeiling) window.clearTimeout(hardCeiling);
           resolve();
         };
+        // Absolute safety net: even a "successful" play() can end up with
+        // neither 'ended' nor 'error' ever firing (a media element that
+        // stalls mid-buffer on a flaky connection is the observed case —
+        // see the blob-size guard in fetchTtsUrl for the other half of
+        // this). Every speak() call is awaited sequentially as part of
+        // one long chain (runQuestion → finishTurn → runQuestion...), so
+        // a single stuck call used to freeze the entire rest of the
+        // interview with no way out. This ceiling guarantees the chain
+        // always keeps moving — generous enough to never cut off a real
+        // answer (the officer isn't reading more than a couple sentences
+        // at a time), but finite.
+        const hardCeiling = window.setTimeout(() => {
+          console.warn("[mock-interview] speak() hit its hard ceiling — forcing the turn to continue.");
+          finish();
+        }, 12000);
         audio.onended = finish;
         // NOT wiring onerror yet — see below. Reusing one <audio> element
         // across every turn means reassigning .src while a previous
