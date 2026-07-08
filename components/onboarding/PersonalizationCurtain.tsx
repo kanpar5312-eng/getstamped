@@ -6,7 +6,7 @@
  * Shown after the user picks destination + applying-from in CountrySelector.
  * The GetStamped mark fills from the bottom in persimmon (like ink in a
  * glass), while a status line cycles through personalization steps. After
- * ~5 seconds it fades and calls onDone, which the CountrySelector chains
+ * ~3 seconds it fades and calls onDone, which the CountrySelector chains
  * to its own onClose.
  *
  * Pure CSS animation — no JS rAF loops. Respects prefers-reduced-motion:
@@ -24,7 +24,8 @@ type Props = {
   firstName?: string | null;
   /** Called when the curtain finishes. CountrySelector hooks its onClose here. */
   onDone: () => void;
-  /** Total duration in ms. Default 5200. */
+  /** Total duration in ms. Default 3000 (3s) — the whole curtain, logo
+   *  fill through fade-out, ends and hands off to the dashboard. */
   durationMs?: number;
 };
 
@@ -33,7 +34,7 @@ const STEPS_BY_COUNTRY: Record<CountryCode, number> = {
 };
 
 export function PersonalizationCurtain({
-  destination, applyingFrom, firstName, onDone, durationMs = 5200,
+  destination, applyingFrom, firstName, onDone, durationMs = 3000,
 }: Props) {
   const dest = SUPPORTED_COUNTRIES.find((c) => c.code === destination);
   const fromName = applyingFrom
@@ -98,18 +99,29 @@ export function PersonalizationCurtain({
       className={`pc-root${phase === "fading" ? " is-fading" : ""}`}
       role="status"
       aria-live="polite"
-      style={{ ["--pc-fade-out" as string]: `${fadeOutMs}ms` }}
+      style={{
+        ["--pc-fade-out" as string]: `${fadeOutMs}ms`,
+        // Custom property, not a plain inline style — plain `style={}`
+        // properties never reach ::after pseudo-elements, but custom
+        // properties inherit into them same as any other descendant.
+        // .pc-rule::after's fill animation reads this; without it, that
+        // bar was hardcoded to a stale 5200ms fallback no matter what
+        // durationMs actually was, so at a shorter duration it got cut
+        // off mid-fill when the curtain unmounted instead of finishing.
+        ["--pc-duration" as string]: `${durationMs}ms`,
+      }}
     >
       <div className="pc-inner">
         <div className="pc-logo" aria-hidden>
           {/* Base ink ghost of the mark */}
           <LogoSvg className="pc-logo-ghost" />
           {/* Persimmon fill copy, clipped by an animated rect that rises.
-              The fill is intentionally faster than the overall curtain so
-              the logo is always 100% filled by ~1.8s — even if the curtain
-              exits early for any reason, the user never sees a half-filled
-              mark. The full-fill state holds via `forwards` until unmount. */}
-          <div className="pc-logo-fill" style={{ animationDuration: "1800ms" }}>
+              Fills in a little over a third of the curtain's total time so
+              the logo is always 100% filled well before the curtain starts
+              fading — even if durationMs is overridden shorter, the user
+              never sees a half-filled mark. The full-fill state holds via
+              `forwards` until unmount. */}
+          <div className="pc-logo-fill" style={{ animationDuration: `${Math.round(durationMs * 0.4)}ms` }}>
             <LogoSvg className="pc-logo-stroke" />
           </div>
           {/* Soft persimmon glow underneath, intensifies with progress */}
@@ -147,7 +159,12 @@ export function PersonalizationCurtain({
           ))}
         </div>
 
-        <span className="pc-rule" aria-hidden style={{ animationDuration: `${durationMs}ms` }} />
+        {/* Duration comes from the --pc-duration custom property set on
+            .pc-root above, read by .pc-rule::after's own animation — a
+            plain inline style here would have no effect on a
+            pseudo-element (that was the bug: this bar used to always
+            run the stale 5200ms CSS fallback regardless of durationMs). */}
+        <span className="pc-rule" aria-hidden />
       </div>
 
       <style>{`
@@ -199,11 +216,12 @@ export function PersonalizationCurtain({
         .pc-logo-ghost { color: var(--color-ink); opacity: 0.10; }
         .pc-logo-fill {
           position: absolute; inset: 0; overflow: hidden;
-          /* Start fully clipped; animation reveals it bottom-up.
-             The 5200ms duration is the safe default if the inline-style
-             override fails for any reason. */
+          /* Start fully clipped; animation reveals it bottom-up. The
+             3000ms duration is the safe fallback if the inline-style
+             override (Math.round(durationMs * 0.4)) fails for any
+             reason — kept in sync with the default durationMs. */
           clip-path: inset(100% 0 0 0);
-          animation: pc-fill 5200ms var(--ease-in-out) forwards;
+          animation: pc-fill 1200ms var(--ease-in-out) forwards;
         }
         @keyframes pc-fill {
           0%   { clip-path: inset(100% 0 0 0); }
@@ -216,7 +234,7 @@ export function PersonalizationCurtain({
             color-mix(in srgb, var(--color-persimmon) 22%, transparent) 0%,
             transparent 70%);
           opacity: 0; pointer-events: none;
-          animation: pc-glow 5.2s var(--ease-in-out) forwards;
+          animation: pc-glow var(--pc-duration, 3000ms) var(--ease-in-out) forwards;
           z-index: -1;
         }
         @keyframes pc-glow {
@@ -308,10 +326,13 @@ export function PersonalizationCurtain({
           background: var(--color-persimmon);
           transform-origin: left center;
           transform: scaleX(0);
-          /* Default duration matches the curtain length; the inline style
-             overrides it. Falling back to the default still gives the bar
-             time to fill if the override doesn't apply. */
-          animation: pc-progress 5200ms var(--ease-out) forwards;
+          /* var(--pc-duration), set on .pc-root above — a plain inline
+             style on .pc-rule can't reach this ::after pseudo-element,
+             but a custom property does. Previously this always ran the
+             hardcoded 5200ms fallback no matter what durationMs actually
+             was, so it got cut off mid-fill whenever the curtain
+             unmounted earlier than that. */
+          animation: pc-progress var(--pc-duration, 3000ms) var(--ease-out) forwards;
         }
         @keyframes pc-progress {
           0%   { transform: scaleX(0); }
