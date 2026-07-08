@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { BrandMark } from "@/components/ui/BrandMark";
+import { SUPPORT_EMAIL } from "@/lib/brand";
 
-const EMAIL = "founder@getstamped.app";
+const EMAIL = SUPPORT_EMAIL;
 
 /* Animated underline — a hairline that grows in smoothly from the left on
    hover/focus, instead of a static always-on underline or a hard color
@@ -105,15 +106,6 @@ export function Footer() {
             <p className="mt-5 text-sm leading-relaxed text-[#F7F3EC]/70">
               F-1 visa prep, end to end.
             </p>
-            <p className="mt-3 text-xs text-[#F7F3EC]/50">
-              Built by a 17-year-old.{" "}
-              <Link
-                href="/about"
-                className={`hover:text-[var(--color-persimmon-soft)] transition-colors ${LINK_HOVER}`}
-              >
-                Read the story →
-              </Link>
-            </p>
           </div>
 
           <div className="lg:col-span-2">
@@ -128,16 +120,6 @@ export function Footer() {
           <div className="lg:col-span-2">
             <Eyebrow className="!text-[#F7F3EC]/50">Connect</Eyebrow>
             <ul className="mt-5 space-y-3">
-              <li>
-                <a
-                  href="https://twitter.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`text-sm text-[#F7F3EC]/85 hover:text-[var(--color-persimmon-soft)] transition-colors ${LINK_HOVER}`}
-                >
-                  Twitter / X
-                </a>
-              </li>
               <li>
                 <a
                   href="https://instagram.com"
