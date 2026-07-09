@@ -1397,6 +1397,8 @@ export function MockInterviewClient({ plan, consulate }: Props) {
           type="limit_reached"
           feature="Mock interview"
           resetAt={limitResetAt}
+          period="week"
+          plan={plan}
         />
       </div>
     );

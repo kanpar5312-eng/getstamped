@@ -16,9 +16,27 @@ import Link from "next/link";
    `position: relative` parent and absolutely center this overlay over it.
    ════════════════════════════════════════════════════════════════════════ */
 
+type Plan = "free" | "solo" | "family";
+
 type Props =
   | { type: "upgrade"; feature: string; resetAt?: string }
-  | { type: "limit_reached"; feature: string; resetAt: string };
+  | {
+      type: "limit_reached";
+      feature: string;
+      resetAt: string;
+      /** Cadence the limit resets on — controls the headline copy.
+       *  Most limit_reached usages are daily (ai_question); mock
+       *  interview is weekly. Defaults to "day" so existing callers
+       *  that don't pass this keep their current copy. */
+      period?: "day" | "week";
+      /** The user's current plan. When it's "solo" or "family" — i.e.
+       *  they're already paying for the plan the old hardcoded CTA
+       *  pitched them ("Remove all limits — $39 →") — that CTA is
+       *  wrong: they'd be asked to buy something they already own. Omit
+       *  entirely (falls back to "free") to keep the old free-tier
+       *  upsell behavior for callers that don't pass this. */
+      plan?: Plan;
+    };
 
 function LockIcon() {
   return (
@@ -51,15 +69,29 @@ function formatResetIn(resetAt: string): string {
 
 export function PaywallOverlay(props: Props) {
   const isLimit = props.type === "limit_reached";
+  // Already paying for a plan means the old "$39 → Solo" CTA would be
+  // pitching them the plan they're already on. Only free-tier users (or
+  // callers that don't pass `plan` at all — kept backward-compatible)
+  // get the upsell CTA; solo/family just wait out the reset.
+  const plan: Plan = (isLimit && props.plan) || "free";
+  const alreadyPaid = isLimit && plan !== "free";
+  const period = (isLimit && props.period) || "day";
+
   const title = isLimit
-    ? "You've reached today's limit."
+    ? alreadyPaid
+      ? `You've used this ${period}'s mock interviews.`
+      : `You've reached ${period === "week" ? "this week's" : "today's"} limit.`
     : `${props.feature} is part of Solo.`;
-  const cta = isLimit ? "Remove all limits — $39 →" : "Unlock Solo — $39 →";
+  const cta = isLimit
+    ? alreadyPaid
+      ? (plan === "solo" ? "See Family plan (more sessions) →" : null)
+      : "Remove all limits — $39 →"
+    : "Unlock Solo — $39 →";
 
   return (
     <div
       role="region"
-      aria-label={isLimit ? "Daily limit reached" : "Upgrade required"}
+      aria-label={isLimit ? "Limit reached" : "Upgrade required"}
       className="gs-card mx-auto max-w-md text-center p-7"
       style={{ borderRadius: "var(--gs-radius-xl)" }}
     >
@@ -82,16 +114,20 @@ export function PaywallOverlay(props: Props) {
           className="mt-2 text-[13px] text-[var(--color-ink-soft)]"
           style={{ fontFamily: "var(--font-sans-stack)" }}
         >
-          Resets in {formatResetIn(props.resetAt)}.
+          {alreadyPaid
+            ? `You're on ${plan === "family" ? "Family" : "Solo"} — this refills automatically. Resets in ${formatResetIn(props.resetAt)}.`
+            : `Resets in ${formatResetIn(props.resetAt)}.`}
         </p>
       )}
 
-      <Link
-        href="/dashboard/upgrade"
-        className="gs-btn-primary mt-5 inline-flex w-full items-center justify-center px-5 py-3 text-sm font-medium"
-      >
-        {cta}
-      </Link>
+      {cta && (
+        <Link
+          href="/dashboard/upgrade"
+          className="gs-btn-primary mt-5 inline-flex w-full items-center justify-center px-5 py-3 text-sm font-medium"
+        >
+          {cta}
+        </Link>
+      )}
     </div>
   );
 }

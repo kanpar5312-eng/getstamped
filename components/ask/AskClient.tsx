@@ -686,6 +686,7 @@ export function AskClient({ plan, isReal = false, initialThreads }: Props) {
                   // Use tomorrow 00:00 UTC as a sensible default.
                   new Date(Math.floor(Date.now() / 86_400_000 + 1) * 86_400_000).toISOString()
                 }
+                plan={plan}
               />
             ) : (
               <div className="flex items-end gap-2">

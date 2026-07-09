@@ -27,7 +27,7 @@ export async function POST() {
     return NextResponse.json(
       {
         error: "limit_reached",
-        message: "You have used your free mock interview this week.",
+        message: "You have used your mock interviews for this week.",
         reset_at: limit.reset_at,
       },
       { status: 429 },
