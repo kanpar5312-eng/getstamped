@@ -1398,6 +1398,45 @@ html.dark input[type="time"] {
 }
 
 /* =========================================================================
+   BRANDED LOADING SPINNER — components/BrandedLoadingSpinner.tsx.
+   Used as the fallback for loading.tsx route boundaries. Invisible for
+   the first ~2s (gs-loading-appear) so fast navigations never see it —
+   NavigationProgress's top bar already gives instant feedback for those;
+   this only ever becomes visible for a segment that's genuinely slow.
+   ========================================================================= */
+.gs-loading-mark {
+  opacity: 0;
+  animation: gs-loading-appear 0s 2000ms forwards;
+}
+@keyframes gs-loading-appear {
+  to { opacity: 1; }
+}
+
+.gs-loading-stroke {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  animation: gs-loading-draw 2400ms cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+.gs-loading-stroke-1 { animation-delay: 0ms; }
+.gs-loading-stroke-2 { animation-delay: 120ms; }
+.gs-loading-stroke-3 { animation-delay: 240ms; }
+.gs-loading-stroke-4 { animation-delay: 360ms; }
+.gs-loading-stroke-5 { animation-delay: 480ms; }
+@keyframes gs-loading-draw {
+  0%   { stroke-dashoffset: 1; opacity: 0; }
+  8%   { opacity: 1; }
+  40%  { stroke-dashoffset: 0; }
+  75%  { stroke-dashoffset: 0; opacity: 1; }
+  92%  { opacity: 0; }
+  100% { stroke-dashoffset: 1; opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gs-loading-mark { animation: none; opacity: 1; }
+  .gs-loading-stroke { animation: none; opacity: 1; stroke-dashoffset: 0; }
+}
+
+/* =========================================================================
    MOTION KIT — global polish (selection, scrollbar, reduced-motion)
    ========================================================================= */
 /* =========================================================================

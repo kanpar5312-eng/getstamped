@@ -105,7 +105,26 @@ export async function proxy(req: NextRequest) {
     (path.startsWith("/sign-up/") && path !== "/sign-up/terms") ||
     path === "/forgot-password";
 
-  if ((isProtected || isAuthRoute) && isSupabaseConfigured()) {
+  // The landing page itself was deliberately left out of the auth check
+  // above (see the comment on isProtected) to spare every anonymous
+  // marketing visitor a Supabase round-trip — that's the vast majority of
+  // traffic to "/". But it meant an already-signed-in user reopening the
+  // site in a new tab (or after closing Chrome) always landed back on the
+  // marketing page instead of their dashboard, since "/" never looked at
+  // their session at all.
+  //
+  // Fix without reintroducing that cost for anonymous visitors: only pay
+  // for the Supabase round-trip on "/" when a Supabase auth cookie is
+  // actually present. supabase-js/ssr's cookie names all start with
+  // "sb-" and contain "auth-token" (chunked as "-auth-token.0" etc. for
+  // large sessions) — checking for that is a synchronous cookie-jar scan,
+  // no network call, so anonymous visitors (no such cookie) still skip
+  // the auth gate entirely, exactly as before.
+  const isLandingWithPossibleSession =
+    path === "/" &&
+    req.cookies.getAll().some((c) => c.name.startsWith("sb-") && c.name.includes("auth-token"));
+
+  if ((isProtected || isAuthRoute || isLandingWithPossibleSession) && isSupabaseConfigured()) {
     const sb = getProxySupabase(req, res);
     if (sb) {
       // Refresh session token if expiring; this writes new cookies into `res`.
@@ -119,7 +138,7 @@ export async function proxy(req: NextRequest) {
         return NextResponse.redirect(url);
       }
 
-      if (isAuthRoute && user) {
+      if ((isAuthRoute || isLandingWithPossibleSession) && user) {
         const url = req.nextUrl.clone();
         url.pathname = "/dashboard";
         url.search = "";
