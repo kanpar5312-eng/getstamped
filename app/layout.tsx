@@ -13,12 +13,20 @@ import { NavigationProgress } from "@/components/ui/NavigationProgress";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { NetworkToast } from "@/components/NetworkToast";
 import type { Currency } from "@/lib/pricing";
+import { SITE_URL } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  // Site lives on the Vercel preview domain until the custom apex
-  // (getstamped.app) is wired up. Update both this base AND openGraph.url
-  // when DNS lands so social cards stop pointing to the Vercel host.
-  metadataBase: new URL("https://getstampedonline.vercel.app"),
+  // SITE_URL (lib/seo.ts) is the one source of truth for the site's own
+  // domain — robots.ts, sitemap.ts, and every JSON-LD builder all read
+  // the same constant now. Previously this file and lib/seo.ts shared a
+  // fallback (getstampedonline.vercel.app) while robots.ts/sitemap.ts
+  // fell back to a DIFFERENT domain (getstamped.app) — since
+  // NEXT_PUBLIC_SITE_ORIGIN wasn't actually set in prod, canonical/OG
+  // urls pointed at one domain while sitemap.xml listed a different one,
+  // a self-contradicting signal to search/AI crawlers. Once DNS for the
+  // custom apex lands, set NEXT_PUBLIC_SITE_ORIGIN and every file updates
+  // together — no more hunting down scattered hardcoded domains.
+  metadataBase: new URL(SITE_URL),
   title: "GetStamped — F-1 visa preparation, end to end",
   description:
     "The 47-step F-1 visa process, organized into a single guided experience. Built for international students applying to US universities.",
@@ -26,7 +34,7 @@ export const metadata: Metadata = {
     title: "GetStamped",
     description:
       "The F-1 visa has forty-seven steps. We made sure you don’t miss one.",
-    url: "https://getstampedonline.vercel.app",
+    url: SITE_URL,
     siteName: "GetStamped",
     // Image auto-discovered from app/opengraph-image.tsx
     type: "website",

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/seo";
 
-const SITE = process.env.NEXT_PUBLIC_SITE_ORIGIN || "https://getstamped.app";
+const SITE = SITE_URL;
 
 /**
  * /sitemap.xml — list of public, crawlable pages. Drop authenticated

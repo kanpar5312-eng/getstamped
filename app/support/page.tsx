@@ -5,6 +5,7 @@ import { SupportClient } from "@/components/support/SupportClient";
 export const metadata: Metadata = {
   title: "Support — GetStamped",
   description: "Answers to common F-1 visa and GetStamped questions.",
+  alternates: { canonical: "/support" },
 };
 
 export default async function SupportPage() {

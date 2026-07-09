@@ -4,6 +4,7 @@ import { LegalPage } from "@/components/legal/LegalPage";
 export const metadata: Metadata = {
   title: "Disclaimer — GetStamped",
   description: "GetStamped is informational only. Not legal advice.",
+  alternates: { canonical: "/disclaimer" },
 };
 
 export default function DisclaimerPage() {

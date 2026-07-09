@@ -29,6 +29,11 @@ export default function FaqPage() {
     <div className="v3-root">
       <Header />
       <main>
+        {/* Same pattern as app/pricing/page.tsx — FAQ is shared with the
+            homepage (which already has its own h1 via Hero), so FAQ's
+            own heading starts at h2 to avoid a duplicate h1 there.
+            Standalone on /faq nothing else provides one. */}
+        <h1 className="sr-only">F-1 Visa Questions Answered — GetStamped</h1>
         <FAQ />
       </main>
       <Footer />

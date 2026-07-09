@@ -4,6 +4,7 @@ import { LegalPage } from "@/components/legal/LegalPage";
 export const metadata: Metadata = {
   title: "Refund Policy — GetStamped",
   description: "Full refund within 14 days if GetStamped is not useful.",
+  alternates: { canonical: "/refund" },
 };
 
 export default function RefundPage() {

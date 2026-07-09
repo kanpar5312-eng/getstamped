@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Data Processing Agreement — GetStamped",
   description:
     "How GetStamped processes personal data on behalf of its users, including categories of data, sub-processors, security measures, and data subject rights.",
+  alternates: { canonical: "/dpa" },
 };
 
 /**

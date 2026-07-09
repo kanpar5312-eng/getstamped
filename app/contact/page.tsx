@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "Contact — GetStamped",
   description:
     "Reach out about your F-1 application, billing, or a bug. Replies within 24 hours from a real person.",
+  alternates: { canonical: "/contact" },
 };
 
 export default function ContactPage() {

@@ -45,7 +45,15 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-function ErrorFallback() {
+/* Exported so app/error.tsx (the App Router route-segment error
+   boundary — catches errors ErrorBoundary's render-time class component
+   can't, like errors thrown during a Server Component's render) can
+   reuse the same branded panel instead of Next's default unstyled
+   error screen. `onRetry` defaults to a full reload (this component's
+   own use case); app/error.tsx passes Next's `reset()` instead, which
+   can recover the segment without a full page reload. */
+export function ErrorFallback({ onRetry }: { onRetry?: () => void } = {}) {
+  const retry = onRetry ?? (() => { if (typeof window !== "undefined") window.location.reload(); });
   return (
     <div
       role="alert"
@@ -123,7 +131,7 @@ function ErrorFallback() {
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 28 }}>
           <button
             type="button"
-            onClick={() => { if (typeof window !== "undefined") window.location.reload(); }}
+            onClick={retry}
             className="gs-btn-primary"
             style={{
               fontSize: 14,

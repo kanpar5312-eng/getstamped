@@ -7,6 +7,7 @@ import { getSessionUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Create your account — GetStamped",
+  alternates: { canonical: "/sign-up" },
 };
 
 export default async function SignUpPage() {

@@ -38,6 +38,14 @@ export default async function PricingPage() {
       <JsonLd data={pricingProductsJsonLd()} />
       <Header />
       <main>
+        {/* Pricing is a shared component also mounted on the homepage
+            (where Hero already provides the page's h1) — giving it its
+            own h1 there would create two h1s on one page. Here, standalone
+            on /pricing, nothing on the page provides an h1 at all: Header
+            has none, and Pricing's own heading starts at h2. sr-only so
+            it's a real semantic landmark for crawlers/screen readers
+            without changing anything sighted visitors see. */}
+        <h1 className="sr-only">F-1 Visa Prep Pricing — GetStamped</h1>
         <Pricing currency={currency} />
       </main>
       <Footer />

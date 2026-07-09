@@ -5,6 +5,7 @@ import { ForgotForm } from "@/components/auth/ForgotForm";
 
 export const metadata: Metadata = {
   title: "Reset your password — GetStamped",
+  alternates: { canonical: "/forgot-password" },
 };
 
 export default function ForgotPasswordPage() {

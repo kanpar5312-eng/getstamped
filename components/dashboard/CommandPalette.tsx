@@ -287,6 +287,7 @@ export function CommandPalette() {
           <input
             ref={inputRef}
             type="search"
+            aria-label="Search steps, pages, and documents"
             value={q}
             onChange={(e) => { setQ(e.target.value); setActiveIdx(0); }}
             onKeyDown={onInputKey}

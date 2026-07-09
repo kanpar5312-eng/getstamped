@@ -663,6 +663,7 @@ function DetailPanel({
   const [mimeType, setMimeType] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   // Was previously untracked — any non-ok response or thrown error just
   // `return`ed silently, so `url` stayed null forever and the panel was
   // stuck on "Loading preview…" with no indication anything had failed.
@@ -694,8 +695,25 @@ function DetailPanel({
   }, [docId]);
 
   const onDelete = async () => {
-    if (!row) return;
-    await fetch(`/api/documents/${docId}`, { method: "DELETE" });
+    if (!row || deleting) return;
+    setDeleting(true);
+    try {
+      const r = await fetch(`/api/documents/${docId}`, { method: "DELETE" });
+      if (!r.ok) {
+        notifyNetworkError();
+        setDeleting(false);
+        return;
+      }
+    } catch {
+      notifyNetworkError();
+      setDeleting(false);
+      return;
+    }
+    // Only drop it from the UI once the server actually confirms the
+    // delete — previously this ran unconditionally, so a failed request
+    // (network error or non-2xx) still removed the document from the
+    // list while it was still sitting on the server, and a thrown fetch
+    // error became an unhandled promise rejection.
     onDeleted(row.slug);
   };
 
@@ -842,16 +860,18 @@ function DetailPanel({
                 <button
                   type="button"
                   onClick={() => setConfirmDelete(false)}
-                  className="px-3 py-[8px] text-[13px] text-[var(--ink-soft)]"
+                  disabled={deleting}
+                  className="px-3 py-[8px] text-[13px] text-[var(--ink-soft)] disabled:opacity-60"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={onDelete}
-                  className="btn-ember rounded-lg px-3 py-[8px] text-[13px] font-semibold"
+                  disabled={deleting}
+                  className="btn-ember rounded-lg px-3 py-[8px] text-[13px] font-semibold disabled:opacity-60"
                 >
-                  Delete
+                  {deleting ? "Deleting…" : "Delete"}
                 </button>
               </div>
             </div>

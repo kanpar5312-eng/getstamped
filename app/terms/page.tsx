@@ -5,6 +5,7 @@ import { LegalPage } from "@/components/legal/LegalPage";
 export const metadata: Metadata = {
   title: "Terms of Service — GetStamped",
   description: "The terms under which you may use GetStamped.",
+  alternates: { canonical: "/terms" },
 };
 
 export default function TermsPage() {

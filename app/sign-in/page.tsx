@@ -7,6 +7,7 @@ import { getSessionUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Sign in — GetStamped",
+  alternates: { canonical: "/sign-in" },
 };
 
 export default async function SignInPage() {

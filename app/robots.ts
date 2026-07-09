@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/seo";
 
 /**
  * /robots.txt — tells crawlers what they can and can't index.
@@ -7,7 +8,7 @@ import type { MetadataRoute } from "next";
  * Authenticated app surface, parent share links, signup verify, API
  * routes, internal devtools: never indexed.
  */
-const SITE = process.env.NEXT_PUBLIC_SITE_ORIGIN || "https://getstamped.app";
+const SITE = SITE_URL;
 
 const DISALLOW = [
   "/api/",
