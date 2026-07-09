@@ -1515,6 +1515,11 @@ export const STEPS: Step[] = [
           body:
             "Disclose every prior visa refusal from any country, every airport denial of entry, any past detention. Even minor refusals from years ago must be declared. The form is clear: omission is fraud.",
         },
+        {
+          title: "Disclose every social media account from the last 5 years",
+          body:
+            "The DS-160's Social Media page requires every platform you've used in the past 5 years — Facebook, Instagram, X/Twitter, LinkedIn, YouTube, TikTok, Snapchat, Reddit, Pinterest, Tumblr, and any others the form lists. This includes accounts you rarely use, deleted, or set to private — the requirement is 'used', not 'currently active'. Omitting one isn't a minor oversight; the form treats it as a misrepresentation risk under the same fraud provision as the rest of this section.",
+        },
       ],
       outro:
         "Lying on the DS-160 is a federal crime — the form prints this in its certification. Honest answers, including 'Yes' to a refusal that has explanation, are far better than undisclosed history that's found during screening.",
@@ -1532,6 +1537,14 @@ export const STEPS: Step[] = [
       {
         title: "Not disclosing a prior visa refusal",
         body: "Refusal records are shared internationally. Undisclosed refusal = fraud bar. Disclosed refusal = officer asks why, you explain, often approved.",
+      },
+      {
+        title: "Leaving out an old or inactive social media account",
+        body: "Consular officers can and do cross-reference the handles you list against what's actually findable online. An account you forgot about, stopped using years ago, or deleted isn't exempt — non-disclosure reads as concealment, not forgetfulness, and risks denial now and ineligibility for future visas, not just a 221(g) hold.",
+      },
+      {
+        title: "Accounts still set to private at interview time",
+        body: "Current guidance expects F-1, M-1, and J-1 applicants to have their social media accounts set to public so consular officers can verify what's actually posted. A disclosed-but-private account doesn't satisfy the check the way officers now expect — switch every listed account to public before your interview, not just before submitting the DS-160.",
       },
     ],
     whyItMatters:
@@ -1649,6 +1662,11 @@ export const STEPS: Step[] = [
           title: "Read the full Review page top-to-bottom",
           body:
             "DS-160's Review page shows everything you entered. Skim every section header. Flag any 'inconsistent' or 'missing' warnings — they block submission.",
+        },
+        {
+          title: "Confirm the social media section and account privacy",
+          body:
+            "Last chance to catch this before it's locked in: confirm every social media account you've used in the last 5 years is listed on the Social Media page, and that each one is set to public before your interview. This is far easier to fix now than after submission.",
         },
         {
           title: "Click 'Submit Application'",
