@@ -1400,17 +1400,17 @@ html.dark input[type="time"] {
 /* =========================================================================
    BRANDED LOADING SPINNER — components/BrandedLoadingSpinner.tsx.
    Used as the fallback for loading.tsx route boundaries. Invisible for
-   the first ~2s (gs-loading-appear) so fast navigations never see it —
+   the first 1s (gs-loading-appear) so fast navigations never see it —
    NavigationProgress's top bar already gives instant feedback for those;
    this only ever becomes visible for a segment that's genuinely slow.
    ========================================================================= */
 .gs-loading-mark {
   opacity: 0;
-  animation: gs-loading-appear 0s 2000ms forwards;
+  animation: gs-loading-appear 0s 1000ms forwards;
 }
-/* NavigationProgress already waits 2s before mounting this component at
+/* NavigationProgress already waits 1s before mounting this component at
    all (see components/ui/NavigationProgress.tsx) — stacking this delay
-   on top would mean a 4s wait before anything shows. */
+   on top would mean a 2s wait before anything shows. */
 .gs-loading-mark-instant {
   opacity: 1;
   animation: none;

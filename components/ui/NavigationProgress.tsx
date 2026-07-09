@@ -24,7 +24,7 @@ export function NavigationProgress() {
   const searchParams = useSearchParams();
   const [progress, setProgress] = useState(0);
   const [visible, setVisible] = useState(false);
-  // True once a navigation has been "in flight" for 2s+ — shows the full
+  // True once a navigation has been "in flight" for 1s+ — shows the full
   // branded spinner on top of the thin progress bar. The bar alone was
   // proving to be an easy-to-miss signal for genuinely slow navigations
   // (a cold dashboard data fetch, a slow server action) — this makes a
@@ -102,11 +102,11 @@ export function NavigationProgress() {
 
       clearSpinnerTimer();
       spinnerTimerRef.current = window.setTimeout(() => {
-        // Still navigating 2s later — the pathname effect above would
+        // Still navigating 1s later — the pathname effect above would
         // have already flipped navigatingRef back to false and cleared
         // this timer if the route had resolved by now.
         if (navigatingRef.current) setShowSpinner(true);
-      }, 2000);
+      }, 1000);
 
       // Trickle toward 80% over time so it doesn't look stuck
       if (tickRef.current) window.clearInterval(tickRef.current);

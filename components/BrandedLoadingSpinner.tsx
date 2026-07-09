@@ -3,7 +3,7 @@
    through a loading.tsx boundary (App Router shows these on both hard
    navigation via streaming SSR and client-side <Link> transitions).
 
-   Deliberately invisible for the first ~2s (see the CSS animation-delay
+   Deliberately invisible for the first 1s (see the CSS animation-delay
    below): most navigations resolve well under that, and a spinner that
    flashes for 100ms reads as jank, not polish. Only a genuinely slow
    segment — a cold Groq call, a heavy data fetch — holds the fallback up
@@ -13,8 +13,8 @@
 export function BrandedLoadingSpinner({
   fullScreen = true,
   zIndex = 70,
-  /** Skip the 2s reveal delay — used by NavigationProgress, which
-   *  already waits 2s itself before mounting this at all, so the CSS
+  /** Skip the 1s reveal delay — used by NavigationProgress, which
+   *  already waits 1s itself before mounting this at all, so the CSS
    *  delay would just double up and never show. loading.tsx usages
    *  (which mount immediately on route entry) want the built-in delay. */
   instant = false,
