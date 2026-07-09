@@ -710,6 +710,13 @@ function DetailPanel({
   // entirely, the same fix already used by SlidePanel/Modal elsewhere.
   return createPortal(
     <div
+      // Portaling past <main>'s z-10 stacking context (see comment above)
+      // also lands this outside the <div data-surface="dashboard">
+      // wrapper that var(--surface)/var(--ink)/var(--line) etc. are
+      // scoped to in globals.css — without repeating the attribute here,
+      // those tokens resolve to nothing and the drawer renders with no
+      // background at all, letting the page underneath show through.
+      data-surface="dashboard"
       className="fixed inset-0 z-50 flex justify-end"
       style={{ background: "rgba(28,27,26,0.35)" }}
       onClick={onClose}
@@ -863,9 +870,11 @@ function DetailPanel({
 function PaywallModal({ onClose }: { onClose: () => void }) {
   if (typeof document === "undefined") return null;
   // Same stacking-context fix as DetailPanel above — portal past <main>'s
-  // z-10 boundary so this renders above the sticky top nav (z-40).
+  // z-10 boundary so this renders above the sticky top nav (z-40). Same
+  // data-surface repeat as DetailPanel too — see that comment for why.
   return createPortal(
     <div
+      data-surface="dashboard"
       className="fixed inset-0 z-50 flex items-center justify-center px-6"
       style={{ background: "rgba(28,27,26,0.5)" }}
       onClick={onClose}

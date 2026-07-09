@@ -106,6 +106,15 @@ export function InterviewRoom({
 
   return (
     <div
+      // This whole component is portaled straight to document.body (see
+      // MockInterviewClient) to escape <main>'s z-10 stacking context —
+      // but that also lands it OUTSIDE the <div data-surface="dashboard">
+      // wrapper that every var(--ember) etc. token is scoped to in
+      // globals.css. Without this attribute here too, var(--ember)
+      // resolves to nothing and the mic glow / "Done answering" button
+      // silently lose their color. Same class of bug as the documents
+      // vault's DetailPanel/PaywallModal portals.
+      data-surface="dashboard"
       className="fixed inset-0 z-[60] flex flex-col overflow-y-auto"
       style={{
         background: "#141312",
