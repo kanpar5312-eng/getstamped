@@ -40,11 +40,22 @@ export function Header() {
     // Until then the header rides on top of the dark video, so text + brand
     // need cream contrast. After, the header lands on Wavly cream and ink
     // text restores.
-    const onScroll = () => {
+    let ticking = false;
+    const check = () => {
+      ticking = false;
       const threshold = Math.max(60, window.innerHeight * 0.7);
       setScrolled(window.scrollY > threshold);
     };
-    onScroll();
+    // rAF-gated so a fast mobile fling doesn't run this on every single
+    // native scroll event — same pattern as the rest of the landing page's
+    // scroll listeners (Hero.tsx, ScrollTransitions.tsx).
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(check);
+      }
+    };
+    check();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);

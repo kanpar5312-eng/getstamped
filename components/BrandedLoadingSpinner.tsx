@@ -10,15 +10,30 @@
    long enough for this to ever become visible.
    ════════════════════════════════════════════════════════════════════════ */
 
-export function BrandedLoadingSpinner({ fullScreen = true }: { fullScreen?: boolean }) {
+export function BrandedLoadingSpinner({
+  fullScreen = true,
+  zIndex = 70,
+  /** Skip the 2s reveal delay — used by NavigationProgress, which
+   *  already waits 2s itself before mounting this at all, so the CSS
+   *  delay would just double up and never show. loading.tsx usages
+   *  (which mount immediately on route entry) want the built-in delay. */
+  instant = false,
+}: {
+  fullScreen?: boolean;
+  zIndex?: number;
+  instant?: boolean;
+}) {
   return (
     <div
-      className={fullScreen ? "fixed inset-0 z-[70] flex items-center justify-center" : "flex items-center justify-center py-16"}
-      style={{ background: fullScreen ? "var(--color-cream)" : "transparent" }}
+      className={fullScreen ? "fixed inset-0 flex items-center justify-center" : "flex items-center justify-center py-16"}
+      style={{
+        background: fullScreen ? "var(--color-cream)" : "transparent",
+        zIndex,
+      }}
       role="status"
       aria-label="Loading"
     >
-      <div className="gs-loading-mark">
+      <div className={instant ? "gs-loading-mark gs-loading-mark-instant" : "gs-loading-mark"}>
         <svg
           viewBox="0 0 120 100"
           width="56"

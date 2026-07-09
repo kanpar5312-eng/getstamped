@@ -127,6 +127,15 @@ export function Hero() {
     let lastHeadT = "";
     let lastChromeOp = "";
     let lastNowlineOp = "";
+    // clip-path is a real repaint (not a compositor-only op) on every
+    // mobile browser tested — even snapped to a coarse grid, writing it
+    // every single rAF tick during a fast fling was still the dominant
+    // cost in the scroll-jank reports. Skipping every other frame for
+    // this ONE write (everything else in frame() still runs at full
+    // rate — track transform, opacity, row ticking) halves the repaint
+    // rate during Act 1 with no visible stepping, since inset() at this
+    // element's size doesn't need 60fps precision to read as smooth.
+    let clipFrameSkip = 0;
     // Android's address bar hides/shows *during* a scroll gesture, which
     // changes window.innerHeight mid-frame (desktop's viewport is stable,
     // no address-bar resize) — visualViewport.height tracks the actual
@@ -164,20 +173,26 @@ export function Hero() {
         head.style.pointerEvents = p > 0.1 ? "none" : "";
       }
 
-      const k = easeOut(sub(p, 0.03, 0.26));
-      const sideStart = isMobile ? vw * 0.05 : Math.max((vw - 760) / 2, vw * 0.04);
-      const topStart = vh * (isMobile ? 0.62 : 0.58);
-      const botStart = vh * 0.05;
-      const clipStep = isMobile ? 3 : 1;
-      const radStep = isMobile ? 2 : 1;
-      const inTop = snap(lerp(topStart, 0, k), clipStep);
-      const inSide = snap(lerp(sideStart, 0, k), clipStep);
-      const inBot = snap(lerp(botStart, 0, k), clipStep);
-      const rad = snap(lerp(20, 0, k), radStep);
-      const clip = `inset(${inTop}px ${inSide}px ${inBot}px ${inSide}px round ${rad}px)`;
-      if (clip !== lastClip) {
-        lastClip = clip;
-        book.style.clipPath = clip;
+      // Gate the whole clip-path recompute+write behind the frame-skip on
+      // mobile — not just the write, the math too, since there's no point
+      // computing a value we're not going to use this tick.
+      clipFrameSkip++;
+      if (!isMobile || clipFrameSkip % 2 === 0) {
+        const k = easeOut(sub(p, 0.03, 0.26));
+        const sideStart = isMobile ? vw * 0.05 : Math.max((vw - 760) / 2, vw * 0.04);
+        const topStart = vh * (isMobile ? 0.62 : 0.58);
+        const botStart = vh * 0.05;
+        const clipStep = isMobile ? 6 : 1;
+        const radStep = isMobile ? 4 : 1;
+        const inTop = snap(lerp(topStart, 0, k), clipStep);
+        const inSide = snap(lerp(sideStart, 0, k), clipStep);
+        const inBot = snap(lerp(botStart, 0, k), clipStep);
+        const rad = snap(lerp(20, 0, k), radStep);
+        const clip = `inset(${inTop}px ${inSide}px ${inBot}px ${inSide}px round ${rad}px)`;
+        if (clip !== lastClip) {
+          lastClip = clip;
+          book.style.clipPath = clip;
+        }
       }
 
       const chromeOp = easeOut(sub(p, 0.16, 0.28)).toFixed(2);

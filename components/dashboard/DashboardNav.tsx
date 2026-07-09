@@ -68,8 +68,20 @@ export function DashboardNav({ initials, email, plan = "free", userId = null, fe
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
+    // rAF-gated so a fast mobile fling doesn't run this on every single
+    // native scroll event.
+    let ticking = false;
+    const check = () => {
+      ticking = false;
+      setScrolled(window.scrollY > 8);
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(check);
+      }
+    };
+    check();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);

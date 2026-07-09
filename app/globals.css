@@ -1408,6 +1408,13 @@ html.dark input[type="time"] {
   opacity: 0;
   animation: gs-loading-appear 0s 2000ms forwards;
 }
+/* NavigationProgress already waits 2s before mounting this component at
+   all (see components/ui/NavigationProgress.tsx) — stacking this delay
+   on top would mean a 4s wait before anything shows. */
+.gs-loading-mark-instant {
+  opacity: 1;
+  animation: none;
+}
 @keyframes gs-loading-appear {
   to { opacity: 1; }
 }

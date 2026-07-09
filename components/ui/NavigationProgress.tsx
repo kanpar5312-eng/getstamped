@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { BrandedLoadingSpinner } from "@/components/BrandedLoadingSpinner";
 
 /**
  * Top progress bar — instant feedback when the user clicks an internal link,
@@ -23,13 +24,30 @@ export function NavigationProgress() {
   const searchParams = useSearchParams();
   const [progress, setProgress] = useState(0);
   const [visible, setVisible] = useState(false);
+  // True once a navigation has been "in flight" for 2s+ — shows the full
+  // branded spinner on top of the thin progress bar. The bar alone was
+  // proving to be an easy-to-miss signal for genuinely slow navigations
+  // (a cold dashboard data fetch, a slow server action) — this makes a
+  // stuck-feeling wait unmistakable instead of just a thin line at the
+  // top of the screen.
+  const [showSpinner, setShowSpinner] = useState(false);
   const tickRef = useRef<number | null>(null);
   const navigatingRef = useRef(false);
+  const spinnerTimerRef = useRef<number | null>(null);
+
+  const clearSpinnerTimer = () => {
+    if (spinnerTimerRef.current) {
+      window.clearTimeout(spinnerTimerRef.current);
+      spinnerTimerRef.current = null;
+    }
+  };
 
   // Snap to 100% + fade when URL actually changes
   useEffect(() => {
     if (!navigatingRef.current) return;
     navigatingRef.current = false;
+    clearSpinnerTimer();
+    setShowSpinner(false);
     if (tickRef.current) {
       window.clearInterval(tickRef.current);
       tickRef.current = null;
@@ -42,6 +60,9 @@ export function NavigationProgress() {
     }, 220);
     return () => window.clearTimeout(hide);
   }, [pathname, searchParams]);
+
+  // Unmount safety — don't leak the spinner timer.
+  useEffect(() => () => clearSpinnerTimer(), []);
 
   // Intercept clicks on internal anchors
   useEffect(() => {
@@ -79,6 +100,14 @@ export function NavigationProgress() {
       setVisible(true);
       setProgress(8);
 
+      clearSpinnerTimer();
+      spinnerTimerRef.current = window.setTimeout(() => {
+        // Still navigating 2s later — the pathname effect above would
+        // have already flipped navigatingRef back to false and cleared
+        // this timer if the route had resolved by now.
+        if (navigatingRef.current) setShowSpinner(true);
+      }, 2000);
+
       // Trickle toward 80% over time so it doesn't look stuck
       if (tickRef.current) window.clearInterval(tickRef.current);
       tickRef.current = window.setInterval(() => {
@@ -99,31 +128,34 @@ export function NavigationProgress() {
   }, []);
 
   return (
-    <div
-      aria-hidden
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 2,
-        zIndex: 9999,
-        pointerEvents: "none",
-        opacity: visible ? 1 : 0,
-        transition: "opacity 0.25s ease",
-      }}
-    >
+    <>
       <div
+        aria-hidden
         style={{
-          height: "100%",
-          width: `${progress}%`,
-          background:
-            "linear-gradient(90deg, var(--color-persimmon) 0%, var(--color-persimmon-deep) 100%)",
-          boxShadow: "0 0 12px rgba(255,91,46,0.55), 0 0 2px rgba(255,91,46,0.8)",
-          transition: "width 0.2s cubic-bezier(0.22,1,0.36,1)",
-          willChange: "width",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 2,
+          zIndex: 9999,
+          pointerEvents: "none",
+          opacity: visible ? 1 : 0,
+          transition: "opacity 0.25s ease",
         }}
-      />
-    </div>
+      >
+        <div
+          style={{
+            height: "100%",
+            width: `${progress}%`,
+            background:
+              "linear-gradient(90deg, var(--color-persimmon) 0%, var(--color-persimmon-deep) 100%)",
+            boxShadow: "0 0 12px rgba(255,91,46,0.55), 0 0 2px rgba(255,91,46,0.8)",
+            transition: "width 0.2s cubic-bezier(0.22,1,0.36,1)",
+            willChange: "width",
+          }}
+        />
+      </div>
+      {showSpinner && <BrandedLoadingSpinner zIndex={9998} instant />}
+    </>
   );
 }
