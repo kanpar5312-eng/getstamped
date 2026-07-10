@@ -7,6 +7,8 @@ import { getSessionUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Create your account — GetStamped",
+  description:
+    "Create a free GetStamped account and start your F-1 visa preparation — Phase 1 unlocked forever, no credit card required.",
   alternates: { canonical: "/sign-up" },
 };
 

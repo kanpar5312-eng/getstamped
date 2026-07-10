@@ -7,6 +7,8 @@ import { getSessionUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Sign in — GetStamped",
+  description:
+    "Sign in to your GetStamped account to continue your F-1 visa playbook, documents, and mock interview history.",
   alternates: { canonical: "/sign-in" },
 };
 

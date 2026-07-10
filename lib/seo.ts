@@ -7,13 +7,31 @@
 
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_ORIGIN || "https://getstampedonline.vercel.app";
 
+// Real, always-live branded image asset (app/opengraph-image.tsx, a
+// Next.js file-convention route — served at /opengraph-image, NOT
+// /icon.png, which doesn't exist and was a dead link in every piece of
+// structured data that referenced it below).
+const BRAND_IMAGE = `${SITE_URL}/opengraph-image`;
+
+// Real return policy — mirrors the live copy in Pricing.tsx
+// ("14-day refund. No exit interview, no forms.") — required by
+// Google's Merchant listing structured data for the Product entries
+// below, and true, not invented.
+const RETURN_POLICY = {
+  "@type": "MerchantReturnPolicy",
+  applicableCountry: "US",
+  returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+  merchantReturnDays: 14,
+  returnFees: "https://schema.org/FreeReturn",
+};
+
 export function organizationJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "GetStamped",
     url: SITE_URL,
-    logo: `${SITE_URL}/icon.png`,
+    logo: BRAND_IMAGE,
     description:
       "GetStamped is a guided F-1 student visa preparation platform: a 47-step checklist, AI document checks, and voice-based mock interviews in one workspace.",
     sameAs: ["https://twitter.com", "https://instagram.com"],
@@ -29,6 +47,7 @@ export function softwareApplicationJsonLd() {
     applicationCategory: "EducationalApplication",
     operatingSystem: "Web",
     url: SITE_URL,
+    image: BRAND_IMAGE,
     description:
       "A guided workspace for the US F-1 student visa process: 47 ordered steps, AI-powered document checks, voice-based mock interviews, and a read-only progress view for parents.",
     offers: [
@@ -71,6 +90,7 @@ export function pricingProductsJsonLd() {
         position: 1,
         name: "GetStamped Free",
         description: "Phase 1 of the F-1 visa checklist, unlocked forever at no cost.",
+        image: BRAND_IMAGE,
         offers: {
           "@type": "Offer",
           price: "0",
@@ -85,12 +105,14 @@ export function pricingProductsJsonLd() {
         name: "GetStamped Solo",
         description:
           "All 47 F-1 visa steps, unlimited AI document checks, and up to 5 voice mock interviews per week. One-time payment, lifetime access.",
+        image: BRAND_IMAGE,
         offers: {
           "@type": "Offer",
           price: "39",
           priceCurrency: "USD",
           availability: "https://schema.org/InStock",
           url: `${SITE_URL}/pricing`,
+          hasMerchantReturnPolicy: RETURN_POLICY,
         },
       },
       {
@@ -99,10 +121,12 @@ export function pricingProductsJsonLd() {
         name: "GetStamped Family",
         description:
           "Everything in Solo, for two students (up to 12 voice mock interviews per week combined, 6 each), with a combined parent view. One-time payment, lifetime access.",
+        image: BRAND_IMAGE,
         offers: {
           "@type": "Offer",
           price: "69",
           priceCurrency: "USD",
+          hasMerchantReturnPolicy: RETURN_POLICY,
           availability: "https://schema.org/InStock",
           url: `${SITE_URL}/pricing`,
         },

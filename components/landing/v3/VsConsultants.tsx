@@ -1,83 +1,65 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Eyebrow } from "./primitives/Eyebrow";
 
 /* ════════════════════════════════════════════════════════════════════════
    VsConsultants — "Why GetStamped" trust section. Sits between
    StackedFeatureCards and Pricing (see MarketingLanding.tsx).
 
-   V2 REDESIGN NOTE — fixes two real problems with the first pass at this
-   section (three flat, equal-weight cards):
+   V3 PASS — fixes theme + scale + balance, keeps the v2 content as-is
+   (real scoring criteria from app/api/mock-interview/finish/route.ts
+   and score/route.ts; no fabricated Q&A, no fabricated stats):
 
-     1. CREDIBILITY BUG. The first version showed a fabricated Q&A —
-        an invented question, an invented answer, an invented feedback
-        line — labeled "sample... not a real transcript." That
-        disclaimer undercut the entire point of the section (proving
-        the feedback is specific, not generic praise): admitting the
-        proof is fake reads worse than no proof at all. Fixed by
-        showing the ACTUAL scoring criteria instead of a fake exchange
-        — the three axes (clarity / confidence / red-flag) and their
-        descriptions below are pulled directly from the system prompt
-        in app/api/mock-interview/finish/route.ts's computeOverall()
-        ("Scoring guidance" block) and the per-answer rules in
-        app/api/mock-interview/score/route.ts. This is real, in the
-        codebase right now, not illustrative copy — framed as "the
-        literal criteria your answers get scored against," not a
-        conversation.
+     • THEME: header already used the shared `.v3-h2`/`.v3-lead` classes
+       (same tokens Pricing.tsx/Hero use), but the two card panels used
+       smaller ad-hoc sizes and one plain cream-soft box next to one
+       fixed-dark box — inconsistent with itself even before touching
+       dark-mode. Both panels are now the SAME "app screenshot" chrome-
+       frame treatment (dark, fixed palette — same convention
+       StackedFeatureCards.tsx's DemoFrame already established: those
+       demo stages are deliberately NOT theme-toggle-following, since
+       they're meant to read as screenshots of the product's own UI).
+       The section's own background still uses the exact same
+       var(--color-cream) token Hero/Pricing use, so it can never drift
+       from the page's actual background color.
+     • SCALE: kickers now use the shared `Eyebrow` primitive (identical
+       to every other section's eyebrow) instead of a smaller custom
+       label; card headlines bumped to a real subhead size; criteria
+       body copy and the reps stat bumped to reading-body / display-
+       number scale instead of fine print.
+     • BALANCE: both panels are now the same chrome-framed dark mock —
+       a matched pair — instead of one dark terminal next to one plain
+       light card.
 
-     2. VISUAL IMBALANCE. Three co-equal cards read as generic/
-        unfinished (the risk-reversal card in particular had almost no
-        content next to the other two). Rebuilt as an asymmetric
-        two-panel layout — a compact stat panel (practice volume) next
-        to a larger "app screenshot" panel (scoring criteria, styled
-        after the demo-frame language already established in
-        StackedFeatureCards.tsx: dark chrome bar, traffic-light dots,
-        mono meta labels) — with risk-reversal folded into a slim
-        full-width strip underneath instead of competing as a third
-        card. DemoFrame itself isn't exported from that file, so the
-        chrome-bar treatment is reimplemented locally here (same
-        recipe: fixed dark palette instead of theme tokens, matching
-        that file's own "this is a screenshot, not chrome" choice) —
-        not importing across files, per scope.
+   Legal posture (unchanged): no named competitors, no outcome/approval-
+   odds claims, no fabricated statistics or testimonials. The "30
+   sessions" figure is transparent multiplication from the real,
+   published Solo plan limit (lib/checkLimit.ts: 5/week) shown as
+   arithmetic in the fine print. The scoring criteria are quoted/closely
+   paraphrased from the real system prompts, not invented. Never frames
+   GetStamped as a replacement for a person.
 
-   Legal posture (unchanged):
-     • No named competitors, no outcome/approval-odds claims, no
-       fabricated statistics or testimonials.
-     • The "30 sessions" figure is transparent multiplication from the
-       real, published Solo plan limit (lib/checkLimit.ts:
-       MOCK_INTERVIEW_WEEKLY_LIMIT.solo = 5/week), shown as arithmetic
-       in the fine print — never presented as a measured average.
-     • The scoring criteria are quoted/closely paraphrased from the
-       actual system prompts, not invented.
-     • Never frames GetStamped as a replacement for a person — every
-       claim is about how the practice itself holds up.
+   Motion: same scroll-gated IntersectionObserver → `.is-playing`
+   pattern as before (no new library). Reps count up via
+   requestAnimationFrame with a synced fill bar; scoring criteria reveal
+   line-by-line staggered; a small "Analyzing… → Criteria locked"
+   status-label swap in the criteria frame's chrome bar.
+   ═════════════════════════════════════════════════════════════════════════
 
-   Motion: same scroll-gated reveal system as before — one
-   IntersectionObserver flips `.is-playing` once ≥25% of the section
-   is in view (no new library; this mirrors the rAF/observer pattern
-   ScrollTransitions.tsx uses elsewhere on this page for its own
-   section-boundary effects, reimplemented at the component scope
-   since ScrollTransitions.tsx's own effect is hardcoded to specific
-   section ids this component isn't one of). Reps count up via
-   requestAnimationFrame; the scoring criteria reveal line-by-line with
-   a small "Analyzing… → Criteria locked" status-label swap in the
-   chrome bar (the connecting "it's actively evaluating something"
-   touch called for — kept to one small effect, not a separate
-   elaborate loop, to stay legible rather than busy).
-   ═════════════════════════════════════════════════════════════════════════ */
+*/
 
 const PERSIMMON = "var(--color-persimmon)";
 const PERSIMMON_DEEP = "var(--color-persimmon-deep)";
 const INK = "var(--color-ink)";
 const INK_SOFT = "var(--color-ink-soft)";
 const CREAM = "var(--color-cream)";
-const STONE = "rgba(11, 30, 63, 0.10)";
 
-// Fixed dark palette for the "app screenshot" criteria panel — matches
+// Fixed dark palette for the "app screenshot" panels — matches
 // StackedFeatureCards.tsx's DemoFrame convention of NOT following the
-// site's light/dark theme toggle, since it's meant to read as a
-// screenshot of the product's own (always-dark) mock-interview stage.
+// site's light/dark theme toggle, since these read as screenshots of
+// the product's own (always-dark) mock-interview stage, not chrome
+// that should re-skin with the page.
 const SCREEN_INK = "#1C1917";
 const SCREEN_PAPER = "#FAF8F4";
 
@@ -151,7 +133,7 @@ export function VsConsultants() {
       }}
     >
       <div style={{ maxWidth: 1080, margin: "0 auto", position: "relative" }}>
-        {/* Header */}
+        {/* Header — same v3-h2 / v3-lead scale as every other section */}
         <header style={{ maxWidth: 720, marginBottom: "clamp(40px, 5vw, 64px)" }}>
           <Eyebrow>Why GetStamped</Eyebrow>
           <h2 className="v3-h2 v3-mt-6 gs-vs-title">
@@ -165,46 +147,50 @@ export function VsConsultants() {
           </p>
         </header>
 
-        {/* Two-panel layout: compact reps stat + larger scoring-criteria screenshot */}
+        {/* Two matched panels — same chrome-frame treatment */}
         <div className="gs-why-main">
-          {/* Practice volume — compact stat panel */}
+          {/* Practice volume */}
           <div className="gs-why-panel gs-why-card--body" data-i={0}>
-            <p className="gs-why-kicker">Practice volume</p>
-            <h3 className="gs-why-h3">
+            <Eyebrow>Practice volume</Eyebrow>
+            <h3 className="gs-why-h3 v3-mt-6">
               Repetition beats a single polished session.
             </h3>
-            <div className="gs-why-reps">
-              <div className="gs-why-reps-row">
-                <span className="gs-why-reps-label">A human mock session</span>
-                <span className="gs-why-reps-value gs-why-reps-value--muted">
-                  $50–150 · realistically one shot, maybe two
-                </span>
-              </div>
-              <div className="gs-why-reps-row gs-why-reps-row--us">
-                <span className="gs-why-reps-label">With GetStamped</span>
-                <RepsBlock target={REPS_TARGET} playing={playing} reduced={reduced} />
+            <div className="gs-why-frame v3-mt-6" aria-hidden>
+              <FrameBar title="Practice volume" />
+              <div className="gs-why-frame-body gs-why-reps-body">
+                <div className="gs-why-reps-row">
+                  <span className="gs-why-reps-row-label">
+                    A human mock session
+                  </span>
+                  <span className="gs-why-reps-row-value gs-why-reps-row-value--muted">
+                    $50–150 · realistically one shot, maybe two
+                  </span>
+                </div>
+                <div className="gs-why-reps-row gs-why-reps-row--us">
+                  <span className="gs-why-reps-row-label">
+                    With GetStamped
+                  </span>
+                  <RepsBlock target={REPS_TARGET} playing={playing} reduced={reduced} />
+                </div>
               </div>
             </div>
             <p className="gs-why-fine">
-              {WEEKLY_MOCKS}/week × {PREP_WEEKS} weeks of typical prep
-              — the real Solo plan limit, not a promise of infinity.
+              {WEEKLY_MOCKS}/week × {PREP_WEEKS} weeks of typical prep —
+              the real Solo plan limit, not a promise of infinity.
             </p>
           </div>
 
-          {/* Feedback specificity — app-screenshot-style scoring criteria */}
+          {/* Feedback specificity — real scoring criteria */}
           <div className="gs-why-panel gs-why-panel--criteria gs-why-card--body" data-i={1}>
-            <p className="gs-why-kicker">Feedback, not a black box</p>
-            <h3 className="gs-why-h3">
+            <Eyebrow>Feedback, not a black box</Eyebrow>
+            <h3 className="gs-why-h3 v3-mt-6">
               The literal criteria your answers get scored against.
             </h3>
-            <div className="gs-why-frame" aria-hidden>
-              <div className="gs-why-frame-bar">
-                <span className="gs-why-dot" style={{ background: "#FF5F57" }} />
-                <span className="gs-why-dot" style={{ background: "#FEBC2E" }} />
-                <span className="gs-why-dot" style={{ background: "#28C840" }} />
-                <span className="gs-why-frame-title">MOCK INTERVIEW · SCORING</span>
-                <span className="gs-why-frame-status" />
-              </div>
+            <div className="gs-why-frame v3-mt-6" aria-hidden>
+              <FrameBar
+                title="Mock interview · scoring"
+                status={<span className="gs-why-frame-status" />}
+              />
               <div className="gs-why-frame-body">
                 {CRITERIA.map((c, i) => (
                   <div className="gs-why-crit-row" data-i={i} key={c.label}>
@@ -215,8 +201,8 @@ export function VsConsultants() {
               </div>
             </div>
             <p className="gs-why-fine">
-              Pulled directly from the grading logic in the product —
-              not a mockup.
+              Pulled directly from the grading logic in the product — not a
+              mockup.
             </p>
           </div>
         </div>
@@ -238,15 +224,6 @@ export function VsConsultants() {
       </div>
 
       <style>{`
-        /* Hold every reveal animation until the section is in view. */
-        .gs-vs *[data-anim] {
-          animation-play-state: paused;
-          animation-fill-mode: both;
-        }
-        .gs-vs.is-playing *[data-anim] {
-          animation-play-state: running;
-        }
-
         /* Title fade-up */
         .gs-vs-title {
           opacity: 0;
@@ -262,8 +239,8 @@ export function VsConsultants() {
         /* ── Two-panel layout ────────────────────────────────────────── */
         .gs-why-main {
           display: grid;
-          grid-template-columns: 0.82fr 1.18fr;
-          gap: clamp(18px, 2.4vw, 28px);
+          grid-template-columns: 1fr 1.2fr;
+          gap: clamp(20px, 2.6vw, 32px);
           align-items: stretch;
         }
         @media (max-width: 900px) {
@@ -273,13 +250,7 @@ export function VsConsultants() {
           position: relative;
           display: flex;
           flex-direction: column;
-          background: var(--color-cream-soft);
-          border: 1px solid ${STONE};
-          border-radius: 20px;
-          padding: clamp(22px, 2.6vw, 28px);
-          box-shadow: 0 20px 48px -30px rgba(11,30,63,0.16);
         }
-        html.dark .gs-why-panel { border-color: rgba(245, 241, 232, 0.12); }
 
         .gs-why-card--body {
           opacity: 0;
@@ -297,108 +268,40 @@ export function VsConsultants() {
           )
           .join("\n")}
 
-        .gs-why-kicker {
-          font-family: var(--font-mono-stack, var(--font-sans-stack));
-          font-size: 10.5px;
-          letter-spacing: 0.22em;
-          text-transform: uppercase;
-          font-weight: 600;
-          color: ${PERSIMMON_DEEP};
-        }
+        /* Card subhead — a real subhead, not fine print */
         .gs-why-h3 {
-          margin-top: 10px;
           font-family: var(--font-display-stack);
           font-style: italic;
           font-weight: 400;
-          font-size: clamp(19px, 2vw, 22px);
-          line-height: 1.3;
+          font-size: clamp(26px, 2.8vw, 32px);
+          line-height: 1.2;
+          letter-spacing: -0.012em;
           color: ${INK};
+          max-width: 22ch;
         }
         .gs-why-fine {
           margin-top: 16px;
           font-family: var(--font-sans-stack);
-          font-size: 12.5px;
-          line-height: 1.5;
-          color: ${INK_SOFT};
-        }
-
-        /* ── Practice-volume panel ───────────────────────────────────── */
-        .gs-why-reps {
-          margin-top: 18px;
-          border: 1px solid ${STONE};
-          border-radius: 12px;
-          overflow: hidden;
-        }
-        .gs-why-reps-row {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          padding: 13px 15px;
-        }
-        .gs-why-reps-row + .gs-why-reps-row {
-          border-top: 1px solid ${STONE};
-        }
-        .gs-why-reps-row--us {
-          background: rgba(232, 98, 42, 0.06);
-        }
-        html.dark .gs-why-reps-row--us { background: rgba(232, 98, 42, 0.12); }
-        .gs-why-reps-label {
-          font-family: var(--font-mono-stack, var(--font-sans-stack));
-          font-size: 10px;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: ${INK_SOFT};
-        }
-        .gs-why-reps-value {
-          font-family: var(--font-sans-stack);
           font-size: 13.5px;
-          color: ${INK};
-        }
-        .gs-why-reps-value--muted { color: ${INK_SOFT}; }
-        .gs-why-reps-count-row {
-          display: inline-flex;
-          align-items: baseline;
-          gap: 8px;
-          font-size: 14.5px;
-          font-weight: 500;
-        }
-        .gs-why-reps-count {
-          font-family: var(--font-mono-stack, var(--font-sans-stack));
-          font-size: 26px;
-          font-weight: 700;
-          font-variant-numeric: tabular-nums;
-          color: ${PERSIMMON_DEEP};
-        }
-        .gs-why-reps-suffix { color: ${INK}; }
-        .gs-why-reps-bar {
-          display: block;
-          margin-top: 10px;
-          height: 4px;
-          border-radius: 999px;
-          background: rgba(232, 98, 42, 0.14);
-          overflow: hidden;
-        }
-        .gs-why-reps-bar-fill {
-          display: block;
-          height: 100%;
-          background: ${PERSIMMON};
-          border-radius: 999px;
-          transition: width 80ms linear;
+          line-height: 1.55;
+          color: ${INK_SOFT};
         }
 
-        /* ── Scoring-criteria "screenshot" panel ─────────────────────── */
+        /* ── Shared chrome-frame — both panels use this ─────────────── */
         .gs-why-frame {
-          margin-top: 18px;
-          border-radius: 14px;
+          flex: 1;
+          border-radius: 16px;
           overflow: hidden;
           background: ${SCREEN_INK};
-          box-shadow: 0 24px 56px -28px rgba(11,30,63,0.34);
+          box-shadow: 0 26px 60px -28px rgba(11,30,63,0.36);
+          display: flex;
+          flex-direction: column;
         }
         .gs-why-frame-bar {
           display: flex;
           align-items: center;
           gap: 8px;
-          padding: 10px 14px;
+          padding: 12px 16px;
           background: rgba(250,248,244,0.04);
           border-bottom: 1px solid rgba(250,248,244,0.08);
         }
@@ -410,7 +313,7 @@ export function VsConsultants() {
         .gs-why-frame-title {
           margin-left: 8px;
           font-family: var(--font-mono-stack, var(--font-sans-stack));
-          font-size: 10px;
+          font-size: 11px;
           letter-spacing: 0.18em;
           text-transform: uppercase;
           color: rgba(250,248,244,0.55);
@@ -418,32 +321,93 @@ export function VsConsultants() {
         .gs-why-frame-status {
           margin-left: auto;
           font-family: var(--font-mono-stack, var(--font-sans-stack));
-          font-size: 9.5px;
+          font-size: 10.5px;
           letter-spacing: 0.14em;
           text-transform: uppercase;
           color: ${PERSIMMON};
         }
-        .gs-why-frame-status::before {
-          content: "Analyzing…";
-        }
+        .gs-why-frame-status::before { content: "Analyzing…"; }
         .gs-vs.is-playing .gs-why-panel--criteria .gs-why-frame-status::before {
           animation: gs-why-status 10ms steps(1, end) 1500ms forwards;
         }
-        @keyframes gs-why-status {
-          to { content: "Criteria locked"; }
-        }
+        @keyframes gs-why-status { to { content: "Criteria locked"; } }
+
         .gs-why-frame-body {
-          padding: 18px 18px 20px;
+          flex: 1;
+          padding: 22px 20px 24px;
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 18px;
+          justify-content: center;
         }
+
+        /* ── Practice-volume panel content ───────────────────────────── */
+        .gs-why-reps-row {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding: 16px 0;
+        }
+        .gs-why-reps-row + .gs-why-reps-row {
+          border-top: 1px solid rgba(250,248,244,0.12);
+        }
+        .gs-why-reps-row-label {
+          font-family: var(--font-mono-stack, var(--font-sans-stack));
+          font-size: 11px;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: rgba(250,248,244,0.5);
+        }
+        .gs-why-reps-row-value {
+          font-family: var(--font-sans-stack);
+          font-size: 16px;
+          line-height: 1.4;
+          color: ${SCREEN_PAPER};
+        }
+        .gs-why-reps-row-value--muted { color: rgba(250,248,244,0.62); }
+        .gs-why-reps-count-row {
+          display: flex;
+          align-items: baseline;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+        .gs-why-reps-count {
+          font-family: var(--font-display-stack);
+          font-size: clamp(42px, 5vw, 56px);
+          font-weight: 400;
+          letter-spacing: -0.02em;
+          color: ${PERSIMMON};
+          font-variant-numeric: tabular-nums;
+          line-height: 1;
+        }
+        .gs-why-reps-suffix {
+          font-family: var(--font-sans-stack);
+          font-size: 15px;
+          color: ${SCREEN_PAPER};
+        }
+        .gs-why-reps-bar {
+          display: block;
+          margin-top: 12px;
+          height: 5px;
+          border-radius: 999px;
+          background: rgba(250,248,244,0.14);
+          overflow: hidden;
+        }
+        .gs-why-reps-bar-fill {
+          display: block;
+          height: 100%;
+          background: ${PERSIMMON};
+          border-radius: 999px;
+          transition: width 80ms linear;
+        }
+
+        /* ── Scoring-criteria panel content ──────────────────────────── */
         .gs-why-crit-row {
           display: flex;
           flex-direction: column;
-          gap: 4px;
-          padding-bottom: 14px;
-          border-bottom: 1px dashed rgba(250,248,244,0.14);
+          gap: 6px;
+          padding-bottom: 16px;
+          border-bottom: 1px dashed rgba(250,248,244,0.16);
           opacity: 0;
           transform: translateY(6px);
         }
@@ -464,7 +428,7 @@ export function VsConsultants() {
         }
         .gs-why-crit-label {
           font-family: var(--font-mono-stack, var(--font-sans-stack));
-          font-size: 10.5px;
+          font-size: 11.5px;
           font-weight: 600;
           letter-spacing: 0.16em;
           text-transform: uppercase;
@@ -472,46 +436,46 @@ export function VsConsultants() {
         }
         .gs-why-crit-text {
           font-family: var(--font-sans-stack);
-          font-size: 14px;
-          line-height: 1.5;
+          font-size: 16px;
+          line-height: 1.6;
           color: ${SCREEN_PAPER};
         }
 
         /* ── Risk-reversal strip ──────────────────────────────────────── */
         .gs-why-refund-strip {
-          margin-top: clamp(18px, 2.2vw, 24px);
+          margin-top: clamp(20px, 2.4vw, 26px);
           display: flex;
           align-items: center;
           flex-wrap: wrap;
-          gap: 14px;
-          padding: 18px clamp(20px, 3vw, 28px);
+          gap: 16px;
+          padding: 20px clamp(22px, 3vw, 30px);
           border-radius: 16px;
-          background: rgba(232, 98, 42, 0.06);
-          border: 1px solid rgba(232, 98, 42, 0.18);
+          background: rgba(232, 98, 42, 0.08);
+          border: 1px solid rgba(232, 98, 42, 0.2);
         }
         html.dark .gs-why-refund-strip {
-          background: rgba(232, 98, 42, 0.12);
-          border-color: rgba(232, 98, 42, 0.28);
+          background: rgba(232, 98, 42, 0.14);
+          border-color: rgba(232, 98, 42, 0.3);
         }
         .gs-why-refund-badge {
           display: inline-flex;
           align-items: center;
           flex: 0 0 auto;
           font-family: var(--font-mono-stack, var(--font-sans-stack));
-          font-size: 11px;
+          font-size: 12px;
           font-weight: 700;
           letter-spacing: 0.1em;
           text-transform: uppercase;
           color: #FFFDF7;
           background: ${PERSIMMON};
-          padding: 8px 16px;
+          padding: 9px 18px;
           border-radius: 999px;
         }
         .gs-why-refund-copy {
-          flex: 1 1 260px;
+          flex: 1 1 280px;
           font-family: var(--font-sans-stack);
-          font-size: 14.5px;
-          line-height: 1.5;
+          font-size: 16px;
+          line-height: 1.55;
           color: ${INK};
           margin: 0;
         }
@@ -545,14 +509,27 @@ export function VsConsultants() {
   );
 }
 
+/* ─────────────────────────────────────────────────────── chrome bar ── */
+
+function FrameBar({ title, status }: { title: string; status?: ReactNode }) {
+  return (
+    <div className="gs-why-frame-bar">
+      <span className="gs-why-dot" style={{ background: "#FF5F57" }} />
+      <span className="gs-why-dot" style={{ background: "#FEBC2E" }} />
+      <span className="gs-why-dot" style={{ background: "#28C840" }} />
+      <span className="gs-why-frame-title">{title}</span>
+      {status}
+    </div>
+  );
+}
+
 /* ─────────────────────────────────────── practice-reps stat block ── */
 
 /** Counts up from 0 to `target` once the section is in view, plus a
  *  fill bar synced to the same progress — same requestAnimationFrame +
  *  eased-cubic technique as the animated counters/progress fills
- *  already used elsewhere in v3 (StackedFeatureCards' progress bars,
- *  the count-swap labels), reimplemented locally rather than imported
- *  since those live in a different component's private scope. */
+ *  already used elsewhere in v3, reimplemented locally since those
+ *  live in a different component's private scope. */
 function RepsBlock({
   target,
   playing,
@@ -587,7 +564,7 @@ function RepsBlock({
   const pct = Math.min(100, Math.round((n / target) * 100));
 
   return (
-    <span className="gs-why-reps-value">
+    <span className="gs-why-reps-row-value">
       <span className="gs-why-reps-count-row">
         <span className="gs-why-reps-count">{n}+</span>
         <span className="gs-why-reps-suffix">sessions before you sit down</span>
